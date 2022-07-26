@@ -55,11 +55,11 @@ Silicon Labs platform.
 
 -   Download the
     [Simplicity Commander](https://www.silabs.com/mcu/programming-options)
-    command line tool, and ensure that `commander` is your shell search path.
+    command line tool, and ensure that `commander` is in your shell search path.
     (For Mac OS X, `commander` is located inside
     `Commander.app/Contents/MacOS/`.)
 
--   Download and install a suitable ARM gcc tool chain:
+-   Download and install a suitable ARM GCC tool chain:
     [GNU Arm Embedded Toolchain 9-2019-q4-major](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
 
 -   Install some additional tools (likely already present for CHIP developers):
