@@ -60,7 +60,7 @@ Silicon Labs platform.
     `Commander.app/Contents/MacOS/`.)
 
 -   Download and install a suitable ARM GCC tool chain:
-    [GNU Arm Embedded Toolchain 9-2019-q4-major](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
+    [GNU Arm Embedded Toolchain (arm-none-eabi)](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/downloads)
 
 -   Install some additional tools (likely already present for CHIP developers):
 
@@ -81,20 +81,61 @@ Silicon Labs platform.
 
 -   To delete generated executable, libraries and object files use:
 
-          $ cd ~/connectedhomeip
+          $ cd ~/matter
           $ rm -rf ./out/
+
+    OR use GN/Ninja directly
+
+          $ cd ~/matter/examples/lighting-app/efr32
+          $ git submodule update --init
+          $ source third_party/matter/scripts/activate.sh
+          $ export EFR32_BOARD=BRD4161A
+          $ gn gen out/debug
+          $ ninja -C out/debug
+
+-   To delete generated executable, libraries and object files use:
+
+          $ cd ~/matter/examples/lighting-app/efr32
+          $ rm -rf out/
+
+*   Build the example as Sleepy End Device (SED)
+
+          $ ./scripts/examples/gn_efr32_example.sh ./examples/lighting-app/efr32/ ./out/lighting-app_SED BRD4161A --sed
+
+    or use gn as previously mentioned but adding the following arguments:
+
+          $ gn gen out/debug '--args=silabs_board="BRD4161A" enable_sleepy_device=true chip_openthread_ftd=false'
+
+*   Build the example with pigweed RPC
+
+          $ ./scripts/examples/gn_efr32_example.sh examples/lighting-app/efr32/ out/lighting_app_rpc BRD4161A 'import("//with_pw_rpc.gni")'
+
+    or use GN/Ninja Directly
+
+          $ cd ~/matter/examples/lighting-app/efr32
+          $ git submodule update --init
+          $ source third_party/matter/scripts/activate.sh
+          $ export EFR32_BOARD=BRD4161A
+          $ gn gen out/debug --args='import("//with_pw_rpc.gni")'
+          $ ninja -C out/debug
+
+    [Running Pigweed RPC console](#running-pigweed-rpc-console)
+
+For more build options, help is provided when running the build script without
+arguments
+
+         ./scripts/examples/gn_efr32_example.sh
 
 <a name="flashing"></a>
 
 ## Flashing the Application
 
--   Flashing requires the SiWx917 SoC device to be configured in the Ozone
-    Debugger.
--   Once it's configured, it can be run with the Ozone Debugger by loading the
-    .out file.
-    -   > For detailed instructions, please refer to
-        > [Running the Matter Demo on SiWx917 SoC](https://github.com/SiliconLabs/matter/blob/latest/docs/silabs/wifi/RUN_DEMO_SiWx917_SoC.md)
-        > in the Silicon Labs Matter Github Repo
+-   On the command line:
+
+          $ cd ~/matter/examples/lighting-app/efr32
+          $ python3 out/debug/chip-efr32-lighting-example.flash.py
+
+-   Or with the Ozone debugger, just load the .out file.
 
 <a name="view-logging"></a>
 
