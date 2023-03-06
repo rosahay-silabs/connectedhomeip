@@ -1017,7 +1017,7 @@ sl_status_t wfx_connect_to_ap(void)
     sl_status_t result;
     sl_wfx_security_mode_t connect_security_mode;
 
-    if (NULL == wifi_provision.ssid[0])
+    if (0 == wifi_provision.ssid[0])
     {
         return SL_STATUS_NOT_AVAILABLE;
     }
