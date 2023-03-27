@@ -149,7 +149,7 @@ static void wfx_events_task_start()
                                                wfxEventTaskStack, &wfxEventTaskBuffer);
     if (NULL == wfx_events_task_handle)
     {
-        SILABS_LOG("Failed to create WFX wfx_events");
+        SILABS_LOG("%s: error: failed to create wfx_events_task", __func__);
     }
 }
 
@@ -165,115 +165,116 @@ sl_status_t sl_wfx_host_process_event(sl_wfx_generic_message_t * event_payload)
     switch (event_payload->header.id)
     {
     /******** INDICATION ********/
-        SILABS_LOG("WFX Startup Completed\r\n");
-    case SL_WFX_STARTUP_IND_ID:
+    case SL_WFX_STARTUP_IND_ID: {
+        SILABS_LOG("%s: header.id: SL_WFX_STARTUP_IND_ID", __func__);
         PlatformMgrImpl().HandleWFXSystemEvent(WIFI_EVENT, event_payload);
         break;
-
-    case SL_WFX_CONNECT_IND_ID:
+    }
+    case SL_WFX_CONNECT_IND_ID: {
         sl_wfx_connect_ind_t * connect_indication = (sl_wfx_connect_ind_t *) event_payload;
         sl_wfx_connect_callback(connect_indication->body);
         break;
-
-    case SL_WFX_DISCONNECT_IND_ID:
+    }
+    case SL_WFX_DISCONNECT_IND_ID: {
         sl_wfx_disconnect_ind_t * disconnect_indication = (sl_wfx_disconnect_ind_t *) event_payload;
         sl_wfx_disconnect_callback(disconnect_indication->body.mac, disconnect_indication->body.reason);
         break;
-
-    case SL_WFX_RECEIVED_IND_ID:
+    }
+    case SL_WFX_RECEIVED_IND_ID: {
         sl_wfx_received_ind_t * ethernet_frame = (sl_wfx_received_ind_t *) event_payload;
         if (ethernet_frame->body.frame_type == ETH_FRAME)
         {
             sl_wfx_host_received_frame_callback(ethernet_frame);
         }
         break;
-
+    }
 #ifdef SL_WFX_CONFIG_SCAN
-    case SL_WFX_SCAN_RESULT_IND_ID:
+    case SL_WFX_SCAN_RESULT_IND_ID: {
         sl_wfx_scan_result_ind_t * scan_result = (sl_wfx_scan_result_ind_t *) event_payload;
         sl_wfx_scan_result_callback(&scan_result->body);
         break;
-    case SL_WFX_SCAN_COMPLETE_IND_ID:
+    }
+    case SL_WFX_SCAN_COMPLETE_IND_ID: {
         sl_wfx_scan_complete_ind_t * scan_complete = (sl_wfx_scan_complete_ind_t *) event_payload;
         sl_wfx_scan_complete_callback(scan_complete->body.status);
         break;
+    }
 #endif /* SL_WFX_CONFIG_SCAN */
 #ifdef SL_WFX_CONFIG_SOFTAP
-    case SL_WFX_START_AP_IND_ID:
+    case SL_WFX_START_AP_IND_ID: {
         sl_wfx_start_ap_ind_t * start_ap_indication = (sl_wfx_start_ap_ind_t *) event_payload;
         sl_wfx_start_ap_callback(start_ap_indication->body.status);
         break;
-
-    case SL_WFX_STOP_AP_IND_ID:
+    }
+    case SL_WFX_STOP_AP_IND_ID: {
         sl_wfx_stop_ap_callback();
         break;
-
-    case SL_WFX_AP_CLIENT_CONNECTED_IND_ID:
+    }
+    case SL_WFX_AP_CLIENT_CONNECTED_IND_ID: {
         sl_wfx_ap_client_connected_ind_t * client_connected_indication = (sl_wfx_ap_client_connected_ind_t *) event_payload;
         sl_wfx_client_connected_callback(client_connected_indication->body.mac);
         break;
-
-    case SL_WFX_AP_CLIENT_REJECTED_IND_ID:
+    }
+    case SL_WFX_AP_CLIENT_REJECTED_IND_ID: {
         sl_wfx_ap_client_rejected_ind_t * ap_client_rejected_indication = (sl_wfx_ap_client_rejected_ind_t *) event_payload;
         sl_wfx_ap_client_rejected_callback(ap_client_rejected_indication->body.reason, ap_client_rejected_indication->body.mac);
         break;
-
-    case SL_WFX_AP_CLIENT_DISCONNECTED_IND_ID:
+    }
+    case SL_WFX_AP_CLIENT_DISCONNECTED_IND_ID: {
         sl_wfx_ap_client_disconnected_ind_t * ap_client_disconnected_indication =
             (sl_wfx_ap_client_disconnected_ind_t *) event_payload;
         sl_wfx_ap_client_disconnected_callback(ap_client_disconnected_indication->body.reason,
                                                ap_client_disconnected_indication->body.mac);
         break;
-
+    }
 #endif /* SL_WFX_CONFIG_SOFTAP */
 #ifdef SL_WFX_USE_SECURE_LINK
-    case SL_WFX_SECURELINK_EXCHANGE_PUB_KEYS_IND_ID:
+    case SL_WFX_SECURELINK_EXCHANGE_PUB_KEYS_IND_ID: {
         if (host_context.waited_event_id != SL_WFX_SECURELINK_EXCHANGE_PUB_KEYS_IND_ID)
         {
             memcpy((void *) &sl_wfx_context->secure_link_exchange_ind, (void *) event_payload, event_payload->header.length);
         }
         break;
-
+    }
 #endif
-    case SL_WFX_GENERIC_IND_ID:
+    case SL_WFX_GENERIC_IND_ID: {
         sl_wfx_generic_ind_t * generic_status = (sl_wfx_generic_ind_t *) event_payload;
         sl_wfx_generic_status_callback(generic_status);
         break;
     }
-case SL_WFX_EXCEPTION_IND_ID:
-    sl_wfx_exception_ind_t * firmware_exception = (sl_wfx_exception_ind_t *) event_payload;
-    uint8_t * exception_tmp                     = (uint8_t *) firmware_exception;
-    SILABS_LOG("firmware exception\r\n");
-    for (uint16_t i = 0; i < firmware_exception->header.length; i += 16)
-    {
-        SILABS_LOG("hif: %.8x:", i);
-        for (uint8_t j = 0; (j < 16) && ((i + j) < firmware_exception->header.length); j++)
+    case SL_WFX_EXCEPTION_IND_ID: {
+        sl_wfx_exception_ind_t * firmware_exception = (sl_wfx_exception_ind_t *) event_payload;
+        uint8_t * exception_tmp                     = (uint8_t *) firmware_exception;
+        SILABS_LOG("%s: error: SL_WFX_EXCEPTION_IND_ID", __func__);
+        for (uint16_t i = 0; i < firmware_exception->header.length; i += 16)
         {
-            SILABS_LOG(" %.2x", *exception_tmp);
-            exception_tmp++;
+            SILABS_LOG("hif: %.8x:", i);
+            for (uint8_t j = 0; (j < 16) && ((i + j) < firmware_exception->header.length); j++)
+            {
+                SILABS_LOG(" %.2x", *exception_tmp);
+                exception_tmp++;
+            }
         }
-        SILABS_LOG("\r\n");
+        break;
     }
-    break;
-
-case SL_WFX_ERROR_IND_ID:
-    sl_wfx_error_ind_t * firmware_error = (sl_wfx_error_ind_t *) event_payload;
-    uint8_t * error_tmp                 = (uint8_t *) firmware_error;
-    SILABS_LOG("firmware error %lu\r\n", firmware_error->body.type);
-    for (uint16_t i = 0; i < firmware_error->header.length; i += 16)
-    {
-        SILABS_LOG("hif: %.8x:", i);
-        for (uint8_t j = 0; (j < 16) && ((i + j) < firmware_error->header.length); j++)
+    case SL_WFX_ERROR_IND_ID: {
+        sl_wfx_error_ind_t * firmware_error = (sl_wfx_error_ind_t *) event_payload;
+        uint8_t * error_tmp                 = (uint8_t *) firmware_error;
+        SILABS_LOG("%s: error: SL_WFX_ERROR_IND_ID -> %lu\r\n", __func__, firmware_error->body.type);
+        for (uint16_t i = 0; i < firmware_error->header.length; i += 16)
         {
-            SILABS_LOG(" %.2x", *error_tmp);
-            error_tmp++;
+            SILABS_LOG("hif: %.8x:", i);
+            for (uint8_t j = 0; (j < 16) && ((i + j) < firmware_error->header.length); j++)
+            {
+                SILABS_LOG(" %.2x", *error_tmp);
+                error_tmp++;
+            }
+            SILABS_LOG("");
         }
-        SILABS_LOG("\r\n");
+        break;
     }
-    break;
-}
-
-return SL_STATUS_OK;
+    }
+    return SL_STATUS_OK;
 }
 
 #ifdef SL_WFX_CONFIG_SCAN
