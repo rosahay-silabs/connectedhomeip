@@ -364,46 +364,22 @@ static void sl_wfx_connect_callback(sl_wfx_connect_ind_body_t connect_indication
     uint32_t status = connect_indication_body.status;
     ap_info.chan    = connect_indication_body.channel;
     memcpy(&ap_info.security, &wifi_provision.security, sizeof(wifi_provision.security));
+    SILABS_LOG("%s: status: %02x", __func__, status);
     if (WFM_STATUS_SUCCESS != status)
     {
-        switch (status)
-        {
-        case WFM_STATUS_NO_MATCHING_AP:
-            SILABS_LOG("WFX Connection failed, access point not found\r\n");
-            break;
-
-        case WFM_STATUS_CONNECTION_ABORTED:
-            SILABS_LOG("WFX Connection aborted\r\n");
-            break;
-
-        case WFM_STATUS_CONNECTION_TIMEOUT:
-            SILABS_LOG("WFX Connection timeout\r\n");
-            break;
-
-        case WFM_STATUS_CONNECTION_REJECTED_BY_AP:
-            SILABS_LOG("WFX Connection rejected by the access point\r\n");
-            break;
-
-        case WFM_STATUS_CONNECTION_AUTH_FAILURE:
-            SILABS_LOG("WFX Connection authentication failure\r\n");
-            break;
-
-        default:
-            SILABS_LOG("WF Connection attempt error\r\n");
-            break;
-        }
-        if (!is_wifi_disconnection_event ? (retryJoin < MAX_JOIN_RETRIES_COUNT) : true)
+        // sl_wfx_fmac_status_t
+        SILABS_LOG("%s: error: failed with status: %02x", __func__, status);
+        if (!is_wifi_disconnection_event && (retryJoin < MAX_JOIN_RETRIES_COUNT))
         {
             retryJoin += 1;
             retryInProgress = false;
-            SILABS_LOG("WFX Retry to connect to network count: %d", retryJoin);
+            SILABS_LOG("%s: try: %d", __func__, retryJoin);
             sl_wfx_context->state =
                 static_cast<sl_wfx_state_t>(static_cast<int>(sl_wfx_context->state) & ~static_cast<int>(SL_WFX_STARTED));
             xEventGroupSetBits(sl_wfx_event_group, SL_WFX_RETRY_CONNECT);
         }
         return;
     }
-    SILABS_LOG("STA-Connected\r\n");
     memcpy(&ap_mac.octet[0], mac, MAC_ADDRESS_FIRST_OCTET);
     sl_wfx_context->state =
         static_cast<sl_wfx_state_t>(static_cast<int>(sl_wfx_context->state) | static_cast<int>(SL_WFX_STA_INTERFACE_CONNECTED));
@@ -419,7 +395,7 @@ static void sl_wfx_connect_callback(sl_wfx_connect_ind_body_t connect_indication
 static void sl_wfx_disconnect_callback(uint8_t * mac, uint16_t reason)
 {
     (void) (mac);
-    SILABS_LOG("WFX Disconnected %d\r\n", reason);
+    SILABS_LOG("%s: error: failed with status: %02x", __func__, reason);
     sl_wfx_context->state =
         static_cast<sl_wfx_state_t>(static_cast<int>(sl_wfx_context->state) & ~static_cast<int>(SL_WFX_STA_INTERFACE_CONNECTED));
     retryInProgress             = false;
