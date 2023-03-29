@@ -112,6 +112,8 @@ void post_bootloader_spi_transfer(void)
      * De-Assert CS pin for EXT SPI Flash
      */
     spiflash_cs_deassert();
+    spi_drv_reinit(SL_BIT_RATE_EXP_HDR);
+    sl_wfx_host_spi_cs_assert();
     xSemaphoreGive(spi_sem_sync_hdl);
 }
 
@@ -128,6 +130,7 @@ void pre_lcd_spi_transfer(void)
     {
         return;
     }
+    sl_wfx_host_spi_cs_deassert();
     spi_drv_reinit(SL_BIT_RATE_LCD);
     /*LCD CS is handled as part of LCD gsdk*/
 }
@@ -141,6 +144,8 @@ void pre_lcd_spi_transfer(void)
  *****************************************************************************/
 void post_lcd_spi_transfer(void)
 {
+    sl_wfx_host_spi_cs_assert();
+    spi_drv_reinit(SL_BIT_RATE_EXP_HDR);
     xSemaphoreGive(spi_sem_sync_hdl);
 }
 #if (defined(EFR32MG24) && defined(WF200_WIFI))
@@ -182,6 +187,7 @@ void post_uart_transfer(void)
         return;
     }
     GPIO_PinModeSet(gpioPortA, 8, gpioModeInputPull, 1);
+    spi_drv_reinit(SL_BIT_RATE_EXP_HDR);
     xSemaphoreGive(spi_sem_sync_hdl);
     sl_wfx_host_enable_platform_interrupt();
     sl_wfx_enable_irq();

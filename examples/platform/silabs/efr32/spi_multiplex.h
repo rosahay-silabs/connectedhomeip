@@ -33,7 +33,6 @@ extern "C" {
 #define SL_BIT_RATE_UART_CONSOLE 16000000
 
 extern SemaphoreHandle_t spi_sem_sync_hdl;
-
 #ifdef RS911X_WIFI
 extern SPIDRV_Handle_t sl_spidrv_eusart_exp_handle;
 #define SL_SPIDRV_HANDLE sl_spidrv_eusart_exp_handle
