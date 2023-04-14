@@ -43,6 +43,7 @@
 #include "sl_wfx_task.h"
 #include "wfx_host_events.h"
 
+#include "efr32_utils.h"
 
 #if SL_WIFI
 #include "spi_multiplex.h"
@@ -143,11 +144,14 @@ sl_status_t sl_wfx_host_spi_cs_deassert()
  *****************************************************************************/
 static void spi_dmaTransferComplete(SPIDRV_HandleData_t * pxHandle, Ecode_t transferStatus, int itemsTransferred)
 {
+    SILABS_LOG("%s: started", __func__);
     configASSERT(spiInitiatorTaskHandle != NULL);
+    SILABS_LOG("%s: spiInitiatorTaskHandle is not nil", __func__);
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     vTaskNotifyGiveFromISR(spiInitiatorTaskHandle, &xHigherPriorityTaskWoken);
     spiInitiatorTaskHandle = NULL;
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    SILABS_LOG("%s: completed", __func__);
 }
 /****************************************************************************
  * @fn  sl_status_t sl_wfx_host_spi_transfer_no_cs_assert(sl_wfx_host_bus_transfer_type_t type,
@@ -168,18 +172,24 @@ static void spi_dmaTransferComplete(SPIDRV_HandleData_t * pxHandle, Ecode_t tran
 sl_status_t sl_wfx_host_spi_transfer_no_cs_assert(sl_wfx_host_bus_transfer_type_t type, uint8_t * header, uint16_t header_length,
                                                   uint8_t * buffer, uint16_t buffer_length)
 {
+    SILABS_LOG("%s: started", __func__);
     if (header_length <= 0 || buffer_length <= 0)
     {
+        SILABS_LOG("%s: error: failed with nil length", __func__);
 
         return SL_STATUS_INVALID_PARAMETER;
     }
+    SILABS_LOG("%s: length is not nil", __func__);
     if (xSemaphoreTake(spiTransferLock, portMAX_DELAY) != pdTRUE)
     {
+        SILABS_LOG("%s: error: failed to acquire spiTransferLock", __func__);
 
         return SL_STATUS_BUSY;
     }
+    SILABS_LOG("%s: acquired spiTransferLock", __func__);
     // no other task should be waiting for dma completion
     configASSERT(spiInitiatorTaskHandle == NULL);
+    SILABS_LOG("%s: taskHandle is nil", __func__);
     spiInitiatorTaskHandle = xTaskGetCurrentTaskHandle();
 
     Ecode_t spiError;
@@ -196,6 +206,7 @@ sl_status_t sl_wfx_host_spi_transfer_no_cs_assert(sl_wfx_host_bus_transfer_type_
     if (ECODE_EMDRV_SPIDRV_OK != spiError)
     {
         spiInitiatorTaskHandle = NULL;
+        SILABS_LOG("%s: error: failed with status: %02x", __func__, spiError);
 
         return SL_STATUS_FAIL;
     }
@@ -207,10 +218,13 @@ sl_status_t sl_wfx_host_spi_transfer_no_cs_assert(sl_wfx_host_bus_transfer_type_
         int itemsRemaining   = 0;
         SPIDRV_GetTransferStatus(SL_SPIDRV_HANDLE, &itemsTransferred, &itemsRemaining);
         SPIDRV_AbortTransfer(SL_SPIDRV_HANDLE);
+        SILABS_LOG("%s: error: failed with status: %02x, %d/%d %x", __func__, ECODE_EMDRV_SPIDRV_TIMEOUT, itemsTransferred,
+                   itemsRemaining, buffer);
 
         return SL_STATUS_TIMEOUT;
     }
     xSemaphoreGive(spiTransferLock);
+    SILABS_LOG("%s: completed", __func__);
 
     return SL_STATUS_OK;
 }
