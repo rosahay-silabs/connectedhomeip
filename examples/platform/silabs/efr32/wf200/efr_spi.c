@@ -38,33 +38,24 @@
 #include "semphr.h"
 
 #include "gpiointerrupt.h"
-
-#include "sl_spidrv_exp_config.h"
 #include "sl_wfx_board.h"
 #include "sl_wfx_host.h"
 #include "sl_wfx_task.h"
 #include "wfx_host_events.h"
 
-#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
-#include "sl_power_manager.h"
-#endif
 
 #if SL_WIFI
 #include "spi_multiplex.h"
 StaticSemaphore_t spi_sem_peripharal;
 SemaphoreHandle_t spi_sem_sync_hdl;
-#endif
+#endif /* SL_WIFI */
 
 #define USART SL_WFX_HOST_PINOUT_SPI_PERIPHERAL
 
 StaticSemaphore_t xEfrSpiSemaBuffer;
-static SemaphoreHandle_t spi_sem;
+static SemaphoreHandle_t spiTransferLock;
+static TaskHandle_t spiInitiatorTaskHandle = NULL;
 
-static unsigned int tx_dma_channel;
-static unsigned int rx_dma_channel;
-
-static uint32_t dummy_rx_data;
-static uint32_t dummy_tx_data;
 static bool spi_enabled = false;
 
 #if defined(EFR32MG12)
@@ -85,36 +76,12 @@ uint8_t wirq_irq_nb = SL_WFX_HOST_PINOUT_SPI_WIRQ_PIN; // SL_WFX_HOST_PINOUT_SPI
  *****************************************************************************/
 sl_status_t sl_wfx_host_init_bus(void)
 {
-    spi_enabled = true;
+    spi_enabled     = true;
+    spiTransferLock = xSemaphoreCreateBinaryStatic(&xEfrSpiSemaBuffer);
+    xSemaphoreGive(spiTransferLock);
 
-    /* Assign allocated DMA channel */
-    tx_dma_channel = SL_SPIDRV_HANDLE->txDMACh;
-    rx_dma_channel = SL_SPIDRV_HANDLE->rxDMACh;
-
-    /*
-     * Route EUSART1 MOSI, MISO, and SCLK to the specified pins.  CS is
-     * not controlled by EUSART so there is no write to the corresponding
-     * EUSARTROUTE register to do this.
-     */
-
-#if defined(EFR32MG12)
-    MY_USART->CTRL |= (1u << _USART_CTRL_SMSDELAY_SHIFT);
-    MY_USART->ROUTEPEN = USART_ROUTEPEN_TXPEN | USART_ROUTEPEN_RXPEN | USART_ROUTEPEN_CLKPEN;
-#endif
-
-#if defined(EFR32MG24)
-    GPIO->USARTROUTE[0].ROUTEEN = GPIO_USART_ROUTEEN_RXPEN | // MISO
-        GPIO_USART_ROUTEEN_TXPEN |                           // MOSI
-        GPIO_USART_ROUTEEN_CLKPEN;
-#endif
-
-    spi_sem = xSemaphoreCreateBinaryStatic(&xEfrSpiSemaBuffer);
-    xSemaphoreGive(spi_sem);
-
-#if defined(EFR32MG24)
     spi_sem_sync_hdl = xSemaphoreCreateBinaryStatic(&spi_sem_peripharal);
     xSemaphoreGive(spi_sem_sync_hdl);
-#endif /* EFR32MG24 */
     return SL_STATUS_OK;
 }
 
@@ -127,15 +94,8 @@ sl_status_t sl_wfx_host_init_bus(void)
  *****************************************************************************/
 sl_status_t sl_wfx_host_deinit_bus(void)
 {
-    vSemaphoreDelete(spi_sem);
+    vSemaphoreDelete(spiTransferLock);
     vSemaphoreDelete(spi_sem_sync_hdl);
-    // Stop DMAs.
-    DMADRV_StopTransfer(rx_dma_channel);
-    DMADRV_StopTransfer(tx_dma_channel);
-    DMADRV_FreeChannel(tx_dma_channel);
-    DMADRV_FreeChannel(rx_dma_channel);
-    DMADRV_DeInit();
-    USART_Reset(MY_USART);
     return SL_STATUS_OK;
 }
 
@@ -173,78 +133,22 @@ sl_status_t sl_wfx_host_spi_cs_deassert()
 }
 
 /****************************************************************************
- * @fn  static bool dma_complete(unsigned int channel, unsigned int sequenceNo, void *userParam)
+ * @fn  static void spi_dmaTransferComplete(SPIDRV_HandleData_t * pxHandle, Ecode_t transferStatus, int itemsTransferred)
  * @brief
- *     function called when the DMA complete
- * @param[in] channel:
- * @param[in]  sequenceNo: sequence number
- * @param[in]  userParam: user parameter
- * @return returns true if suucessful,
- *          false otherwise
+ *     The callback for SPIDRV_Callback_t function
+ * @param[in]  pxHandle: spidrv instance handle
+ * @param[in]  transferStatus: status of the SPI transfer
+ * @param[in]  itemsTransferred: number of bytes transferred
+ * @return None
  *****************************************************************************/
-static bool dma_complete(unsigned int channel, unsigned int sequenceNo, void * userParam)
+static void spi_dmaTransferComplete(SPIDRV_HandleData_t * pxHandle, Ecode_t transferStatus, int itemsTransferred)
 {
-    (void) channel;
-    (void) sequenceNo;
-    (void) userParam;
-
+    configASSERT(spiInitiatorTaskHandle != NULL);
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    xSemaphoreGiveFromISR(spi_sem, &xHigherPriorityTaskWoken);
+    vTaskNotifyGiveFromISR(spiInitiatorTaskHandle, &xHigherPriorityTaskWoken);
+    spiInitiatorTaskHandle = NULL;
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-
-#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
-    sl_power_manager_remove_em_requirement(SL_POWER_MANAGER_EM1);
-#endif
-
-    return true;
 }
-
-/****************************************************************************
- * @fn   void receiveDMA(uint8_t *buffer, uint16_t buffer_length)
- * @brief
- *     start receive DMA
- * @param[in]  buffer:
- * @param[in]  buffer_length:
- * @return  None
- *****************************************************************************/
-void receiveDMA(uint8_t * buffer, uint16_t buffer_length)
-{
-#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
-    sl_power_manager_add_em_requirement(SL_POWER_MANAGER_EM1);
-#endif
-
-    // Start receive DMA.
-    DMADRV_PeripheralMemory(rx_dma_channel, MY_USART_RX_SIGNAL, (void *) buffer, (void *) &(MY_USART->RXDATA), true, buffer_length,
-                            dmadrvDataSize1, dma_complete, NULL);
-
-    // Start transmit DMA.
-    DMADRV_MemoryPeripheral(tx_dma_channel, MY_USART_TX_SIGNAL, (void *) &(MY_USART->TXDATA), (void *) &(dummy_tx_data), false,
-                            buffer_length, dmadrvDataSize1, NULL, NULL);
-}
-
-/****************************************************************************
- * @fn   void transmitDMA(uint8_t *buffer, uint16_t buffer_length)
- * @brief
- *     start  transmit DMA
- * @param[in]  buffer:
- * @param[in]  buffer_length:
- * @return  None
- *****************************************************************************/
-void transmitDMA(uint8_t * buffer, uint16_t buffer_length)
-{
-#if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
-    sl_power_manager_add_em_requirement(SL_POWER_MANAGER_EM1);
-#endif
-
-    // Receive DMA runs only to initiate callback
-    // Start receive DMA.
-    DMADRV_PeripheralMemory(rx_dma_channel, MY_USART_RX_SIGNAL, &dummy_rx_data, (void *) &(MY_USART->RXDATA), false, buffer_length,
-                            dmadrvDataSize1, dma_complete, NULL);
-    // Start transmit DMA.
-    DMADRV_MemoryPeripheral(tx_dma_channel, MY_USART_TX_SIGNAL, (void *) &(MY_USART->TXDATA), (void *) buffer, true, buffer_length,
-                            dmadrvDataSize1, NULL, NULL);
-}
-
 /****************************************************************************
  * @fn  sl_status_t sl_wfx_host_spi_transfer_no_cs_assert(sl_wfx_host_bus_transfer_type_t type,
                                                   uint8_t *header,
@@ -264,55 +168,50 @@ void transmitDMA(uint8_t * buffer, uint16_t buffer_length)
 sl_status_t sl_wfx_host_spi_transfer_no_cs_assert(sl_wfx_host_bus_transfer_type_t type, uint8_t * header, uint16_t header_length,
                                                   uint8_t * buffer, uint16_t buffer_length)
 {
+    if (header_length <= 0 || buffer_length <= 0)
+    {
+
+        return SL_STATUS_INVALID_PARAMETER;
+    }
+    if (xSemaphoreTake(spiTransferLock, portMAX_DELAY) != pdTRUE)
+    {
+
+        return SL_STATUS_BUSY;
+    }
+    // no other task should be waiting for dma completion
+    configASSERT(spiInitiatorTaskHandle == NULL);
+    spiInitiatorTaskHandle = xTaskGetCurrentTaskHandle();
+
+    Ecode_t spiError;
     const bool is_read = (type == SL_WFX_BUS_READ);
-
-    while (!(MY_USART->STATUS & USART_STATUS_TXBL))
+    if (is_read)
     {
+        spiError = SPIDRV_MReceive(SL_SPIDRV_HANDLE, buffer, buffer_length, spi_dmaTransferComplete);
     }
-    MY_USART->CMD = USART_CMD_CLEARRX | USART_CMD_CLEARTX;
-
-    /* header length should be greater than 0 */
-    if (header_length > 0)
+    else
     {
-        for (uint8_t * buffer_ptr = header; header_length > 0; --header_length, ++buffer_ptr)
-        {
-            MY_USART->TXDATA = (uint32_t)(*buffer_ptr);
-
-            while (!(MY_USART->STATUS & USART_STATUS_TXC))
-            {
-            }
-        }
-        while (!(MY_USART->STATUS & USART_STATUS_TXBL))
-        {
-        }
+        spiError = SPIDRV_MTransmit(SL_SPIDRV_HANDLE, buffer, buffer_length, spi_dmaTransferComplete);
     }
 
-    /* buffer length should be greater than 0 */
-    if (buffer_length > 0)
+    if (ECODE_EMDRV_SPIDRV_OK != spiError)
     {
-        MY_USART->CMD = USART_CMD_CLEARRX | USART_CMD_CLEARTX;
-        // Reset the semaphore
-        configASSERT(spi_sem);
-        if (xSemaphoreTake(spi_sem, portMAX_DELAY) != pdTRUE)
-        {
-            return SL_STATUS_TIMEOUT;
-        }
+        spiInitiatorTaskHandle = NULL;
 
-        if (is_read)
-        {
-            receiveDMA(buffer, buffer_length);
-        }
-        else
-        {
-            transmitDMA(buffer, buffer_length);
-        }
-        // wait for dma_complete by using the same spi_semaphore
-        if (xSemaphoreTake(spi_sem, portMAX_DELAY) != pdTRUE)
-        {
-            return SL_STATUS_TIMEOUT;
-        }
-        xSemaphoreGive(spi_sem);
+        return SL_STATUS_FAIL;
     }
+    // slave (WF200) expects a synchronous operation
+    // wait for notification from dma completition block
+    if (ulTaskNotifyTake(pdTRUE, SL_WFX_DEFAULT_REQUEST_TIMEOUT_MS) != pdPASS)
+    {
+        int itemsTransferred = 0;
+        int itemsRemaining   = 0;
+        SPIDRV_GetTransferStatus(SL_SPIDRV_HANDLE, &itemsTransferred, &itemsRemaining);
+        SPIDRV_AbortTransfer(SL_SPIDRV_HANDLE);
+
+        return SL_STATUS_TIMEOUT;
+    }
+    xSemaphoreGive(spiTransferLock);
+
     return SL_STATUS_OK;
 }
 
