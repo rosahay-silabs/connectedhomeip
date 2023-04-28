@@ -474,14 +474,14 @@ void uartSendBytes(uint8_t * buffer, uint16_t nbOfBytes)
 #endif
 
 #if (defined(EFR32MG24) && defined(WF200_WIFI))
-    pre_uart_transfer();
+    sl_wfx_host_pre_uart_transfer();
 #endif /* EFR32MG24 && WF200_WIFI */
 
     UARTDRV_Transmit(vcom_handle, (uint8_t *) buffer, nbOfBytes, UART_tx_callback);
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
 #if (defined(EFR32MG24) && defined(WF200_WIFI))
-    post_uart_transfer();
+    sl_wfx_host_post_uart_transfer();
 #endif /* EFR32MG24 && WF200_WIFI */
 
 #if defined(SL_CATALOG_POWER_MANAGER_PRESENT)
