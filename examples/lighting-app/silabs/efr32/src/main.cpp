@@ -64,7 +64,7 @@ int main(void)
     chip::DeviceLayer::PlatformMgr().LockChipStack();
     // Initialize device attestation config
 #ifdef SILABS_ATTESTATION_CREDENTIALS
-    SetDeviceAttestationCredentialsProvider(Silabs::GetSilabsDacProvider());
+    SetDeviceAttestationCredentialsProvider(Credentials::Silabs::GetSilabsDacProvider());
 #else
     SetDeviceAttestationCredentialsProvider(Examples::GetExampleDACProvider());
 #endif
