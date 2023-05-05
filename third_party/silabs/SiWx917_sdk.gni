@@ -64,7 +64,7 @@ template("siwx917_sdk") {
 
       "${wisemcu_sdk_root}/platforms/si91x/drivers/cmsis_driver",
       "${wisemcu_sdk_root}/platforms/si91x/drivers/cmsis_driver/CMSIS/Driver/Include",
-      "${wisemcu_sdk_root}/platforms/si91x/boards/brd4325x/inc",
+      "${wisemcu_sdk_root}/platforms/si91x/boards/brd4325a/inc",
       "${wisemcu_sdk_root}/platforms/si91x/core/cmsis",
       "${wisemcu_sdk_root}/third_party/freertos/include",
       "${wisemcu_sdk_root}/third_party/freertos/portable/GCC/ARM_CM4F",
@@ -244,7 +244,7 @@ template("siwx917_sdk") {
       "${wisemcu_sdk_root}/sapi/wlan/rsi_wlan_apis.c",
 
       # platform
-      "${wisemcu_sdk_root}/platforms/si91x/boards/brd4325x/src/rsi_board.c",
+      "${wisemcu_sdk_root}/platforms/si91x/boards/brd4325a/src/rsi_board.c",
       "${wisemcu_sdk_root}/platforms/si91x/core/chip/src/rsi_deepsleep_commonflash.c",
       "${wisemcu_sdk_root}/platforms/si91x/core/chip/src/rsi_ps_ram_func.c",
       "${wisemcu_sdk_root}/platforms/si91x/core/chip/src/rsi_system_config.c",
