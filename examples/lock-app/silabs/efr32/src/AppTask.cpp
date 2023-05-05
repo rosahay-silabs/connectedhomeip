@@ -53,8 +53,10 @@
 #define SYSTEM_STATE_LED 0
 #define LOCK_STATE_LED 1
 
+#ifdef SL_CATALOG_SIMPLE_BUTTON_PRESENT
 #define APP_FUNCTION_BUTTON &sl_button_btn0
 #define APP_LOCK_SWITCH &sl_button_btn1
+#endif // SL_CATALOG_SIMPLE_BUTTON_PRESENT
 
 using chip::app::Clusters::DoorLock::DlLockState;
 using chip::app::Clusters::DoorLock::OperationErrorEnum;
@@ -355,6 +357,7 @@ void AppTask::LockActionEventHandler(AppEvent * aEvent)
     }
 }
 
+#ifdef SL_CATALOG_SIMPLE_BUTTON_PRESENT
 void AppTask::ButtonEventHandler(const sl_button_t * buttonHandle, uint8_t btnAction)
 {
     if (buttonHandle == NULL)
@@ -377,6 +380,7 @@ void AppTask::ButtonEventHandler(const sl_button_t * buttonHandle, uint8_t btnAc
         sAppTask.PostEvent(&button_event);
     }
 }
+#endif
 
 void AppTask::ActionInitiated(LockManager::Action_t aAction, int32_t aActor)
 {
