@@ -338,7 +338,7 @@ void wfx_connected_notify(int32_t status, sl_wfx_mac_address_t * ap);
 void wfx_disconnected_notify(int32_t status);
 /* Implemented for LWIP */
 void wfx_host_received_sta_frame_cb(uint8_t * buf, int len);
-void wfx_lwip_set_sta_link_up(void);
+sl_status_t wfx_lwip_set_sta_link_up(void);
 void wfx_lwip_set_sta_link_down(void);
 void wfx_lwip_start(void);
 struct netif * wfx_get_netif(sl_wfx_interface_t interface);

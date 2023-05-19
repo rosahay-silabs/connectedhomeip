@@ -81,16 +81,30 @@ static void netif_config(struct netif * sta_if, struct netif * ap_if)
 }
 
 /****************************************************************************
- * @fn  void wfx_lwip_set_sta_link_up(void)
+ * @fn  sl_status_t wfx_lwip_set_sta_link_up(void)
  * @brief
  * Set station link status to up.
  * @param[in]  None
  * @return None
  *****************************************************************************/
-void wfx_lwip_set_sta_link_up(void)
+sl_status_t wfx_lwip_set_sta_link_up(void)
 {
-    netifapi_netif_set_up(&sta_netif);
-    netifapi_netif_set_link_up(&sta_netif);
+    ChipLogDetail(DeviceLayer, "%s: started", __func__);
+    err_t lwip_err = ERR_OK;
+
+    lwip_err = netifapi_netif_set_up(&sta_netif);
+    if (lwip_err != ERR_OK)
+    {
+        ChipLogError(DeviceLayer, "%s: netifapi_netif_set_up: %s", __func__, lwip_strerr(lwip_err));
+        return SL_STATUS_FAIL;
+    }
+
+    lwip_err = netifapi_netif_set_link_up(&sta_netif);
+    if (lwip_err != ERR_OK)
+    {
+        ChipLogError(DeviceLayer, "%s: netifapi_netif_set_link_up: %s", __func__, lwip_strerr(lwip_err));
+        return SL_STATUS_FAIL;
+    }
 #if LWIP_IPV4 && LWIP_DHCP
     dhcpclient_set_link_state(LINK_UP);
 #endif /* LWIP_IPV4 && LWIP_DHCP */
@@ -102,6 +116,8 @@ void wfx_lwip_set_sta_link_up(void)
     sta_netif.ip6_autoconfig_enabled = 1;
 #endif /* LWIP_IPV6_AUTOCONFIG */
     netif_create_ip6_linklocal_address(&sta_netif, MAC_48_BIT_SET);
+    ChipLogDetail(DeviceLayer, "%s: completed", __func__);
+    return SL_STATUS_OK;
 }
 
 /***************************************************************************
