@@ -135,7 +135,7 @@ static void low_level_input(struct netif * netif, uint8_t * b, uint16_t len)
     if (!(ip6_addr_ispreferred(netif_ip6_addr_state(netif, 0))) && (memcmp(netif->hwaddr, src_mac, netif->hwaddr_len) == 0) &&
         (memcmp(netif->hwaddr, dst_mac, netif->hwaddr_len) != 0))
     {
-#ifdef WIFI_DEBUG_ENABLED
+#if 1
         SILABS_LOG("%s: DROP, [%02x:%02x:%02x:%02x:%02x:%02x]<-[%02x:%02x:%02x:%02x:%02x:%02x] type=%02x%02x", __func__,
 
                    dst_mac[0], dst_mac[1], dst_mac[2], dst_mac[3], dst_mac[4], dst_mac[5],

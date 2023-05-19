@@ -627,8 +627,10 @@ void wfx_rsi_task(void * arg)
                 /* Checks if the assigned IPv6 address is preferred by evaluating
                  * the first block of IPv6 address ( block 0)
                  */
+                SILABS_LOG("%s: checking ip6_addr_ispreferred", __func__);
                 if ((ip6_addr_ispreferred(netif_ip6_addr_state(sta_netif, 0))) && !hasNotifiedIPV6)
                 {
+                    SILABS_LOG("%s: success ip6_addr_ispreferred", __func__);
                     wfx_ipv6_notify(GET_IPV6_SUCCESS);
                     hasNotifiedIPV6 = true;
                     if (!hasNotifiedWifiConnectivity)
@@ -642,6 +644,11 @@ void wfx_rsi_task(void * arg)
         }
         if (flags & WFX_EVT_STA_START_JOIN)
         {
+#if (CHIP_DEVICE_CONFIG_ENABLE_IPV4)
+            hasNotifiedIPV4 = false;
+#endif /* CHIP_DEVICE_CONFIG_ENABLE_IPV4 */
+            hasNotifiedIPV6             = false;
+            hasNotifiedWifiConnectivity = false;
             // saving the AP related info
             wfx_rsi_save_ap_info();
             // Joining to the network
