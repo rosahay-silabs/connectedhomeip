@@ -458,6 +458,7 @@ static void wfx_rsi_do_join(void)
             /* Call rsi connect call with given ssid and password
              * And check there is a success
              */
+            wfx_get_ap_info(); // TODO: Remove after debug
             if ((status = rsi_wlan_connect_async((int8_t *) &wfx_rsi.sec.ssid[0], connect_security_mode, &wfx_rsi.sec.passkey[0],
                                                  wfx_rsi_join_cb)) != RSI_SUCCESS)
             {
