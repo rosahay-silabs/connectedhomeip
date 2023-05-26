@@ -154,7 +154,7 @@ void wfx_ipv6_notify(int got_ip)
     if (got_ip)
     {
         /* Should remember this */
-        vTaskDelay(1);
+        vTaskDelay(pdMS_TO_TICKS(1));
         chip::DeviceLayer::PlatformMgr().LockChipStack();
         chip::app::DnssdServer::Instance().StartServer(/*Dnssd::CommissioningMode::kEnabledBasic*/);
         chip::DeviceLayer::PlatformMgr().UnlockChipStack();
@@ -183,7 +183,7 @@ void wfx_ip_changed_notify(int got_ip)
     if (got_ip)
     {
         /* Should remember this */
-        vTaskDelay(1);
+        vTaskDelay(pdMS_TO_TICKS(1));
         chip::DeviceLayer::PlatformMgr().LockChipStack();
         chip::app::DnssdServer::Instance().StartServer(/*Dnssd::CommissioningMode::kEnabledBasic*/);
         chip::DeviceLayer::PlatformMgr().UnlockChipStack();

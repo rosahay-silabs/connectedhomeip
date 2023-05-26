@@ -267,6 +267,16 @@ static void wfx_rsi_join_cb(uint16_t status, const uint8_t * buf, const uint16_t
 static void wfx_rsi_join_fail_cb(uint16_t status, uint8_t * buf, uint32_t len)
 {
     SILABS_LOG("%s: error: failed status: %02x", __func__, status);
+#if (CHIP_DEVICE_CONFIG_ENABLE_IPV4)
+    if (hasNotifiedIPV4)
+    {
+        wfx_ip_changed_notify(IP_STATUS_FAIL);
+    }
+#endif /* CHIP_DEVICE_CONFIG_ENABLE_IPV4 */
+    if (hasNotifiedIPV6)
+    {
+        wfx_ipv6_notify(GET_IPV6_FAIL);
+    }
     wfx_rsi.join_retries += 1;
     wfx_rsi.dev_state &= ~(WFX_RSI_ST_STA_CONNECTING | WFX_RSI_ST_STA_CONNECTED);
     is_wifi_disconnection_event = true;
