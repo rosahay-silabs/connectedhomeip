@@ -618,6 +618,7 @@ void wfx_rsi_task(void * arg)
             // TODO: remove debug code
             if (xTaskGetTickCount() % pdMS_TO_TICKS(50000) == 0)
             {
+                SILABS_LOG("%s: invoke wfx_rsi_disconnect", __func__);
                 wfx_rsi_disconnect();
             }
             if ((now = xTaskGetTickCount()) > (last_dhcp_poll + pdMS_TO_TICKS(250)))
