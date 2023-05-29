@@ -496,6 +496,7 @@ void wfx_rsi_task(void * arg)
     EventBits_t flags;
     int32_t status;
     TickType_t last_dhcp_poll, now;
+    TickType_t last_reconnect_poll;
     struct netif * sta_netif;
     (void) arg;
     status = wfx_rsi_init();
@@ -506,6 +507,7 @@ void wfx_rsi_task(void * arg)
     }
     wfx_lwip_start();
     last_dhcp_poll = xTaskGetTickCount();
+    last_reconnect_poll = xTaskGetTickCount();
     sta_netif      = wfx_get_netif(SL_WFX_STA_INTERFACE);
     wfx_started_notify();
 
@@ -539,12 +541,6 @@ void wfx_rsi_task(void * arg)
          */
         if (wfx_rsi.dev_state & WFX_RSI_ST_STA_CONNECTED)
         {
-            // TODO: remove debug code
-            if (xTaskGetTickCount() % pdMS_TO_TICKS(50000) == 0)
-            {
-                SILABS_LOG("%s: invoke wfx_rsi_disconnect", __func__);
-                wfx_rsi_disconnect();
-            }
             if ((now = xTaskGetTickCount()) > (last_dhcp_poll + pdMS_TO_TICKS(250)))
             {
 #if (CHIP_DEVICE_CONFIG_ENABLE_IPV4)
@@ -584,6 +580,15 @@ void wfx_rsi_task(void * arg)
                     }
                 }
                 last_dhcp_poll = now;
+            }
+            // TODO: remove debug code
+            if ((now = xTaskGetTickCount()) > (last_reconnect_poll + pdMS_TO_TICKS(30000)))
+            {
+                wfx_rsi_disconnect();
+                SILABS_LOG("%s: did invoke wfx_rsi_disconnect", __func__);
+                last_reconnect_poll = now;
+                wfx_rsi.dev_state &= ~(WFX_RSI_ST_STA_CONNECTING | WFX_RSI_ST_STA_CONNECTED);
+                xEventGroupSetBits(wfx_rsi.events, WFX_EVT_STA_START_JOIN);
             }
         }
         if (flags & WFX_EVT_STA_START_JOIN)
