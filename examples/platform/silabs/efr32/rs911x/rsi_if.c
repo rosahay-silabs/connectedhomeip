@@ -615,6 +615,11 @@ void wfx_rsi_task(void * arg)
          */
         if (wfx_rsi.dev_state & WFX_RSI_ST_STA_CONNECTED)
         {
+            // TODO: remove debug code
+            if (xTaskGetTickCount() % pdMS_TO_TICKS(50000) == 0)
+            {
+                wfx_rsi_disconnect();
+            }
             if ((now = xTaskGetTickCount()) > (last_dhcp_poll + pdMS_TO_TICKS(250)))
             {
 #if (CHIP_DEVICE_CONFIG_ENABLE_IPV4)
