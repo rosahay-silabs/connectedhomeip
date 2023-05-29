@@ -458,7 +458,7 @@ static void wfx_rsi_do_join(void)
             /* Call rsi connect call with given ssid and password
              * And check there is a success
              */
-            wfx_get_ap_info(); // TODO: Remove after debug
+            wfx_get_ap_info(); // TODO: remove after debug
             if ((status = rsi_wlan_connect_async((int8_t *) &wfx_rsi.sec.ssid[0], connect_security_mode, &wfx_rsi.sec.passkey[0],
                                                  wfx_rsi_join_cb)) != RSI_SUCCESS)
             {
@@ -562,6 +562,11 @@ void wfx_rsi_task(void * arg)
                 /* Checks if the assigned IPv6 address is preferred by evaluating
                  * the first block of IPv6 address ( block 0)
                  */
+                // TODO: remove log below
+                if (!hasNotifiedIPV6)
+                {
+                    SILABS_LOG("%s: checking ip6_addr_ispreferred", __func__);
+                }
                 if ((ip6_addr_ispreferred(netif_ip6_addr_state(sta_netif, 0))) && !hasNotifiedIPV6)
                 {
                     wfx_ipv6_notify(GET_IPV6_SUCCESS);
