@@ -659,11 +659,11 @@ void wfx_rsi_task(void * arg)
                 last_dhcp_poll = now;
             }
             // TODO: remove debug code
-            if ((now = xTaskGetTickCount()) > (last_reconnect_poll + pdMS_TO_TICKS(30000)))
+            if ((now = xTaskGetTickCount()) > (last_reconnect_poll + pdMS_TO_TICKS(15000)))
             {
                 wfx_rsi_disconnect();
-                SILABS_LOG("%s: did invoke wfx_rsi_disconnect attempt: %d", __func__, last_reconnect_poll / pdMS_TO_TICKS(30000));
                 last_reconnect_poll = now;
+                SILABS_LOG("%s: did invoke wfx_rsi_disconnect attempt: %d", __func__, last_reconnect_poll / pdMS_TO_TICKS(15000));
                 wfx_rsi.dev_state &= ~(WFX_RSI_ST_STA_CONNECTING | WFX_RSI_ST_STA_CONNECTED);
                 xEventGroupSetBits(wfx_rsi.events, WFX_EVT_STA_START_JOIN);
             }
