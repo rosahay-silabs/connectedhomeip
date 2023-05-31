@@ -277,6 +277,7 @@ static void wfx_rsi_join_fail_cb(uint16_t status, uint8_t * buf, uint32_t len)
     {
         wfx_ipv6_notify(GET_IPV6_FAIL);
     }
+    wfx_lwip_set_sta_link_down();
     wfx_rsi.join_retries += 1;
     wfx_rsi.dev_state &= ~(WFX_RSI_ST_STA_CONNECTING | WFX_RSI_ST_STA_CONNECTED);
     is_wifi_disconnection_event = true;
@@ -643,11 +644,11 @@ void wfx_rsi_task(void * arg)
                 // TODO: remove log below
                 if (!hasNotifiedIPV6)
                 {
-                    SILABS_LOG("%s: checking ip6_addr_ispreferred", __func__);
+                    SILABS_LOG("checking ip6_addr_ispreferred");
                 }
                 if ((ip6_addr_ispreferred(netif_ip6_addr_state(sta_netif, 0))) && !hasNotifiedIPV6)
                 {
-                    SILABS_LOG("%s: success ip6_addr_ispreferred", __func__);
+                    SILABS_LOG("success ip6_addr_ispreferred");
                     wfx_ipv6_notify(GET_IPV6_SUCCESS);
                     hasNotifiedIPV6 = true;
                     if (!hasNotifiedWifiConnectivity)
@@ -663,9 +664,8 @@ void wfx_rsi_task(void * arg)
             {
                 wfx_rsi_disconnect();
                 last_reconnect_poll = now;
-                SILABS_LOG("%s: did invoke wfx_rsi_disconnect attempt: %d", __func__, last_reconnect_poll / pdMS_TO_TICKS(15000));
-                wfx_rsi.dev_state &= ~(WFX_RSI_ST_STA_CONNECTING | WFX_RSI_ST_STA_CONNECTED);
-                xEventGroupSetBits(wfx_rsi.events, WFX_EVT_STA_START_JOIN);
+                SILABS_LOG("did invoke wfx_rsi_disconnect attempt: %d", last_reconnect_poll / pdMS_TO_TICKS(15000));
+                wfx_rsi_join_fail_cb(1, NULL, 0);
             }
         }
         if (flags & WFX_EVT_STA_START_JOIN)
