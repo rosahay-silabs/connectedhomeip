@@ -37,9 +37,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <rsi_ble.h>
-#include <rsi_ble_apis.h>
-#include <rsi_bt_common.h>
+//#include <rsi_ble.h>
+//#include <rsi_ble_apis.h>
+//#include <rsi_bt_common.h>
 #ifdef __cplusplus
 }
 #endif
@@ -67,10 +67,10 @@ public:
 #ifdef RSI_BLE_ENABLE
     void HandleConnectEvent(void);
     void HandleConnectionCloseEvent(uint16_t reason);
-    void HandleWriteEvent(rsi_ble_event_write_t evt);
-    void UpdateMtu(rsi_ble_event_mtu_t evt);
+//    void HandleWriteEvent(rsi_ble_event_write_t evt);
+//    void UpdateMtu(rsi_ble_event_mtu_t evt);
     void HandleTxConfirmationEvent(BLE_CONNECTION_OBJECT conId);
-    void HandleTXCharCCCDWrite(rsi_ble_event_write_t * evt);
+//    void HandleTXCharCCCDWrite(rsi_ble_event_write_t * evt);
     void HandleSoftTimerEvent(void);
 #else
     void HandleConnectEvent(volatile sl_bt_msg_t * evt);
@@ -192,7 +192,7 @@ private:
 #endif
 
 #ifdef RSI_BLE_ENABLE
-    void HandleRXCharWrite(rsi_ble_event_write_t * evt);
+//    void HandleRXCharWrite(rsi_ble_event_write_t * evt);
 #else
     void HandleRXCharWrite(volatile sl_bt_msg_t * evt);
 #endif

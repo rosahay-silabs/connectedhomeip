@@ -61,9 +61,9 @@ static_library("SiWx917") {
     "BLEManagerImpl.cpp",
     "ConfigurationManagerImpl.cpp",
     "PlatformManagerImpl.cpp",
-    "bluetooth/rsi_ble_config.h",
-    "bluetooth/wfx_sl_ble_init.c",
-    "bluetooth/wfx_sl_ble_init.h",
+#    "bluetooth/ble_config.h",
+#    "bluetooth/wfx_sl_ble_init.c",
+#    "bluetooth/wfx_sl_ble_init.h",
   ]
 
   # TODO: OTA on CCP platform

@@ -35,7 +35,7 @@
 #endif // DISPLAY_ENABLED
 
 #include "SilabsDeviceDataProvider.h"
-#include "rsi_board.h"
+//#include "rsi_board.h"
 #include "rsi_chip.h"
 #include "siwx917_utils.h"
 #include <app/server/OnboardingCodesUtil.h>

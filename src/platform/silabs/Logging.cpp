@@ -27,7 +27,7 @@
 #endif
 #endif // BRD4325A
 
-#ifdef BRD4325A // For SiWx917 Platform only
+#ifndef BRD4325A // For SiWx917 Platform only
 #include "core_cm4.h"
 #endif
 
@@ -386,56 +386,56 @@ extern "C" void otPlatLog(otLogLevel aLogLevel, otLogRegion aLogRegion, const ch
  */
 extern "C" void debugHardfault(uint32_t * sp)
 {
-    uint32_t cfsr  = SCB->CFSR;
-    uint32_t hfsr  = SCB->HFSR;
-    uint32_t mmfar = SCB->MMFAR;
-    uint32_t bfar  = SCB->BFAR;
-    uint32_t r0    = sp[0];
-    uint32_t r1    = sp[1];
-    uint32_t r2    = sp[2];
-    uint32_t r3    = sp[3];
-    uint32_t r12   = sp[4];
-    uint32_t lr    = sp[5];
-    uint32_t pc    = sp[6];
-    uint32_t psr   = sp[7];
-    char formattedMsg[32];
-
-    if (sLogInitialized == false)
-    {
-        silabsInitLog();
-    }
-
-    snprintf(formattedMsg, sizeof formattedMsg, LOG_ERROR "HardFault:\n");
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "SCB->CFSR   0x%08lx", cfsr);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "SCB->HFSR   0x%08lx", hfsr);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "SCB->MMFAR  0x%08lx", mmfar);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "SCB->BFAR   0x%08lx", bfar);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "SP          0x%08lx", (uint32_t) sp);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "R0          0x%08lx\n", r0);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "R1          0x%08lx\n", r1);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "R2          0x%08lx\n", r2);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "R3          0x%08lx\n", r3);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "R12         0x%08lx\n", r12);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "LR          0x%08lx\n", lr);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "PC          0x%08lx\n", pc);
-    PrintLog(formattedMsg);
-    snprintf(formattedMsg, sizeof formattedMsg, "PSR         0x%08lx\n", psr);
-    PrintLog(formattedMsg);
-
-    while (true)
-        ;
+//    uint32_t cfsr  = SCB->CFSR;
+//    uint32_t hfsr  = SCB->HFSR;
+//    uint32_t mmfar = SCB->MMFAR;
+//    uint32_t bfar  = SCB->BFAR;
+//    uint32_t r0    = sp[0];
+//    uint32_t r1    = sp[1];
+//    uint32_t r2    = sp[2];
+//    uint32_t r3    = sp[3];
+//    uint32_t r12   = sp[4];
+//    uint32_t lr    = sp[5];
+//    uint32_t pc    = sp[6];
+//    uint32_t psr   = sp[7];
+//    char formattedMsg[32];
+//
+//    if (sLogInitialized == false)
+//    {
+//        silabsInitLog();
+//    }
+//
+//    snprintf(formattedMsg, sizeof formattedMsg, LOG_ERROR "HardFault:\n");
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "SCB->CFSR   0x%08lx", cfsr);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "SCB->HFSR   0x%08lx", hfsr);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "SCB->MMFAR  0x%08lx", mmfar);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "SCB->BFAR   0x%08lx", bfar);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "SP          0x%08lx", (uint32_t) sp);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "R0          0x%08lx\n", r0);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "R1          0x%08lx\n", r1);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "R2          0x%08lx\n", r2);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "R3          0x%08lx\n", r3);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "R12         0x%08lx\n", r12);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "LR          0x%08lx\n", lr);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "PC          0x%08lx\n", pc);
+//    PrintLog(formattedMsg);
+//    snprintf(formattedMsg, sizeof formattedMsg, "PSR         0x%08lx\n", psr);
+//    PrintLog(formattedMsg);
+//
+//    while (true)
+//        ;
 }
 
 /**

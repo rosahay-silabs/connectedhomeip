@@ -44,7 +44,7 @@ void SilabsPlatform::InitLed(void)
 CHIP_ERROR SilabsPlatform::SetLed(bool state, uint8_t led)
 {
     // TODO add range check
-    RSI_Board_LED_Set(led, state);
+//    RSI_Board_LED_Set(led, state);
     return CHIP_NO_ERROR;
 }
 
@@ -57,7 +57,7 @@ bool SilabsPlatform::GetLedState(uint8_t led)
 CHIP_ERROR SilabsPlatform::ToggleLed(uint8_t led)
 {
     // TODO add range check
-    RSI_Board_LED_Toggle(led);
+//    RSI_Board_LED_Toggle(led);
     return CHIP_NO_ERROR;
 }
 #endif // ENABLE_WSTK_LEDS

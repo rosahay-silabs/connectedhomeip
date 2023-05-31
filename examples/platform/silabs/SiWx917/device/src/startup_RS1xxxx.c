@@ -15,9 +15,10 @@
  *    limitations under the License.
  */
 
-#include "rsi_ps_ram_func.h"
+//#include "rsi_ps_ram_func.h"
 #include "system_RS1xxxx.h"
 #include "system_si917.h"
+#include "RS1xxxx_9117.h"
 
 /*----------Stack Configuration-----------------------------------------------*/
 #define STACK_SIZE 0x00000C00 /*!< Stack size (in Words)           */

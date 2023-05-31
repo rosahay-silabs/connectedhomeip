@@ -26,7 +26,7 @@ extern "C" {
 #endif
 #include <assert.h>
 #include <string.h>
-
+#include "sl_system_init.h"
 #include <mbedtls/platform.h>
 
 #include "init_ccpPlatform.h"
@@ -34,15 +34,15 @@ extern "C" {
 void initAntenna(void);
 
 /* GPIO button config */
-void RSI_Wakeupsw_config(void);
-void RSI_Wakeupsw_config_gpio0(void);
+//void RSI_Wakeupsw_config(void);
+//void RSI_Wakeupsw_config_gpio0(void);
 
 void init_ccpPlatform(void)
 {
-
-    RSI_Wakeupsw_config();
-
-    RSI_Wakeupsw_config_gpio0();
+    sl_system_init();
+//    RSI_Wakeupsw_config();
+//
+//    RSI_Wakeupsw_config_gpio0();
 #if SILABS_LOG_ENABLED
     silabsInitLog();
 #endif

@@ -104,12 +104,12 @@ CHIP_ERROR SilabsMatterConfig::InitMatter(const char * appName)
     ReturnErrorOnFailure(chip::Platform::MemoryInit());
 
     SILABS_LOG("Init RSI 911x Platform");
-    int32_t deviceInit = wfx_rsi_platform();
-    if (deviceInit != SL_STATUS_OK)
-    {
-        SILABS_LOG("RSI init failed");
-        return CHIP_ERROR_INTERNAL;
-    }
+//    int32_t deviceInit = wfx_rsi_platform();
+//    if (deviceInit != SL_STATUS_OK)
+//    {
+//        SILABS_LOG("RSI init failed");
+//        return CHIP_ERROR_INTERNAL;
+//    }
     ReturnErrorOnFailure(PlatformMgr().InitChipStack());
 
     SetDeviceInstanceInfoProvider(&Silabs::SilabsDeviceDataProvider::GetDeviceDataProvider());

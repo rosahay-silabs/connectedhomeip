@@ -30,7 +30,7 @@
 #include <platform/DiagnosticDataProvider.h>
 #include <platform/silabs/SilabsConfig.h>
 
-#include "core_cm4.h"
+//#include "core_cm4.h"
 
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI_STATION
 #include "wfx_host_events.h"
@@ -292,7 +292,7 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
 
     // Restart the system.
     ChipLogProgress(DeviceLayer, "System restarting");
-    NVIC_SystemReset();
+//    NVIC_SystemReset();
 }
 
 #ifdef SL_WIFI

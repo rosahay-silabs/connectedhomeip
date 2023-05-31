@@ -104,7 +104,7 @@ extern "C" {
 #endif
 
 #include <CHIPProjectConfig.h>
-
+#include "RS1xxxx_9117.h"
 #include <stdint.h>
 
 /*-----------------------------------------------------------
@@ -151,6 +151,12 @@ extern uint32_t SystemCoreClock;
 #define configTIMER_TASK_PRIORITY (40) /* Highest priority */
 #define configTIMER_QUEUE_LENGTH (10)
 #define configTIMER_TASK_STACK_DEPTH (1024)
+
+/* Cortex-M specific definitions. */
+#ifdef __NVIC_PRIO_BITS
+#undef __NVIC_PRIO_BITS
+#endif
+#define configPRIO_BITS 6 /* 6 priority levels. */
 
 /* Interrupt priorities used by the kernel port layer itself.  These are generic
 to all Cortex-M ports, and do not rely on any particular library functions. */
