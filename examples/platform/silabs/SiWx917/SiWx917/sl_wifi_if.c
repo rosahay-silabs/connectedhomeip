@@ -52,7 +52,11 @@
 #include "sl_si91x_types.h"
 //#include "sl_net_default_values.h"
 #include "sl_si91x_host_interface.h"
-#include "rsi_ccp_common.h"
+
+
+#if BLE_ENABLE
+#include "ble_config.h"
+#endif
 
 #include "dhcp_client.h"
 #include "wfx_host_events.h"
@@ -86,6 +90,15 @@ uint32_t retryInterval = WLAN_MIN_RETRY_TIMER_MS;
 extern rsi_semaphore_handle_t sl_rs_ble_init_sem;
 #endif
 */
+
+#define RSI_TCP_IP_BYPASS 1
+
+#if (BLE_ENABLE)
+extern osSemaphoreId_t sl_rs_ble_init_sem;
+#endif
+
+//static sl_wifi_device_configuration_t config;
+
 /*
  * This file implements the interface to the RSI SAPIs
  */
@@ -488,6 +501,91 @@ void initialize_device_configuration(void)
 
 #endif
 #endif
+
+
+#if BLE_ENABLE
+static const sl_wifi_device_configuration_t config = {
+  .boot_option = LOAD_NWP_FW,
+  .mac_address = NULL,
+  .band        = SL_SI91X_WIFI_BAND_2_4GHZ,
+  .region_code = US,
+  .boot_config = { .oper_mode = SL_SI91X_CLIENT_MODE,
+                   .coex_mode = SL_SI91X_WLAN_BLE_MODE,
+#ifdef RSI_M4_INTERFACE
+                   .feature_bit_map = (SL_SI91X_FEAT_WPS_DISABLE | RSI_FEATURE_BIT_MAP),
+#else
+                   .feature_bit_map        = RSI_FEATURE_BIT_MAP,
+#endif
+#if RSI_TCP_IP_BYPASS
+                   .tcp_ip_feature_bit_map = RSI_TCP_IP_FEATURE_BIT_MAP,
+#else
+                   .tcp_ip_feature_bit_map = (RSI_TCP_IP_FEATURE_BIT_MAP | SL_SI91X_TCP_IP_FEAT_EXTENSION_VALID),
+#endif
+                   .custom_feature_bit_map = (SL_SI91X_FEAT_CUSTOM_FEAT_EXTENTION_VALID | RSI_CUSTOM_FEATURE_BIT_MAP),
+                   .ext_custom_feature_bit_map = (
+#ifdef CHIP_917
+                     (RSI_EXT_CUSTOM_FEATURE_BIT_MAP)
+#else //defaults
+#ifdef RSI_M4_INTERFACE
+                     (SL_SI91X_EXT_FEAT_256K_MODE | RSI_EXT_CUSTOM_FEATURE_BIT_MAP)
+#else
+                     (SL_SI91X_EXT_FEAT_384K_MODE | RSI_EXT_CUSTOM_FEATURE_BIT_MAP)
+#endif
+#endif
+                     | (SL_SI91X_EXT_FEAT_BT_CUSTOM_FEAT_ENABLE)
+#if (defined A2DP_POWER_SAVE_ENABLE)
+                     | SL_SI91X_EXT_FEAT_XTAL_CLK_ENABLE(2)
+#endif
+                       ),
+                   .bt_feature_bit_map = (RSI_BT_FEATURE_BITMAP
+#if (RSI_BT_GATT_ON_CLASSIC)
+                                          | SL_SI91X_BT_ATT_OVER_CLASSIC_ACL /* to support att over classic acl link */
+#endif
+                                          ),
+#ifdef RSI_PROCESS_MAX_RX_DATA
+                   .ext_tcp_ip_feature_bit_map = (RSI_EXT_TCPIP_FEATURE_BITMAP | SL_SI91X_CONFIG_FEAT_EXTENTION_VALID
+                                                  | SL_SI91X_EXT_TCP_MAX_RECV_LENGTH),
+#else
+                   .ext_tcp_ip_feature_bit_map = (RSI_EXT_TCPIP_FEATURE_BITMAP | SL_SI91X_CONFIG_FEAT_EXTENTION_VALID),
+#endif
+                   //!ENABLE_BLE_PROTOCOL in bt_feature_bit_map
+                   .ble_feature_bit_map =
+                     ((SL_SI91X_BLE_MAX_NBR_SLAVES(RSI_BLE_MAX_NBR_SLAVES)
+                       | SL_SI91X_BLE_MAX_NBR_MASTERS(RSI_BLE_MAX_NBR_MASTERS)
+                       | SL_SI91X_BLE_MAX_NBR_ATT_SERV(RSI_BLE_MAX_NBR_ATT_SERV)
+                       | SL_SI91X_BLE_MAX_NBR_ATT_REC(RSI_BLE_MAX_NBR_ATT_REC))
+                      | SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | SL_SI91X_BLE_PWR_INX(RSI_BLE_PWR_INX)
+                      | SL_SI91X_BLE_PWR_SAVE_OPTIONS(RSI_BLE_PWR_SAVE_OPTIONS)
+                      | SL_SI91X_916_BLE_COMPATIBLE_FEAT_ENABLE
+#if RSI_BLE_GATT_ASYNC_ENABLE
+                      | SL_SI91X_BLE_GATT_ASYNC_ENABLE
+#endif
+                      ),
+
+                   .ble_ext_feature_bit_map =
+                     ((SL_SI91X_BLE_NUM_CONN_EVENTS(RSI_BLE_NUM_CONN_EVENTS)
+                       | SL_SI91X_BLE_NUM_REC_BYTES(RSI_BLE_NUM_REC_BYTES))
+#if RSI_BLE_INDICATE_CONFIRMATION_FROM_HOST
+                      | SL_SI91X_BLE_INDICATE_CONFIRMATION_FROM_HOST //indication response from app
+#endif
+#if RSI_BLE_MTU_EXCHANGE_FROM_HOST
+                      | SL_SI91X_BLE_MTU_EXCHANGE_FROM_HOST //MTU Exchange request initiation from app
+#endif
+#if RSI_BLE_SET_SCAN_RESP_DATA_FROM_HOST
+                      | (SL_SI91X_BLE_SET_SCAN_RESP_DATA_FROM_HOST) //Set SCAN Resp Data from app
+#endif
+#if RSI_BLE_DISABLE_CODED_PHY_FROM_HOST
+                      | (SL_SI91X_BLE_DISABLE_CODED_PHY_FROM_HOST) //Disable Coded PHY from app
+#endif
+#if BLE_SIMPLE_GATT
+                      | SL_SI91X_BLE_GATT_INIT
+#endif
+                      ),
+                   .config_feature_bit_map = (SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | RSI_CONFIG_FEATURE_BITMAP) }
+};
+#endif
+
+
 /*************************************************************************************
  * @fn  static int32_t wfx_rsi_init(void)
  * @brief
@@ -501,11 +599,12 @@ static int32_t wfx_rsi_init(void)
   sl_status_t status;
 //#if BLE_ENABLE
   //initialize_device_configuration();
- // status = sl_wifi_init(&config  , default_wifi_event_handler);
+  status = sl_wifi_init(&config  , default_wifi_event_handler);
 //#else
-    status = sl_wifi_init(&sl_wifi_default_client_configuration , default_wifi_event_handler);
+    //status = sl_wifi_init(&sl_wifi_default_client_configuration , default_wifi_event_handler);
     if(status != 0){
         SILABS_LOG("init failed **************** %x", status);
+	return status;
     }
 //#endif
 //  }
@@ -523,6 +622,7 @@ static int32_t wfx_rsi_init(void)
 //         wfx_rsi.sta_mac.octet[5]);
   wfx_rsi.events = xEventGroupCreateStatic(&rsiDriverEventGroup);
     wfx_rsi.dev_state |= WFX_RSI_ST_DEV_READY;
+     osSemaphoreRelease(sl_rs_ble_init_sem);
 //    SILABS_LOG("%s: RSI: OK", __func__);
     return 0;
 }
@@ -878,47 +978,6 @@ void wfx_rsi_task(void * arg)
         }
         if (flags & WFX_EVT_STA_CONN)
         {
-        #if 0
-        uint32_t sampledata[100];
-         uint32_t count =0;
-/* make buffer point to useful data, and then: */
-    for (i=0; i < 100; ++i)
-    sampledata[i] = i*10;
-    for(count=0;count<10;count++)
-    {
-    /*
-    * Initiate the Join command (assuming we have been provisioned)
-    */
-        sl_wifi_buffer_t *buffer;
-        sl_si91x_packet_t *packet;
-        sl_status_t status = SL_STATUS_OK;
-        uint32_t data_length = 100;
-        /* Confirm if packet is allocated */
-
-        status = sl_si91x_allocate_command_buffer(&buffer,
-                                            (void **)&packet,
-                                            sizeof(sl_si91x_packet_t) + 100,
-                                            SL_WIFI_ALLOCATE_COMMAND_BUFFER_WAIT_TIME);
-//        VERIFY_STATUS_AND_RETURN(status);
-        if (packet == NULL) {
-           SILABS_LOG("EN-RSI:No buf");
-           return SL_STATUS_ALLOCATION_FAILED;
-        }
-        memset(packet->desc, 0, sizeof(packet->desc));
-        if (sampledata != NULL) {
-           memcpy(packet->data, sampledata, data_length);
-        }
-
-        // Fill frame type
-        packet->length  = data_length & 0xFFF;
-        packet->command =  0x1;
-        if (sl_si91x_driver_send_data_packet(SI91X_WLAN_CMD_QUEUE,buffer, 1000))
-        {
-            SILABS_LOG("Wifi send fail");
-            return ;
-        }
-    }
-#endif
             SILABS_LOG("%s: starting LwIP STA", __func__);
             wfx_rsi.dev_state |= WFX_RSI_ST_STA_CONNECTED;
 #ifndef RS911X_SOCKETS

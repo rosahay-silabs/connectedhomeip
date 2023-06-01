@@ -15,7 +15,6 @@
  *    limitations under the License.
  */
 
-//#include "rsi_ps_ram_func.h"
 #include "system_RS1xxxx.h"
 #include "system_si917.h"
 #include "RS1xxxx_9117.h"

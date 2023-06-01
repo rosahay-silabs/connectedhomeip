@@ -34,6 +34,7 @@ extern "C" {
 void initAntenna(void);
 
 /* GPIO button config */
+// TODO should be checked
 //void RSI_Wakeupsw_config(void);
 //void RSI_Wakeupsw_config_gpio0(void);
 

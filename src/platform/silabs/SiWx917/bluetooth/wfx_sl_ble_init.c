@@ -15,13 +15,15 @@
  *    limitations under the License.
  */
 #include "wfx_sl_ble_init.h"
-#include "rsi_ble_config.h"
+//#include "rsi_ble_config.h"
+#include "ble_config.h"
 
-// Global Variables
+
+// application defines
 rsi_ble_event_conn_status_t conn_event_to_app;
 rsi_ble_t att_list;
 sl_wfx_msg_t event_msg;
-extern rsi_semaphore_handle_t sl_ble_event_sem;
+extern osSemaphoreId_t sl_ble_event_sem;
 
 // Memory to initialize driver
 uint8_t bt_global_buf[BT_GLOBAL_BUFF_LEN];
@@ -187,7 +189,7 @@ void rsi_ble_app_set_event(uint32_t event_num)
 {
     SILABS_LOG("%s: starting", __func__);
     event_msg.ble_app_event_map |= BIT(event_num);
-    rsi_semaphore_post(&sl_ble_event_sem);
+     osSemaphoreRelease(sl_ble_event_sem);
     return;
 }
 
@@ -292,7 +294,6 @@ void rsi_ble_add_char_val_att(void * serv_handler, uint16_t handle, uuid_t att_t
 {
     rsi_ble_req_add_att_t new_att = { 0 };
 
-    memset(&new_att, 0, sizeof(rsi_ble_req_add_att_t));
     //! preparing the attributes
     new_att.serv_handler  = serv_handler;
     new_att.handle        = handle;

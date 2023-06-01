@@ -57,6 +57,7 @@ template("siwx917_sdk") {
 
       # new wifi sdk
       # siwx917_soc component
+      "${new_wifi_sdk_root}/si91x/ble/inc",
       "${new_wifi_sdk_root}/components/siwx917_soc/inc",
       "${new_wifi_sdk_root}/components/siwx917_soc/drivers/cmsis_driver",
       "${new_wifi_sdk_root}/components/siwx917_soc/drivers/cmsis_driver/config",
@@ -148,7 +149,8 @@ template("siwx917_sdk") {
       "SIWX_917",
       "BRD4325A",
       "CHIP_9117",
-      "RSI_BLE_ENABLE=1",
+      "BLE_ENABLE=1",
+      "RSI_LITTLE_ENDIAN=1",
       "TINYCRYPT_PRIMITIVES",
       "OPTIMIZE_TINYCRYPT_ASM",
       "__error_t_defined",
@@ -326,6 +328,12 @@ template("siwx917_sdk") {
       "${new_wifi_sdk_root}/components/si91x/src/sl_rsi_utility.c",
       "${new_wifi_sdk_root}/components/si91x/sl_net/src/sl_net_si91x.c",
       "${new_wifi_sdk_root}/components/service/network_manager/src/sl_net_basic_credentials.c",
+      "${new_wifi_sdk_root}/components/si91x/ble/src/rsi_ble_gap_apis.c",
+      "${new_wifi_sdk_root}/components/si91x/ble/src/rsi_ble_gatt_apis.c",
+      "${new_wifi_sdk_root}/components/si91x/ble/src/rsi_bt_common_apis.c",
+      "${new_wifi_sdk_root}/components/si91x/ble/src/rsi_common_apis.c",
+      "${new_wifi_sdk_root}/components/si91x/ble/src/rsi_bt_ble.c",
+      "${new_wifi_sdk_root}/components/si91x/ble/src/rsi_utils.c",
 
       # BLE
 #      "${new_wifi_sdk_root}/components/si91x/ble/src/rsi_ble_gap_apis.c",

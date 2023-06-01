@@ -25,7 +25,7 @@
 #pragma once
 #if CHIP_DEVICE_CONFIG_ENABLE_CHIPOBLE
 
-#ifdef RSI_BLE_ENABLE
+#ifdef BLE_ENABLE
 #define BLE_MIN_CONNECTION_INTERVAL_MS 45 // 45 msec
 #define BLE_MAX_CONNECTION_INTERVAL_MS 45 // 45 msec
 #define BLE_SLAVE_LATENCY_MS 0
@@ -33,13 +33,13 @@
 #endif // RSI_BLE_ENABLE
 #include "FreeRTOS.h"
 #include "timers.h"
-#ifdef RSI_BLE_ENABLE
+#ifdef BLE_ENABLE
 #ifdef __cplusplus
 extern "C" {
 #endif
-//#include <rsi_ble.h>
-//#include <rsi_ble_apis.h>
-//#include <rsi_bt_common.h>
+#include <rsi_ble.h>
+#include <rsi_ble_apis.h>
+#include <rsi_bt_common.h>
 #ifdef __cplusplus
 }
 #endif
@@ -47,7 +47,7 @@ extern "C" {
 #include "gatt_db.h"
 #include "sl_bgapi.h"
 #include "sl_bt_api.h"
-#endif // RSI_BLE_ENABLE
+#endif // BLE_ENABLE
 
 namespace chip {
 namespace DeviceLayer {
@@ -64,14 +64,15 @@ class BLEManagerImpl final : public BLEManager, private BleLayer, private BlePla
 public:
     void HandleBootEvent(void);
 
-#ifdef RSI_BLE_ENABLE
+#ifdef BLE_ENABLE
     void HandleConnectEvent(void);
     void HandleConnectionCloseEvent(uint16_t reason);
-//    void HandleWriteEvent(rsi_ble_event_write_t evt);
-//    void UpdateMtu(rsi_ble_event_mtu_t evt);
+    void HandleWriteEvent(rsi_ble_event_write_t evt);
+    void UpdateMtu(rsi_ble_event_mtu_t evt);
     void HandleTxConfirmationEvent(BLE_CONNECTION_OBJECT conId);
-//    void HandleTXCharCCCDWrite(rsi_ble_event_write_t * evt);
+    void HandleTXCharCCCDWrite(rsi_ble_event_write_t * evt);
     void HandleSoftTimerEvent(void);
+    CHIP_ERROR StartAdvertising(void);
 #else
     void HandleConnectEvent(volatile sl_bt_msg_t * evt);
     void HandleConnectionCloseEvent(volatile sl_bt_msg_t * evt);
@@ -80,12 +81,11 @@ public:
     void HandleTxConfirmationEvent(BLE_CONNECTION_OBJECT conId);
     void HandleTXCharCCCDWrite(volatile sl_bt_msg_t * evt);
     void HandleSoftTimerEvent(volatile sl_bt_msg_t * evt);
-#endif // RSI_BLE_ENABLE
     CHIP_ERROR StartAdvertising(void);
-    CHIP_ERROR StopAdvertising(void);
+#endif // BLE_ENABLE
 
 #if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
-#ifdef RSI_BLE_ENABLE
+#ifdef BLE_ENABLE
     static void HandleC3ReadRequest(void);
 #else
 #if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
@@ -162,7 +162,7 @@ private:
 
     struct CHIPoBLEConState
     {
-#ifndef RSI_BLE_ENABLE
+#ifndef BLE_ENABLE
         bd_addr address;
 #endif
         uint16_t mtu : 10;
@@ -187,12 +187,13 @@ private:
     CHIP_ERROR MapBLEError(int bleErr);
     void DriveBLEState(void);
     CHIP_ERROR ConfigureAdvertisingData(void);
+    CHIP_ERROR StopAdvertising(void);
 #if CHIP_ENABLE_ADDITIONAL_DATA_ADVERTISING
     CHIP_ERROR EncodeAdditionalDataTlv();
 #endif
 
-#ifdef RSI_BLE_ENABLE
-//    void HandleRXCharWrite(rsi_ble_event_write_t * evt);
+#ifdef BLE_ENABLE
+    void HandleRXCharWrite(rsi_ble_event_write_t * evt);
 #else
     void HandleRXCharWrite(volatile sl_bt_msg_t * evt);
 #endif
