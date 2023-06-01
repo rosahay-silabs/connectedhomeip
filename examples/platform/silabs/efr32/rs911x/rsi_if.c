@@ -78,6 +78,8 @@ uint32_t retryInterval = WLAN_MIN_RETRY_TIMER_MS;
 extern rsi_semaphore_handle_t sl_rs_ble_init_sem;
 #endif
 
+uint8_t kMaxRetries = 15; // TODO: debug remove
+
 /*
  * This file implements the interface to the RSI SAPIs
  */
@@ -537,14 +539,13 @@ static void wfx_rsi_do_join(void)
             /* Call rsi connect call with given ssid and password
              * And check there is a success
              */
-            wfx_rsi_save_ap_info(); // TODO: remove after debug
+            wfx_rsi_save_ap_info(); // TODO: debug remove
             if ((status = rsi_wlan_connect_async((int8_t *) &wfx_rsi.sec.ssid[0], connect_security_mode, &wfx_rsi.sec.passkey[0],
                                                  wfx_rsi_join_cb)) != RSI_SUCCESS)
             {
 
                 wfx_rsi.dev_state &= ~WFX_RSI_ST_STA_CONNECTING;
                 SILABS_LOG("%s: rsi_wlan_connect_async failed with status: %02x on try %d", __func__, status, wfx_rsi.join_retries);
-
                 wfx_retry_interval_handler(is_wifi_disconnection_event, wfx_rsi.join_retries);
                 wfx_rsi.join_retries++;
             }
@@ -573,7 +574,7 @@ void wfx_rsi_task(void * arg)
 {
     EventBits_t flags;
     TickType_t last_dhcp_poll, now;
-    TickType_t last_reconnect_poll;
+    TickType_t last_reconnect_poll; // TODO: debug remove
     struct netif * sta_netif;
     (void) arg;
     uint32_t rsi_status = wfx_rsi_init();
@@ -583,9 +584,9 @@ void wfx_rsi_task(void * arg)
         return;
     }
     wfx_lwip_start();
-    last_dhcp_poll = xTaskGetTickCount();
-    last_reconnect_poll = xTaskGetTickCount();
-    sta_netif      = wfx_get_netif(SL_WFX_STA_INTERFACE);
+    last_dhcp_poll      = xTaskGetTickCount();
+    sta_netif           = wfx_get_netif(SL_WFX_STA_INTERFACE);
+    last_reconnect_poll = xTaskGetTickCount(); // TODO: debug remove
     wfx_started_notify();
 
     SILABS_LOG("%s: starting event wait", __func__);
@@ -641,14 +642,8 @@ void wfx_rsi_task(void * arg)
                 /* Checks if the assigned IPv6 address is preferred by evaluating
                  * the first block of IPv6 address ( block 0)
                  */
-                // TODO: remove log below
-                if (!hasNotifiedIPV6)
-                {
-                    SILABS_LOG("checking ip6_addr_ispreferred");
-                }
                 if ((ip6_addr_ispreferred(netif_ip6_addr_state(sta_netif, 0))) && !hasNotifiedIPV6)
                 {
-                    SILABS_LOG("success ip6_addr_ispreferred");
                     wfx_ipv6_notify(GET_IPV6_SUCCESS);
                     hasNotifiedIPV6 = true;
                     if (!hasNotifiedWifiConnectivity)

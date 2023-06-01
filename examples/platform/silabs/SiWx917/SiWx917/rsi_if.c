@@ -61,6 +61,8 @@ static bool is_wifi_disconnection_event = false;
 /* Declare a variable to hold connection time intervals */
 static uint32_t retryInterval = WLAN_MIN_RETRY_TIMER_MS;
 
+uint8_t kMaxRetries = 15; // TODO: debug remove
+
 bool hasNotifiedIPV6 = false;
 #if (CHIP_DEVICE_CONFIG_ENABLE_IPV4)
 bool hasNotifiedIPV4 = false;
@@ -496,7 +498,7 @@ void wfx_rsi_task(void * arg)
     EventBits_t flags;
     int32_t status;
     TickType_t last_dhcp_poll, now;
-    TickType_t last_reconnect_poll;
+    TickType_t last_reconnect_poll; // TODO: debug remove
     struct netif * sta_netif;
     (void) arg;
     status = wfx_rsi_init();
@@ -506,9 +508,9 @@ void wfx_rsi_task(void * arg)
         return;
     }
     wfx_lwip_start();
-    last_dhcp_poll = xTaskGetTickCount();
-    last_reconnect_poll = xTaskGetTickCount();
-    sta_netif      = wfx_get_netif(SL_WFX_STA_INTERFACE);
+    last_dhcp_poll      = xTaskGetTickCount();
+    sta_netif           = wfx_get_netif(SL_WFX_STA_INTERFACE);
+    last_reconnect_poll = xTaskGetTickCount(); // TODO: debug remove
     wfx_started_notify();
 
     SILABS_LOG("%s: starting event wait", __func__);
@@ -586,9 +588,8 @@ void wfx_rsi_task(void * arg)
             {
                 wfx_rsi_disconnect();
                 last_reconnect_poll = now;
-                SILABS_LOG("%s: did invoke wfx_rsi_disconnect attempt: %d", __func__, last_reconnect_poll / pdMS_TO_TICKS(15000));
-                wfx_rsi.dev_state &= ~(WFX_RSI_ST_STA_CONNECTING | WFX_RSI_ST_STA_CONNECTED);
-                xEventGroupSetBits(wfx_rsi.events, WFX_EVT_STA_START_JOIN);
+                SILABS_LOG("did invoke wfx_rsi_disconnect attempt: %d", last_reconnect_poll / pdMS_TO_TICKS(15000));
+                wfx_rsi_join_fail_cb(1, NULL, 0);
             }
         }
         if (flags & WFX_EVT_STA_START_JOIN)
@@ -882,6 +883,8 @@ void wfx_retry_interval_handler(bool is_wifi_disconnection_event, uint16_t retry
         SILABS_LOG("%s: Next attempt after %d Seconds", __func__, CONVERT_MS_TO_SEC(retryInterval));
         vTaskDelay(pdMS_TO_TICKS(retryInterval));
         retryInterval += retryInterval;
+        while (retryJoin == kMaxRetries)
+            ;
     }
 }
 

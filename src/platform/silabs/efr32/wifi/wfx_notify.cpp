@@ -47,6 +47,7 @@ using namespace ::chip;
 using namespace ::chip::DeviceLayer;
 
 extern uint32_t retryInterval;
+extern uint8_t kMaxRetries;
 
 /*
  * Notifications to the upper-layer
@@ -228,5 +229,7 @@ void wfx_retry_interval_handler(bool is_wifi_disconnection_event, uint16_t retry
         SILABS_LOG("%s: Next attempt after %d Seconds", __func__, CONVERT_MS_TO_SEC(retryInterval));
         vTaskDelay(pdMS_TO_TICKS(retryInterval));
         retryInterval += retryInterval;
+        while (retryJoin == kMaxRetries)
+            ;
     }
 }
