@@ -167,9 +167,9 @@ template("siwx917_sdk") {
       "EXECUTION_FROM_RAM",
       "SL_CATALOG_FREERTOS_KERNEL_PRESENT=1",
 
-      "SL_ONNETWORK_PAIRING=1",
-      "SL_WIFI_SSID=\"matter_netgear\"",
-      "SL_WIFI_PSK=\"matter@123\"",
+#      "SL_ONNETWORK_PAIRING=1",
+#      "SL_WIFI_SSID=\"matter_openwrt\"",
+#      "SL_WIFI_PSK=\"matter@123\"",
 
 
       "RTE_RTOS_FreeRTOS_CORE",

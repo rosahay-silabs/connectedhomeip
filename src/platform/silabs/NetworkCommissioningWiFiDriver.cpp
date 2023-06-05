@@ -54,17 +54,17 @@ CHIP_ERROR SlWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeC
     err                          = CHIP_NO_ERROR;
 #else
     // If reading fails, wifi is not provisioned, no need to go further.
-    err = SilabsConfig::ReadConfigValueStr(SilabsConfig::kConfigKey_WiFiSSID, mSavedNetwork.ssid, sizeof(mSavedNetwork.ssid),
-                                           ssidLen);
-    VerifyOrReturnError(err == CHIP_NO_ERROR, CHIP_NO_ERROR);
-
-    err = SilabsConfig::ReadConfigValueStr(SilabsConfig::kConfigKey_WiFiPSK, mSavedNetwork.credentials,
-                                           sizeof(mSavedNetwork.credentials), credentialsLen);
-    VerifyOrReturnError(err == CHIP_NO_ERROR, CHIP_NO_ERROR);
-
-    mSavedNetwork.credentialsLen = credentialsLen;
-    mSavedNetwork.ssidLen        = ssidLen;
-    mStagingNetwork              = mSavedNetwork;
+//    err = SilabsConfig::ReadConfigValueStr(SilabsConfig::kConfigKey_WiFiSSID, mSavedNetwork.ssid, sizeof(mSavedNetwork.ssid),
+//                                           ssidLen);
+//    VerifyOrReturnError(err == CHIP_NO_ERROR, CHIP_NO_ERROR);
+//
+//    err = SilabsConfig::ReadConfigValueStr(SilabsConfig::kConfigKey_WiFiPSK, mSavedNetwork.credentials,
+//                                           sizeof(mSavedNetwork.credentials), credentialsLen);
+//    VerifyOrReturnError(err == CHIP_NO_ERROR, CHIP_NO_ERROR);
+//
+//    mSavedNetwork.credentialsLen = credentialsLen;
+//    mSavedNetwork.ssidLen        = ssidLen;
+//    mStagingNetwork              = mSavedNetwork;
 #endif
     ConnectWiFiNetwork(mSavedNetwork.ssid, ssidLen, mSavedNetwork.credentials, credentialsLen);
     return err;

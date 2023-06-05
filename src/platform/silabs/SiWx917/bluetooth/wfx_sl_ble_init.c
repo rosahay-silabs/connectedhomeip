@@ -211,7 +211,7 @@ void rsi_gatt_add_attribute_to_list(rsi_ble_t * p_val, uint16_t handle, uint16_t
 {
     if ((p_val->DATA_ix + data_len) >= BLE_ATT_REC_SIZE)
     { //! Check for max data length for the characteristic value
-        LOG_PRINT("\r\n no data memory for att rec values \r\n");
+        SILABS_LOG("\r\n no data memory for att rec values \r\n");
         return;
     }
 

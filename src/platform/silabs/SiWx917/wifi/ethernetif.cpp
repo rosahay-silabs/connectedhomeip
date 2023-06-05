@@ -507,7 +507,7 @@ sl_status_t si91x_host_process_data_frame(sl_wifi_interface_t interface, sl_wifi
   sl_si91x_packet_t *rsi_pkt;
   packet  = si91x_host_get_buffer_data(buffer, 0, NULL);
   rsi_pkt = (sl_si91x_packet_t *)packet;
-  printf("\nlen :%d\n", rsi_pkt->length);
+  SILABS_LOG("\nlen :%d\n", rsi_pkt->length);
 
  /* get the network interface for STATION interface,
      * and forward the received frame buffer to LWIP

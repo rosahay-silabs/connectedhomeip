@@ -107,8 +107,6 @@ extern osSemaphoreId_t sl_rs_ble_init_sem;
 //extern osSemaphoreId_t sl_rs_ble_init_sem;
 //#endif
 
-static sl_wifi_device_configuration_t config;
-
 static uint8_t wfx_rsi_drv_buf[WFX_RSI_BUF_SZ];
 wfx_wifi_scan_ext_t * temp_reset;
 
@@ -502,7 +500,6 @@ void initialize_device_configuration(void)
 #endif
 #endif
 
-
 #if BLE_ENABLE
 static const sl_wifi_device_configuration_t config = {
   .boot_option = LOAD_NWP_FW,
@@ -511,16 +508,18 @@ static const sl_wifi_device_configuration_t config = {
   .region_code = US,
   .boot_config = { .oper_mode = SL_SI91X_CLIENT_MODE,
                    .coex_mode = SL_SI91X_WLAN_BLE_MODE,
+                   .feature_bit_map =
 #ifdef RSI_M4_INTERFACE
-                   .feature_bit_map = (SL_SI91X_FEAT_WPS_DISABLE | RSI_FEATURE_BIT_MAP),
+                     (SL_SI91X_FEAT_SECURITY_OPEN | SL_SI91X_FEAT_WPS_DISABLE),
 #else
-                   .feature_bit_map        = RSI_FEATURE_BIT_MAP,
+                     (SL_SI91X_FEAT_SECURITY_OPEN | SL_SI91X_FEAT_AGGREGATION),
 #endif
-#if RSI_TCP_IP_BYPASS
-                   .tcp_ip_feature_bit_map = RSI_TCP_IP_FEATURE_BIT_MAP,
-#else
-                   .tcp_ip_feature_bit_map = (RSI_TCP_IP_FEATURE_BIT_MAP | SL_SI91X_TCP_IP_FEAT_EXTENSION_VALID),
+                   .tcp_ip_feature_bit_map =
+                     (SL_SI91X_TCP_IP_FEAT_DHCPV4_CLIENT | SL_SI91X_TCP_IP_FEAT_DNS_CLIENT | SL_SI91X_TCP_IP_FEAT_SSL | SL_SI91X_TCP_IP_FEAT_BYPASS
+#ifdef ipv6_FEATURE_REQUIRED
+                      | SL_SI91X_TCP_IP_FEAT_DHCPV6_CLIENT | SL_SI91X_TCP_IP_FEAT_IPV6
 #endif
+                      | SL_SI91X_TCP_IP_FEAT_ICMP | SL_SI91X_TCP_IP_FEAT_EXTENSION_VALID),
                    .custom_feature_bit_map = (SL_SI91X_FEAT_CUSTOM_FEAT_EXTENTION_VALID | RSI_CUSTOM_FEATURE_BIT_MAP),
                    .ext_custom_feature_bit_map = (
 #ifdef CHIP_917
@@ -584,7 +583,6 @@ static const sl_wifi_device_configuration_t config = {
                    .config_feature_bit_map = (SL_SI91X_FEAT_SLEEP_GPIO_SEL_BITMAP | RSI_CONFIG_FEATURE_BITMAP) }
 };
 #endif
-
 
 /*************************************************************************************
  * @fn  static int32_t wfx_rsi_init(void)
