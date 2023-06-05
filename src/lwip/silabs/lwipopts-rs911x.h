@@ -81,7 +81,8 @@
 
 #define LWIP_HAVE_LOOPIF (0)
 
-// TODO: not sure why this is disabled
+// Enabling the loopback interface adds additional processing overhead and memory usage to the device. If the loopback interface is
+// not required for your specific application or use case, it is recommended to keep it disabled to conserve system resources.
 #define LWIP_NETIF_LOOPBACK (0)
 
 #define MEMP_NUM_NETCONN (0)
@@ -109,7 +110,7 @@
 #define LWIP_IPV6_FRAG (LWIP_IPV6)
 #define LWIP_IPV6_DHCP6 0
 #define LWIP_IPV6_AUTOCONFIG (LWIP_IPV6)
-#define LWIP_IPV6_DUP_DETECT_ATTEMPTS (LWIP_IPV6_AUTOCONFIG)
+#define LWIP_IPV6_DUP_DETECT_ATTEMPTS 1
 #define LWIP_IPV6_ROUTER_SUPPORT (0)
 #define LWIP_ND6_LISTEN_RA (0)
 #define LWIP_ND6_NUM_NEIGHBORS (0)

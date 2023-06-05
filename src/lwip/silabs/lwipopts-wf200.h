@@ -82,7 +82,8 @@
 
 #define LWIP_HAVE_LOOPIF (0)
 
-// TODO: not sure why this is disabled
+// Enabling the loopback interface adds additional processing overhead and memory usage to the device. If the loopback interface is
+// not required for your specific application or use case, it is recommended to keep it disabled to conserve system resources.
 #define LWIP_NETIF_LOOPBACK (0)
 
 #define MEMP_NUM_NETCONN (0)
@@ -111,17 +112,17 @@
 #define LWIP_IPV6_DHCP6 0
 #define LWIP_IPV6_AUTOCONFIG (LWIP_IPV6)
 #define LWIP_IPV6_DUP_DETECT_ATTEMPTS 1
-#define LWIP_IPV6_ROUTER_SUPPORT (LWIP_IPV6)
-#define LWIP_ND6_LISTEN_RA (LWIP_IPV6_ND)
-#define LWIP_ND6_NUM_NEIGHBORS (10)
-#define LWIP_ND6_NUM_DESTINATIONS (10)
-#define LWIP_ND6_NUM_PREFIXES (5)
-#define LWIP_ND6_NUM_ROUTERS (3)
+#define LWIP_IPV6_ROUTER_SUPPORT (0)
+#define LWIP_ND6_LISTEN_RA (0)
+#define LWIP_ND6_NUM_NEIGHBORS (0)
+#define LWIP_ND6_NUM_DESTINATIONS (0)
+#define LWIP_ND6_NUM_PREFIXES (0)
+#define LWIP_ND6_NUM_ROUTERS (0)
 #define LWIP_ND6_MAX_MULTICAST_SOLICIT (3)
 #define LWIP_ND6_MAX_UNICAST_SOLICIT (3)
 #define LWIP_ND6_MAX_NEIGHBOR_ADVERTISEMENT (3)
 #define LWIP_ND6_TCP_REACHABILITY_HINTS (0)
-#define LWIP_ND6_ALLOW_RA_UPDATES (LWIP_IPV6_ND)
+#define LWIP_ND6_ALLOW_RA_UPDATES (0)
 
 #define MEMP_SEPARATE_POOLS (1)
 #define LWIP_PBUF_FROM_CUSTOM_POOLS (0)
@@ -148,8 +149,8 @@
 #define LWIP_IPV6_NUM_ADDRESSES 5
 
 #define LWIP_IPV6_ND (LWIP_IPV6)
-#define LWIP_ND6_QUEUEING (LWIP_IPV6)
-#define LWIP_NUM_ND6_QUEUE 3
+#define LWIP_ND6_QUEUEING (0)
+#define LWIP_NUM_ND6_QUEUE 0
 
 #define LWIP_MULTICAST_PING 0
 
@@ -168,7 +169,7 @@
 #define API_LIB_DEBUG (LWIP_DBG_OFF)
 #define API_MSG_DEBUG (LWIP_DBG_OFF)
 #define TCPIP_DEBUG (LWIP_DBG_OFF)
-#define NETIF_DEBUG (LWIP_DBG_OFF)
+#define NETIF_DEBUG (LWIP_DBG_ON)
 #define SOCKETS_DEBUG (LWIP_DBG_OFF)
 #define DEMO_DEBUG (LWIP_DBG_OFF)
 #define DHCP_DEBUG (LWIP_DBG_OFF)
