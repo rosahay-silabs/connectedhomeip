@@ -232,10 +232,10 @@ void wfx_retry_interval_handler(bool is_wifi_disconnection_event, uint16_t retry
         if (retryJoin == kMaxRetries)
         {
             SILABS_LOG("HALT");
-            vTaskSuspendAll();
+            // vTaskSuspendAll();
         }
         while (retryJoin == kMaxRetries)
             ;
-        xTaskResumeAll();
+        // xTaskResumeAll();
     }
 }
