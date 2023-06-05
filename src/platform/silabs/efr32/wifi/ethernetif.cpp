@@ -135,7 +135,7 @@ static void low_level_input(struct netif * netif, uint8_t * b, uint16_t len)
     if (!(ip6_addr_ispreferred(netif_ip6_addr_state(netif, 0))) && (memcmp(netif->hwaddr, src_mac, netif->hwaddr_len) == 0) &&
         (memcmp(netif->hwaddr, dst_mac, netif->hwaddr_len) != 0))
     {
-#if 1
+#if WIFI_DEBUG_ENABLED
         SILABS_LOG("%s: DROP, [%02x:%02x:%02x:%02x:%02x:%02x]<-[%02x:%02x:%02x:%02x:%02x:%02x] type=%02x%02x", __func__,
 
                    dst_mac[0], dst_mac[1], dst_mac[2], dst_mac[3], dst_mac[4], dst_mac[5],
@@ -143,7 +143,7 @@ static void low_level_input(struct netif * netif, uint8_t * b, uint16_t len)
                    src_mac[0], src_mac[1], src_mac[2], src_mac[3], src_mac[4], src_mac[5],
 
                    b[12], b[13]);
-#endif
+#endif /* WIFI_DEBUG_ENABLED */
         return;
     }
 
@@ -157,7 +157,7 @@ static void low_level_input(struct netif * netif, uint8_t * b, uint16_t len)
             memcpy((uint8_t *) q->payload, (uint8_t *) b + bufferoffset, q->len);
             bufferoffset += q->len;
         }
-#if 1
+#if WIFI_DEBUG_ENABLED
         if (!ip6_addr_ispreferred(netif_ip6_addr_state(netif, 0)))
         {
 
@@ -170,7 +170,7 @@ static void low_level_input(struct netif * netif, uint8_t * b, uint16_t len)
 
                        b[12], b[13]);
         }
-#endif
+#endif /* WIFI_DEBUG_ENABLED */
 
         if (netif->input(p, netif) != ERR_OK)
         {
@@ -252,9 +252,9 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
     int i  = 0;
     result = SL_STATUS_FAIL;
 
-#ifdef WIFI_DEBUG_ENABLED
+#if WIFI_DEBUG_ENABLED
     SILABS_LOG("WF200: Out %d", (int) framelength);
-#endif
+#endif /* WIFI_DEBUG_ENABLED */
 
     /* send the generated frame over Wifi network */
     while ((result != SL_STATUS_OK) && (i++ < 10))
@@ -299,24 +299,24 @@ void sl_wfx_host_received_frame_callback(sl_wfx_received_ind_t * rx_buffer)
             len    = rx_buffer->body.frame_length;
             buffer = (uint8_t *) &(rx_buffer->body.frame[rx_buffer->body.frame_padding]);
 
-#ifdef WIFI_DEBUG_ENABLED
+#if WIFI_DEBUG_ENABLED
             SILABS_LOG("WF200: In %d", (int) len);
-#endif
+#endif /* WIFI_DEBUG_ENABLED */
 
             low_level_input(netif, buffer, len);
         }
         else
         {
-#ifdef WIFI_DEBUG_ENABLED
+#if WIFI_DEBUG_ENABLED
             SILABS_LOG("WF200: NO-INTF");
-#endif
+#endif /* WIFI_DEBUG_ENABLED */
         }
     }
     else
     {
-#ifdef WIFI_DEBUG_ENABLED
+#if WIFI_DEBUG_ENABLED
         SILABS_LOG("WF200: Invalid frame IN");
-#endif
+#endif /* WIFI_DEBUG_ENABLED */
     }
 }
 
@@ -345,9 +345,9 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
     {
         return ERR_IF;
     }
-#ifdef WIFI_DEBUG_ENABLED
+#if WIFI_DEBUG_ENABLED
     SILABS_LOG("EN-RSI: Output");
-#endif
+#endif /* WIFI_DEBUG_ENABLED */
     if ((netif->flags & (NETIF_FLAG_LINK_UP | NETIF_FLAG_UP)) != (NETIF_FLAG_LINK_UP | NETIF_FLAG_UP))
     {
         SILABS_LOG("EN-RSI:NOT UP");
@@ -363,7 +363,7 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
         return ERR_IF;
     }
 
-#if 1
+#if WIFI_DEBUG_ENABLED
     const uint8_t * b       = (uint8_t *) p->payload;
     const uint8_t * src_mac = b + netif->hwaddr_len;
     const uint8_t * dst_mac = b;
@@ -377,7 +377,7 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
 
                    b[12], b[13]);
     }
-#endif
+#endif /* WIFI_DEBUG_ENABLED */
     /* Generate the packet */
     for (q = p, framelength = 0; q != NULL; q = q->next)
     {
@@ -389,9 +389,9 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
         /* Add junk data to the end for frame alignment if framelength is less than 60 */
         wfx_rsi_pkt_add_data(rsipkt, (uint8_t *) (p->payload), LWIP_FRAME_ALIGNMENT - framelength, framelength);
     }
-#ifdef WIFI_DEBUG_ENABLED
+#if WIFI_DEBUG_ENABLED
     SILABS_LOG("EN-RSI: Sending %d", framelength);
-#endif
+#endif /* WIFI_DEBUG_ENABLED */
 
     /* forward the generated packet to RSI to
      * send the data over wifi network
@@ -403,9 +403,9 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
         return ERR_IF;
     }
 
-#ifdef WIFI_DEBUG_ENABLED
+#if WIFI_DEBUG_ENABLED
     SILABS_LOG("EN-RSI:Xmit %d", framelength);
-#endif
+#endif /* WIFI_DEBUG_ENABLED */
     xSemaphoreGive(ethout_sem);
 
     return ERR_OK;
