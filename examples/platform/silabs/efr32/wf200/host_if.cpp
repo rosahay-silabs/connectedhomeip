@@ -71,6 +71,8 @@ static wfx_wifi_scan_result_t ap_info;
 sl_wfx_context_t wifiContext;
 static uint8_t wifi_extra;
 
+uint8_t kMaxRetries = 15; // TODO: debug remove
+
 /*****************************************************************************
  * macros
  ******************************************************************************/
@@ -421,7 +423,7 @@ static void sl_wfx_connect_callback(sl_wfx_connect_ind_body_t connect_indication
 static void sl_wfx_disconnect_callback(uint8_t * mac, uint16_t reason)
 {
     (void) (mac);
-    SILABS_LOG("WFX Disconnected %d\r\n", reason);
+    SILABS_LOG("sl_wfx_disconnect_callback error: %lx", reason);
     sl_wfx_context->state =
         static_cast<sl_wfx_state_t>(static_cast<int>(sl_wfx_context->state) & ~static_cast<int>(SL_WFX_STA_INTERFACE_CONNECTED));
     retryInProgress             = false;
@@ -522,11 +524,13 @@ static void sl_wfx_generic_status_callback(sl_wfx_generic_ind_t * frame)
 static void wfx_events_task(void * p_arg)
 {
     TickType_t last_dhcp_poll, now;
+    TickType_t last_reconnect_poll; // TODO: debug remove
     EventBits_t flags;
     (void) p_arg;
 
     sta_netif      = wfx_get_netif(SL_WFX_STA_INTERFACE);
     last_dhcp_poll = xTaskGetTickCount();
+    last_reconnect_poll = xTaskGetTickCount(); // TODO: debug remove
     while (true)
     {
         flags = xEventGroupWaitBits(sl_wfx_event_group,
@@ -585,6 +589,14 @@ static void wfx_events_task(void * p_arg)
                     }
                 }
                 last_dhcp_poll = now;
+            }
+            // TODO: remove debug code
+            if ((now = xTaskGetTickCount()) > (last_reconnect_poll + pdMS_TO_TICKS(15000)))
+            {
+                sl_wfx_send_disconnect_command();
+                last_reconnect_poll = now;
+                SILABS_LOG("did invoke sl_wfx_disconnect_callback attempt: %d", last_reconnect_poll / pdMS_TO_TICKS(15000));
+                sl_wfx_disconnect_callback(NULL, 1);
             }
         }
 
