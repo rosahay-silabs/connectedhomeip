@@ -135,7 +135,7 @@ static void low_level_input(struct netif * netif, uint8_t * b, uint16_t len)
     if (!(ip6_addr_ispreferred(netif_ip6_addr_state(netif, 0))) && (memcmp(netif->hwaddr, src_mac, netif->hwaddr_len) == 0) &&
         (memcmp(netif->hwaddr, dst_mac, netif->hwaddr_len) != 0))
     {
-#if WIFI_DEBUG_ENABLED
+#if 1
         SILABS_LOG("%s: DROP, [%02x:%02x:%02x:%02x:%02x:%02x]<-[%02x:%02x:%02x:%02x:%02x:%02x] type=%02x%02x", __func__,
 
                    dst_mac[0], dst_mac[1], dst_mac[2], dst_mac[3], dst_mac[4], dst_mac[5],
@@ -157,7 +157,7 @@ static void low_level_input(struct netif * netif, uint8_t * b, uint16_t len)
             memcpy((uint8_t *) q->payload, (uint8_t *) b + bufferoffset, q->len);
             bufferoffset += q->len;
         }
-#if WIFI_DEBUG_ENABLED
+#if 1
         if (!ip6_addr_ispreferred(netif_ip6_addr_state(netif, 0)))
         {
 
@@ -363,7 +363,7 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
         return ERR_IF;
     }
 
-#if WIFI_DEBUG_ENABLED
+#if 1
     const uint8_t * b       = (uint8_t *) p->payload;
     const uint8_t * src_mac = b + netif->hwaddr_len;
     const uint8_t * dst_mac = b;
