@@ -49,6 +49,8 @@ using namespace ::chip::DeviceLayer;
 extern uint32_t retryInterval;
 extern uint8_t kMaxRetries;
 
+bool kMaxRetriesFlag = false;
+
 /*
  * Notifications to the upper-layer
  * All done in the context of the RSI/WiFi task (rsi_if.c)
@@ -229,14 +231,17 @@ void wfx_retry_interval_handler(bool is_wifi_disconnection_event, uint16_t retry
         SILABS_LOG("%s: Next attempt after %d Seconds", __func__, CONVERT_MS_TO_SEC(retryInterval));
         vTaskDelay(pdMS_TO_TICKS(retryInterval));
         retryInterval += retryInterval;
+        // TODO: debug remove
         if (retryJoin == kMaxRetries)
         {
             SILABS_LOG("HALT");
             vTaskSuspendAll();
         }
         while (retryJoin == kMaxRetries)
-            ;
-        if (retryJoin + 1 == kMaxRetries)
+        {
+            kMaxRetriesFlag = true;
+        }
+        if (kMaxRetriesFlag)
         {
             SILABS_LOG("CONTINUE");
             xTaskResumeAll();

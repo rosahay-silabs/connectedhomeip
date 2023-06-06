@@ -62,6 +62,7 @@ static bool is_wifi_disconnection_event = false;
 static uint32_t retryInterval = WLAN_MIN_RETRY_TIMER_MS;
 
 uint8_t kMaxRetries = 15; // TODO: debug remove
+bool kMaxRetriesFlag = false;
 
 bool hasNotifiedIPV6 = false;
 #if (CHIP_DEVICE_CONFIG_ENABLE_IPV4)
@@ -883,8 +884,21 @@ void wfx_retry_interval_handler(bool is_wifi_disconnection_event, uint16_t retry
         SILABS_LOG("%s: Next attempt after %d Seconds", __func__, CONVERT_MS_TO_SEC(retryInterval));
         vTaskDelay(pdMS_TO_TICKS(retryInterval));
         retryInterval += retryInterval;
+        // TODO: debug remove
+        if (retryJoin == kMaxRetries)
+        {
+            SILABS_LOG("HALT");
+            vTaskSuspendAll();
+        }
         while (retryJoin == kMaxRetries)
-            ;
+        {
+            kMaxRetriesFlag = true;
+        }
+        if (kMaxRetriesFlag)
+        {
+            SILABS_LOG("CONTINUE");
+            xTaskResumeAll();
+        }
     }
 }
 
