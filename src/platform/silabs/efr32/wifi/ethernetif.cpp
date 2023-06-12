@@ -396,9 +396,11 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
     /* forward the generated packet to RSI to
      * send the data over wifi network
      */
-    if (wfx_rsi_send_data(rsipkt, framelength))
+    int32_t status = 0;
+    if ((status = wfx_rsi_send_data(rsipkt, framelength)) != EXIT_SUCCESS)
     {
         SILABS_LOG("*ERR*EN-RSI:Send fail");
+        SILABS_LOG("wfx_rsi_send_data: error: %lx", status);
         xSemaphoreGive(ethout_sem);
         return ERR_IF;
     }
