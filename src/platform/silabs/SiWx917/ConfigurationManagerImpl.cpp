@@ -292,7 +292,7 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
 
     // Restart the system.
     ChipLogProgress(DeviceLayer, "System restarting");
-//    NVIC_SystemReset();
+    NVIC_SystemReset();
 }
 
 #ifdef SL_WIFI

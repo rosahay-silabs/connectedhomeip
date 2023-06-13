@@ -18,10 +18,7 @@
 #include <platform/silabs/platformAbstraction/SilabsPlatform.h>
 
 #include "init_ccpPlatform.h"
-
-// TODO add includes ?
-extern "C" void RSI_Board_LED_Set(int, bool);
-extern "C" void RSI_Board_LED_Toggle(int);
+#include "rsi_board.h"
 
 namespace chip {
 namespace DeviceLayer {
@@ -38,13 +35,14 @@ CHIP_ERROR SilabsPlatform::Init(void)
 void SilabsPlatform::InitLed(void)
 {
     // TODO
+    RSI_Board_Init();
     SilabsPlatformAbstractionBase::InitLed();
 }
 
 CHIP_ERROR SilabsPlatform::SetLed(bool state, uint8_t led)
 {
     // TODO add range check
-//    RSI_Board_LED_Set(led, state);
+    RSI_Board_LED_Set(led, state);
     return CHIP_NO_ERROR;
 }
 
@@ -57,7 +55,7 @@ bool SilabsPlatform::GetLedState(uint8_t led)
 CHIP_ERROR SilabsPlatform::ToggleLed(uint8_t led)
 {
     // TODO add range check
-//    RSI_Board_LED_Toggle(led);
+    RSI_Board_LED_Toggle(led);
     return CHIP_NO_ERROR;
 }
 #endif // ENABLE_WSTK_LEDS

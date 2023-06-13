@@ -181,14 +181,12 @@ static void low_level_input(struct netif * netif, uint8_t * b, uint16_t len)
         if (netif->input(p, netif) != ERR_OK)
         {
             gOverrunCount++;
-//            SILABS_LOG("overrun count entering when fail to alloc value %d", gOverrunCount);
             pbuf_free(p);
         }
     }
     else
     {
         gOverrunCount++;
-//        SILABS_LOG("overrun count entering when fail to alloc value %d", gOverrunCount);
     }
 }
 
@@ -499,15 +497,14 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
 #endif
 }
 
-sl_status_t si91x_host_process_data_frame(sl_wifi_interface_t interface, sl_wifi_buffer_t *buffer)
+sl_status_t sl_si91x_host_process_data_frame(sl_wifi_interface_t interface, sl_wifi_buffer_t *buffer)
 {
   struct pbuf *pbuf_packet;
   void *packet;
   struct netif * ifp;
   sl_si91x_packet_t *rsi_pkt;
-  packet  = si91x_host_get_buffer_data(buffer, 0, NULL);
+  packet  = sl_si91x_host_get_buffer_data(buffer, 0, NULL);
   rsi_pkt = (sl_si91x_packet_t *)packet;
-  SILABS_LOG("\nlen :%d\n", rsi_pkt->length);
 
  /* get the network interface for STATION interface,
      * and forward the received frame buffer to LWIP

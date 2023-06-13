@@ -35,97 +35,23 @@ extern "C" {
 
 #include "init_ccpPlatform.h"
 
-#define SOC_PLL_REF_FREQUENCY 32000000 /* PLL input REFERENCE clock 32MHZ */
-
-// Note: Change this macro to required PLL frequency in hertz
-#define PS4_SOC_FREQ 180000000 /* PLL out clock 180MHz */
-#define SWITCH_QSPI_TO_SOC_PLL
-#define ICACHE_DISABLE
-#define DEBUG_DISABLE
-
-/* QSPI clock config params */
-#define INTF_PLL_500_CTRL_VALUE 0xD900
-#define INTF_PLL_CLK 80000000 /* PLL out clock 80 MHz */
-
-#define PMU_GOOD_TIME 31  /*Duration in us*/
-#define XTAL_GOOD_TIME 31 /*Duration in us*/
-
-/*Pre-fetch and regestring */
-#define ICACHE2_ADDR_TRANSLATE_1_REG *(volatile uint32_t *) (0x20280000 + 0x24)
-#define MISC_CFG_SRAM_REDUNDANCY_CTRL *(volatile uint32_t *) (0x46008000 + 0x18)
-#define MISC_CONFIG_MISC_CTRL1 *(volatile uint32_t *) (0x46008000 + 0x44)
-#define MISC_QUASI_SYNC_MODE *(volatile uint32_t *) (0x46008000 + 0x84)
-
-void initAntenna(void);
-
 /* GPIO button config */
 // TODO should be checked
-//void RSI_Wakeupsw_config(void);
-//void RSI_Wakeupsw_config_gpio0(void);
-
-/**
- * @fn           void soc_pll_config()
- * @brief        This function to configure clock for SiWx917 SoC (80MHz)
- *               Configure the PLL frequency and Switch M4 clock to PLL clock for speed operations
- *
- * @param[in]    none
- * @param[out]   none
- * @return       int
- * @section description
- * configure clock for SiWx917 SoC
- *
- */
-int soc_pll_config(void)
-{
-    int32_t status = RSI_OK;
-
-    RSI_CLK_SocPllLockConfig(1, 1, 7);
-
-    RSI_CLK_SocPllRefClkConfig(2);
-
-    RSI_CLK_M4SocClkConfig(M4CLK, M4_ULPREFCLK, 0);
-
-    /*Enable fre-fetch and register if SOC-PLL frequency is more than or equal to 120M*/
-#if (PS4_SOC_FREQ >= 120000000)
-    ICACHE2_ADDR_TRANSLATE_1_REG  = BIT(21);
-    MISC_CFG_SRAM_REDUNDANCY_CTRL = BIT(4);
-    MISC_CONFIG_MISC_CTRL1 |= BIT(4);
-#if !(defined WISE_AOC_4)
-    MISC_QUASI_SYNC_MODE |= BIT(6);
-    MISC_QUASI_SYNC_MODE |= (BIT(6) | BIT(7));
-#endif /* !WISE_AOC_4 */
-#endif /* (PS4_SOC_FREQ > 120000000) */
-
-    RSI_CLK_SetSocPllFreq(M4CLK, PS4_SOC_FREQ, SOC_PLL_REF_FREQUENCY);
-
-    RSI_CLK_M4SocClkConfig(M4CLK, M4_SOCPLLCLK, 0);
-
-#ifdef SWITCH_QSPI_TO_SOC_PLL
-    /* program intf pll to 160Mhz */
-    SPI_MEM_MAP_PLL(INTF_PLL_500_CTRL_REG9) = INTF_PLL_500_CTRL_VALUE;
-    status                                  = RSI_CLK_SetIntfPllFreq(M4CLK, INTF_PLL_CLK, SOC_PLL_REF_FREQUENCY);
-    if (status != RSI_OK)
-    {
-        SILABS_LOG("Failed to Config Interface PLL Clock, status:%d", status);
-    }
-    else
-    {
-        SILABS_LOG("Configured Interface PLL Clock to %d", INTF_PLL_CLK);
-    }
-
-    RSI_CLK_QspiClkConfig(M4CLK, QSPI_INTFPLLCLK, 0, 0, 1);
-#endif /* SWITCH_QSPI_TO_SOC_PLL */
-
-    return 0;
-}
+void soc_pll_config(void);
+void RSI_Wakeupsw_config(void);
+void RSI_Wakeupsw_config_gpio0(void);
 
 void init_ccpPlatform(void)
 {
     sl_system_init();
+
+    // Configuration the clock rate
     soc_pll_config();
-//    RSI_Wakeupsw_config();
-//
-//    RSI_Wakeupsw_config_gpio0();
+
+    // BTN0 and BTN1 init
+    RSI_Wakeupsw_config();
+    RSI_Wakeupsw_config_gpio0();
+
 #if SILABS_LOG_ENABLED
     silabsInitLog();
 #endif
