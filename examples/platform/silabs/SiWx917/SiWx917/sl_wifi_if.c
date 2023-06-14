@@ -702,28 +702,20 @@ static void wfx_rsi_do_join(void)
                     osThreadYield();
                  }
                  status = callback_status;
-
-         //     SILABS_LOG("sl_wifi_connect  before");
-       //    wfx_rsi.dev_state &= ~WFX_RSI_ST_STA_CONNECTING;
-     //      wfx_retry_interval_handler(is_wifi_disconnection_event, wfx_rsi.join_retries);
-    //       wfx_rsi.join_retries++;
-/*
-            if ((status = rsi_wlan_connect_async((int8_t *) &wfx_rsi.sec.ssid[0], (rsi_security_mode_t) wfx_rsi.sec.security,
-                                                 &wfx_rsi.sec.passkey[0], wfx_rsi_join_cb)) != RSI_SUCCESS)
+            }
+            else
             {
-
-                wfx_rsi.dev_state &= ~WFX_RSI_ST_STA_CONNECTING;
-                SILABS_LOG("%s: rsi_wlan_connect_async failed with status: %02x on try %d", __func__, status,
+                while (is_wifi_disconnection_event || wfx_rsi.join_retries <= WFX_RSI_CONFIG_MAX_JOIN)
+                {
+                     SILABS_LOG("%s: failed. retry: %d", __func__, wfx_rsi.join_retries);
+                     wfx_retry_interval_handler(is_wifi_disconnection_event, wfx_rsi.join_retries++);
+                    if (is_wifi_disconnection_event || wfx_rsi.join_retries <= WFX_RSI_CONFIG_MAX_JOIN)
+                        xEventGroupSetBits(wfx_rsi.events, WFX_EVT_STA_START_JOIN);
+                    SILABS_LOG("%s: starting JOIN to %s after %d tries\n", __func__, (char *) &wfx_rsi.sec.ssid[0],
                             wfx_rsi.join_retries);
-
-                wfx_retry_interval_handler(is_wifi_disconnection_event, wfx_rsi.join_retries);
-                wfx_rsi.join_retries++;*/
-         }
-         else
-         {
-                SILABS_LOG("%s: starting JOIN to %s after %d tries\n", __func__, (char *) &wfx_rsi.sec.ssid[0],
-                            wfx_rsi.join_retries);
-               // break; // exit while loop
+                    // break; // exit while loop        
+                }                            
+               
             }
         //}
     }
