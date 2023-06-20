@@ -113,6 +113,7 @@ template("efr32_sdk") {
       "${efr32_sdk_root}/hardware/board/inc",
       "${efr32_sdk_root}/hardware/driver/memlcd/inc",
       "${efr32_sdk_root}/hardware/driver/memlcd/src/ls013b7dh03",
+      "${efr32_sdk_root}/hardware/driver/configuration_over_swo/inc/",
       "${efr32_sdk_root}/platform/bootloader",
       "${efr32_sdk_root}/platform/bootloader/config",
       "${efr32_sdk_root}/platform/bootloader/config/s2/btl_interface",
@@ -178,11 +179,6 @@ template("efr32_sdk") {
       "${silabs_gen_folder}/config",
       "${silabs_gen_folder}/autogen",
     ]
-
-    if (slc_generate || slc_reuse_files || silabs_family == "mgm24") {
-      _include_dirs +=
-          [ "${efr32_sdk_root}/hardware/driver/configuration_over_swo/inc/" ]
-    }
 
     if (silabs_family != "mgm24") {
       _include_dirs += [
@@ -315,14 +311,6 @@ template("efr32_sdk") {
       defines += [ "SL_SYSTEM_VIEW=1" ]
     }
 
-    if (silabs_board == "BRD2704A" || silabs_board == "BRD4318A") {
-      _include_dirs += [
-        "${efr32_sdk_root}/platform/radio/rail_lib/plugin/fem_util/",
-        "${efr32_sdk_root}/platform/radio/rail_lib/plugin/rail_util_rssi/",
-        "${efr32_sdk_root}/platform/driver/debug/inc/",
-      ]
-    }
-
     defines += board_defines
 
     if (use_wstk_leds) {
@@ -452,10 +440,13 @@ template("efr32_sdk") {
     } else if (silabs_family == "mgm24") {
       _include_dirs += [
         "${efr32_sdk_root}/platform/Device/SiliconLabs/MGM24/Include",
+        "${efr32_sdk_root}/platform/driver/debug/inc/",
         "${efr32_sdk_root}/platform/radio/rail_lib/chip/efr32/efr32xg2x",
         "${efr32_sdk_root}/platform/radio/rail_lib/protocol/ble",
         "${efr32_sdk_root}/platform/radio/rail_lib/protocol/ieee802154",
         "${efr32_sdk_root}/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure",
+        "${efr32_sdk_root}/platform/radio/rail_lib/plugin/fem_util/",
+        "${efr32_sdk_root}/platform/radio/rail_lib/plugin/rail_util_rssi/",
         "${efr32_sdk_root}/platform/radio/rail_lib/plugin/pa-conversions/efr32xg24",
         "${efr32_sdk_root}/platform/radio/rail_lib/plugin/pa-conversions/efr32xg24/config",
         "${efr32_sdk_root}/platform/service/device_init/config/s2/",
@@ -713,18 +704,13 @@ template("efr32_sdk") {
       "${silabs_gen_folder}/autogen/sl_board_default_init.c",
       "${silabs_gen_folder}/autogen/sl_device_init_clocks.c",
       "${silabs_gen_folder}/autogen/sl_event_handler.c",
+      "${efr32_sdk_root}/hardware/driver/configuration_over_swo/src/sl_cos.c",
+      "${efr32_sdk_root}/platform/driver/debug/src/sl_debug_swo.c",
     ]
     if (enable_dic) {
       sources += [
         "${chip_root}/third_party/silabs/mqtt/stack/mqtt.c",
         "${efr32_sdk_root}/util/third_party/mbedtls/library/rsa_alt_helpers.c",
-      ]
-    }
-
-    if (slc_generate || slc_reuse_files || silabs_board == "BRD2704A" || silabs_board == "BRD4318A") {
-      sources += [
-        "${efr32_sdk_root}/hardware/driver/configuration_over_swo/src/sl_cos.c",
-        "${efr32_sdk_root}/platform/driver/debug/src/sl_debug_swo.c",
       ]
     }
 
@@ -922,6 +908,7 @@ template("efr32_sdk") {
         "${efr32_sdk_root}/platform/security/sl_component/sl_psa_driver/src/sli_se_transparent_driver_mac.c",
         "${efr32_sdk_root}/platform/security/sl_component/sl_psa_driver/src/sli_se_transparent_key_derivation.c",
         "${efr32_sdk_root}/platform/service/device_init/src/sl_device_init_dcdc_s2.c",
+        "${efr32_sdk_root}/platform/service/device_init/src/sl_device_init_dpll_s2.c",
         "${efr32_sdk_root}/platform/service/device_init/src/sl_device_init_emu_s2.c",
         "${efr32_sdk_root}/platform/service/device_init/src/sl_device_init_hfxo_s2.c",
         "${efr32_sdk_root}/platform/service/device_init/src/sl_device_init_lfxo_s2.c",
@@ -960,25 +947,15 @@ template("efr32_sdk") {
         "${efr32_sdk_root}/platform/security/sl_component/sl_psa_driver/src/sli_se_transparent_driver_mac.c",
         "${efr32_sdk_root}/platform/security/sl_component/sl_psa_driver/src/sli_se_transparent_key_derivation.c",
         "${efr32_sdk_root}/platform/service/device_init/src/sl_device_init_dcdc_s2.c",
+        "${efr32_sdk_root}/platform/service/device_init/src/sl_device_init_dpll_s2.c",
         "${efr32_sdk_root}/platform/service/device_init/src/sl_device_init_emu_s2.c",
         "${efr32_sdk_root}/platform/service/device_init/src/sl_device_init_hfxo_mgm24.c",
         "${efr32_sdk_root}/platform/service/device_init/src/sl_device_init_lfxo_s2.c",
         "${efr32_sdk_root}/platform/service/hfxo_manager/src/sl_hfxo_manager_hal_s2.c",
         "${efr32_sdk_root}/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/port.c",
         "${efr32_sdk_root}/util/third_party/freertos/kernel/portable/GCC/ARM_CM33_NTZ/non_secure/portasm.c",
-      ]
-    }
-
-    if (silabs_board == "BRD4186A" || silabs_board == "BRD4186C" ||
-        silabs_board == "BRD4187A" || silabs_board == "BRD4187C" ||
-        silabs_board == "BRD2704A") {
-      sources += [ "${efr32_sdk_root}/platform/service/device_init/src/sl_device_init_dpll_s2.c" ]
-    }
-
-    if (silabs_board == "BRD2704A" || silabs_board == "BRD4318A") {
-      sources += [
         "${efr32_sdk_root}/platform/radio/rail_lib/plugin/fem_util/sl_fem_util.c",
-        "${efr32_sdk_root}/platform/radio/rail_lib/plugin/rail_util_rssi/sl_rail_util_rssi.c",
+        #"${efr32_sdk_root}/platform/radio/rail_lib/plugin/rail_util_rssi/sl_rail_util_rssi.c",
       ]
     }
 
