@@ -28,34 +28,33 @@ void ENFORCE_FORMAT(3, 0) LogV(const char * module, uint8_t category, const char
 
     switch (category)
     {
-    case kLogCategory_Error:
-        if (esp_log_default_level >= ESP_LOG_ERROR)
+    case kLogCategory_Error: {
         {
-            printf(LOG_COLOR_E "E");                        // set color
-            printf(" (%u) %s: ", esp_log_timestamp(), tag); // add timestamp
+            printf(LOG_COLOR_E "E (%" PRIu32 ") %s: ", esp_log_timestamp(), tag);
             esp_log_writev(ESP_LOG_ERROR, tag, msg, v);
             printf(LOG_RESET_COLOR "\n");
         }
-        break;
+    }
+    break;
+
     case kLogCategory_Progress:
-    default:
-        if (esp_log_default_level >= ESP_LOG_INFO)
+    default: {
         {
-            printf(LOG_COLOR_I "I");                        // set color
-            printf(" (%u) %s: ", esp_log_timestamp(), tag); // add timestamp
+            printf(LOG_COLOR_I "I (%" PRIu32 ") %s: ", esp_log_timestamp(), tag);
             esp_log_writev(ESP_LOG_INFO, tag, msg, v);
             printf(LOG_RESET_COLOR "\n");
         }
-        break;
-    case kLogCategory_Detail:
-        if (esp_log_default_level >= ESP_LOG_DEBUG)
+    }
+    break;
+
+    case kLogCategory_Detail: {
         {
-            printf(LOG_COLOR_D "D");                        // set color
-            printf(" (%u) %s: ", esp_log_timestamp(), tag); // add timestamp
+            printf(LOG_COLOR_D "D (%" PRIu32 ") %s: ", esp_log_timestamp(), tag);
             esp_log_writev(ESP_LOG_DEBUG, tag, msg, v);
             printf(LOG_RESET_COLOR "\n");
         }
-        break;
+    }
+    break;
     }
 }
 

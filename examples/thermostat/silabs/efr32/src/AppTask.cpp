@@ -52,9 +52,10 @@
 /**********************************************************
  * Defines and Constants
  *********************************************************/
-
+#ifdef SL_CATALOG_SIMPLE_BUTTON_PRESENT
 #define APP_FUNCTION_BUTTON &sl_button_btn0
 #define APP_THERMOSTAT &sl_button_btn1
+#endif // SL_CATALOG_SIMPLE_BUTTON_PRESENT
 
 #define MODE_TIMER 1000 // 1s timer period
 
@@ -242,6 +243,7 @@ void AppTask::UpdateThermoStatUI()
 #endif // DISPLAY_ENABLED
 }
 
+#ifdef SL_CATALOG_SIMPLE_BUTTON_PRESENT
 void AppTask::ButtonEventHandler(const sl_button_t * buttonHandle, uint8_t btnAction)
 {
     if (buttonHandle == nullptr)
@@ -259,3 +261,4 @@ void AppTask::ButtonEventHandler(const sl_button_t * buttonHandle, uint8_t btnAc
         sAppTask.PostEvent(&aEvent);
     }
 }
+#endif // SL_CATALOG_SIMPLE_BUTTON_PRESENT

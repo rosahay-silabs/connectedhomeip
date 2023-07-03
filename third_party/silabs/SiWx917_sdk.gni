@@ -69,6 +69,7 @@ template("siwx917_sdk") {
       "${new_wifi_sdk_root}/components/siwx917_soc/drivers/peripheral_drivers/inc",
       "${new_wifi_sdk_root}/components/siwx917_soc/drivers/rom_driver/inc",
 
+<<<<<<< HEAD
       # wifi_support
       "${new_wifi_sdk_root}/components/wifi_support/inc",
       "${new_wifi_sdk_root}/components/wifi_support/siwx917_soc",
@@ -118,6 +119,14 @@ template("siwx917_sdk") {
       #      "${wisemcu_sdk_root}/platforms/si91x/boards/brd4325x/inc",
       #      "${wisemcu_sdk_root}/platforms/si91x/core/cmsis",
       "${efr32_sdk_root}/util/third_party/freertos/kernel/portable/GCC/ARM_CM4F",
+=======
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/cmsis_driver",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/cmsis_driver/CMSIS/Driver/Include",
+      "${wisemcu_sdk_root}/platforms/si91x/boards/brd4325a/inc",
+      "${wisemcu_sdk_root}/platforms/si91x/core/cmsis",
+      "${wisemcu_sdk_root}/third_party/freertos/include",
+      "${wisemcu_sdk_root}/third_party/freertos/portable/GCC/ARM_CM4F",
+>>>>>>> SiliconLabs/release_2.1.0-1.1
       "${examples_plat_dir}/device/inc",
     ]
 
@@ -377,6 +386,7 @@ template("siwx917_sdk") {
       #      "${wisemcu_sdk_root}/sapi/wlan/rsi_wlan_apis.c",
 
       # platform
+<<<<<<< HEAD
       #      "${wisemcu_sdk_root}/platforms/si91x/boards/brd4325x/src/rsi_board.c",
       #      "${wisemcu_sdk_root}/platforms/si91x/core/chip/src/rsi_deepsleep_commonflash.c",
       #      "${wisemcu_sdk_root}/platforms/si91x/core/chip/src/rsi_ps_ram_func.c",
@@ -402,6 +412,31 @@ template("siwx917_sdk") {
       #      "${wisemcu_sdk_root}/platforms/si91x/hal/src/rsi_hal_mcu_m4_rom.c",
 
       "${examples_plat_dir}/SiWx917/hal/rsi_board.c",
+=======
+      "${wisemcu_sdk_root}/platforms/si91x/boards/brd4325a/src/rsi_board.c",
+      "${wisemcu_sdk_root}/platforms/si91x/core/chip/src/rsi_deepsleep_commonflash.c",
+      "${wisemcu_sdk_root}/platforms/si91x/core/chip/src/rsi_ps_ram_func.c",
+      "${wisemcu_sdk_root}/platforms/si91x/core/chip/src/rsi_system_config.c",
+      "${wisemcu_sdk_root}/platforms/si91x/core/chip/src/system_RS1xxxx.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/peripheral_drivers/src/clock_update.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/peripheral_drivers/src/rsi_comparator.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/peripheral_drivers/src/rsi_egpio.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/peripheral_drivers/src/rsi_udma.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/peripheral_drivers/src/rsi_udma_wrapper.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/peripheral_drivers/src/rsi_usart.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/systemlevel/src/rsi_ipmu.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/systemlevel/src/rsi_pll.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/systemlevel/src/rsi_power_save.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/systemlevel/src/rsi_processor_sensor.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/systemlevel/src/rsi_rtc.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/systemlevel/src/rsi_temp_sensor.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/systemlevel/src/rsi_time_period.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/systemlevel/src/rsi_ulpss_clk.c",
+      "${wisemcu_sdk_root}/platforms/si91x/drivers/systemlevel/src/rsi_wwdt.c",
+      "${wisemcu_sdk_root}/platforms/si91x/hal/src/rsi_bootup_config.c",
+      "${wisemcu_sdk_root}/platforms/si91x/hal/src/rsi_hal_mcu_interrupt.c",
+      "${wisemcu_sdk_root}/platforms/si91x/hal/src/rsi_hal_mcu_m4_rom.c",
+>>>>>>> SiliconLabs/release_2.1.0-1.1
 
       # modified hal
       "${examples_plat_dir}/SiWx917/hal/rsi_hal_mcu_m4.c",

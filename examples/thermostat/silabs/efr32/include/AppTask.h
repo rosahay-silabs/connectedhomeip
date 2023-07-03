@@ -35,12 +35,14 @@
 #include "FreeRTOS.h"
 #include "SensorManager.h"
 #include "TemperatureManager.h"
-#include "sl_simple_button_instances.h"
 #include "timers.h" // provides FreeRTOS timer support
 #include <app/clusters/identify-server/identify-server.h>
 #include <ble/BLEEndPoint.h>
 #include <lib/core/CHIPError.h>
 #include <platform/CHIPDeviceLayer.h>
+#ifdef SL_CATALOG_SIMPLE_BUTTON_PRESENT
+#include "sl_simple_button_instances.h"
+#endif // SL_CATALOG_SIMPLE_BUTTON_PRESENT
 
 /**********************************************************
  * Defines
@@ -80,6 +82,7 @@ public:
      */
     void UpdateThermoStatUI();
 
+#ifdef SL_CATALOG_SIMPLE_BUTTON_PRESENT
     /**
      * @brief Event handler when a button is pressed
      * Function posts an event for button processing
@@ -89,6 +92,7 @@ public:
      *                  SL_SIMPLE_BUTTON_RELEASED or SL_SIMPLE_BUTTON_DISABLED
      */
     void ButtonEventHandler(const sl_button_t * buttonHandle, uint8_t btnAction) override;
+#endif // SL_CATALOG_SIMPLE_BUTTON_PRESENT
 
     /**
      * @brief Callback called by the identify-server when an identify command is received
