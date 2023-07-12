@@ -293,3 +293,6 @@
 	path = third_party/imgui/repo
 	url = https://github.com/ocornut/imgui
 	platforms = linux
+[submodule "third_party/silabs/wifi_sdk"]
+	path = third_party/silabs/wifi_sdk
+	url = https://github.com/SiliconLabs/wiseconnect
