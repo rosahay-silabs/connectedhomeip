@@ -15,7 +15,7 @@
  *    limitations under the License.
  */
 
-#include "system_RS1xxxx.h"
+#include "sli_siwx917_soc.h"
 #include "system_si917.h"
 #include "RS1xxxx_9117.h"
 

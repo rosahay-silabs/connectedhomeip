@@ -76,8 +76,8 @@ static const sl_wifi_device_configuration_t config = {
 #endif
                    //!ENABLE_BLE_PROTOCOL in bt_feature_bit_map
                    .ble_feature_bit_map =
-                     ((SL_SI91X_BLE_MAX_NBR_SLAVES(RSI_BLE_MAX_NBR_SLAVES)
-                       | SL_SI91X_BLE_MAX_NBR_MASTERS(RSI_BLE_MAX_NBR_MASTERS)
+                     ((SL_SI91X_BLE_MAX_NBR_PERIPHERALS(RSI_BLE_MAX_NBR_PERIPHERALS)
+                       | SL_SI91X_BLE_MAX_NBR_CENTRALS(RSI_BLE_MAX_NBR_CENTRALS)
                        | SL_SI91X_BLE_MAX_NBR_ATT_SERV(RSI_BLE_MAX_NBR_ATT_SERV)
                        | SL_SI91X_BLE_MAX_NBR_ATT_REC(RSI_BLE_MAX_NBR_ATT_REC))
                       | SL_SI91X_FEAT_BLE_CUSTOM_FEAT_EXTENTION_VALID | SL_SI91X_BLE_PWR_INX(RSI_BLE_PWR_INX)

@@ -186,7 +186,6 @@ static int32_t wfx_rsi_init(void)
 	return status;
   }
 
-  RSI_Wireless_GPIO_Frontend_Switch_Controls();
   status = sl_wifi_get_mac_address(SL_WIFI_CLIENT_INTERFACE, (sl_mac_address_t *)&wfx_rsi.sta_mac.octet[0]);
   if(status != SL_STATUS_OK){
     SILABS_LOG("sl_wifi_get_mac_address failed: %x",status);
