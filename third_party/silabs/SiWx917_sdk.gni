@@ -118,6 +118,7 @@ template("siwx917_sdk") {
       "SL_HEAP_SIZE=32768",
       "SL_WIFI=1",
       "CCP_SI917_BRINGUP",
+      "SL_COMPONENT_CATALOG_PRESENT",
       "RS911X_WIFI",
       "RSI_WLAN_ENABLE",
       "RSI_WITH_OS",
@@ -155,7 +156,15 @@ template("siwx917_sdk") {
       "EXECUTION_FROM_RAM",
       "SL_CATALOG_FREERTOS_KERNEL_PRESENT=1",
 
+      "SL_PLATFORM_EXAMPLES_ENABLE",
+      "SI91X_DEVICE",
+      "SL_NET_COMPONENT_INCLUDED",
+      "FLASH_PAGE_SIZE",
+      "SL_NVM3_PRESENT",
+
       "ROM_WIRELESS",
+      "SRAM_BASE=0x0C000000UL",
+      "SRAM_SIZE=0x00040000UL",
 
       # "SL_ONNETWORK_PAIRING=1",
       # "SL_WIFI_SSID=\"matter_openwrt\"",
