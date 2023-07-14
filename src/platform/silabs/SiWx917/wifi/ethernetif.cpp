@@ -21,23 +21,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 #include "wfx_host_events.h"
 #include "wifi_config.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "sl_si91x_driver.h"
 #include "cmsis_os2.h"
 #include "sl_net.h"
+#include "sl_si91x_driver.h"
 //#include "sl_uart.h"
 #include "sl_board_configuration.h"
-#include "sl_wifi_types.h"
 #include "sl_si91x_types.h"
 #include "sl_wifi_callback_framework.h"
 #include "sl_wifi_constants.h"
+#include "sl_wifi_types.h"
 //#include "si91x_constants.h"
 //#include "sl_net_default_values.h"
 #include "sl_si91x_host_interface.h"
@@ -126,6 +124,7 @@ static void low_level_init(struct netif * netif)
  ************************************************************************************/
 static void low_level_input(struct netif * netif, uint8_t * b, uint16_t len)
 {
+    SILABS_LOG("low_level_input: started.");
     struct pbuf *p, *q;
     uint32_t bufferoffset;
 
@@ -341,17 +340,17 @@ static SemaphoreHandle_t ethout_sem;
  ******************************************************************************/
 static err_t low_level_output(struct netif * netif, struct pbuf * p)
 {
-  sl_wifi_buffer_t *buffer;
-  sl_si91x_packet_t *packet;
-  sl_status_t status = SL_STATUS_OK;
-  void * rsipkt;
-  struct pbuf * q;
-  uint16_t framelength;
-  SILABS_LOG("LWIP : low_level_output");
-  if (xSemaphoreTake(ethout_sem, portMAX_DELAY) != pdTRUE)
-  {
-      return ERR_IF;
-  }
+    sl_wifi_buffer_t * buffer;
+    sl_si91x_packet_t * packet;
+    sl_status_t status = SL_STATUS_OK;
+    void * rsipkt;
+    struct pbuf * q;
+    uint16_t framelength;
+    SILABS_LOG("LWIP : low_level_output");
+    if (xSemaphoreTake(ethout_sem, portMAX_DELAY) != pdTRUE)
+    {
+        return ERR_IF;
+    }
 #ifdef WIFI_DEBUG_ENABLED
     SILABS_LOG("EN-RSI: Output");
 #endif
@@ -363,10 +362,8 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
     }
     /* Confirm if packet is allocated */
 
-    status = sl_si91x_allocate_command_buffer(&buffer,
-                                            (void **)&packet,
-                                            sizeof(sl_si91x_packet_t) + p->len,
-                                            SL_WIFI_ALLOCATE_COMMAND_BUFFER_WAIT_TIME);
+    status = sl_si91x_allocate_command_buffer(&buffer, (void **) &packet, sizeof(sl_si91x_packet_t) + p->len,
+                                              SL_WIFI_ALLOCATE_COMMAND_BUFFER_WAIT_TIME);
     if (status || packet == NULL)
     {
         SILABS_LOG("failed to allocate buffer");
@@ -393,17 +390,17 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
 #ifdef WIFI_DEBUG_ENABLED
     SILABS_LOG("EN-RSI: Sending %d", framelength);
 #endif
-     // Fill frame type
+    // Fill frame type
     packet->length  = p->len & 0xFFF;
-    packet->command =  0x1;
-    status = sl_si91x_driver_send_data_packet(SI91X_WLAN_CMD_QUEUE,buffer, 1000);
+    packet->command = 0x1;
+    status          = sl_si91x_driver_send_data_packet(SI91X_WLAN_CMD_QUEUE, buffer, 1000);
     if (status)
     {
         SILABS_LOG("send_data_packet failed status: %x", status);
         xSemaphoreGive(ethout_sem);
         return ERR_IF;
     }
-    /* 
+    /*
      * forward the generated packet to RSI to
      * send the data over wifi network
      */
@@ -412,16 +409,16 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
     return ERR_OK;
 }
 
-sl_status_t sl_si91x_host_process_data_frame(sl_wifi_interface_t interface, sl_wifi_buffer_t *buffer)
+sl_status_t sl_si91x_host_process_data_frame(sl_wifi_interface_t interface, sl_wifi_buffer_t * buffer)
 {
-  struct pbuf *pbuf_packet;
-  void *packet;
-  struct netif * ifp;
-  sl_si91x_packet_t *rsi_pkt;
-  packet  = sl_si91x_host_get_buffer_data(buffer, 0, NULL);
-  rsi_pkt = (sl_si91x_packet_t *)packet;
+    struct pbuf * pbuf_packet;
+    void * packet;
+    struct netif * ifp;
+    sl_si91x_packet_t * rsi_pkt;
+    packet  = sl_si91x_host_get_buffer_data(buffer, 0, NULL);
+    rsi_pkt = (sl_si91x_packet_t *) packet;
 
- /* get the network interface for STATION interface,
+    /* get the network interface for STATION interface,
      * and forward the received frame buffer to LWIP
      */
     if ((ifp = wfx_get_netif(SL_WFX_STA_INTERFACE)) != (struct netif *) 0)
@@ -429,8 +426,7 @@ sl_status_t sl_si91x_host_process_data_frame(sl_wifi_interface_t interface, sl_w
         low_level_input(ifp, rsi_pkt->data, rsi_pkt->length);
     }
 
-
-  return SL_STATUS_OK;
+    return SL_STATUS_OK;
 }
 
 /*****************************************************************************

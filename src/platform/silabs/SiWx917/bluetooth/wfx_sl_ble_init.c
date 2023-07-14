@@ -18,7 +18,6 @@
 //#include "rsi_ble_config.h"
 #include "ble_config.h"
 
-
 // application defines
 rsi_ble_event_conn_status_t conn_event_to_app;
 rsi_ble_t att_list;
@@ -189,7 +188,7 @@ void rsi_ble_app_set_event(uint32_t event_num)
 {
     SILABS_LOG("%s: starting", __func__);
     event_msg.ble_app_event_map |= BIT(event_num);
-     osSemaphoreRelease(sl_ble_event_sem);
+    osSemaphoreRelease(sl_ble_event_sem);
     return;
 }
 

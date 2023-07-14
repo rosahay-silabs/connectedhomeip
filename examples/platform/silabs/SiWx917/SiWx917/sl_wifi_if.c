@@ -23,23 +23,23 @@
 
 #include "FreeRTOS.h"
 #include "event_groups.h"
-#include "task.h"
-#include "sl_wlan_config.h"
-#include "wfx_host_events.h"
-#include "sl_net.h"
 #include "sl_board_configuration.h"
-#include "sl_wifi_types.h"
+#include "sl_net.h"
+#include "sl_si91x_host_interface.h"
+#include "sl_si91x_types.h"
 #include "sl_wifi_callback_framework.h"
 #include "sl_wifi_constants.h"
-#include "sl_si91x_types.h"
-#include "sl_si91x_host_interface.h"
+#include "sl_wifi_types.h"
+#include "sl_wlan_config.h"
+#include "task.h"
+#include "wfx_host_events.h"
 
 #include "ble_config.h"
 
 #include "dhcp_client.h"
+#include "sl_wifi.h"
 #include "wfx_host_events.h"
 #include "wfx_rsi.h"
-#include "sl_wifi.h"
 
 struct wfx_rsi wfx_rsi;
 
@@ -56,12 +56,11 @@ bool hasNotifiedWifiConnectivity = false;
 bool is_wifi_disconnection_event = false;
 
 /* Declare a variable to hold connection time intervals */
-uint32_t retryInterval = WLAN_MIN_RETRY_TIMER_MS;
-volatile bool scan_results_complete  = false;
+uint32_t retryInterval              = WLAN_MIN_RETRY_TIMER_MS;
+volatile bool scan_results_complete = false;
 #define WIFI_SCAN_TIMEOUT 10000
 
 extern osSemaphoreId_t sl_rs_ble_init_sem;
-
 
 /*
  * This file implements the interface to the wifi sdk
@@ -97,18 +96,18 @@ int32_t wfx_rsi_get_ap_info(wfx_wifi_scan_result_t * ap)
  *********************************************************************/
 int32_t wfx_rsi_get_ap_ext(wfx_wifi_scan_ext_t * extra_info)
 {
-  sl_status_t status              = SL_STATUS_OK;
-  sl_wifi_statistics_t test = { 0 };
-  status = sl_wifi_get_statistics(SL_WIFI_CLIENT_INTERFACE, &test);
-  VERIFY_STATUS_AND_RETURN(status);
-  extra_info->beacon_lost_count = test.beacon_lost_count - temp_reset->beacon_lost_count;
-  extra_info->beacon_rx_count   = test.beacon_rx_count - temp_reset->beacon_rx_count;
-  extra_info->mcast_rx_count    = test.mcast_rx_count - temp_reset->mcast_rx_count;
-  extra_info->mcast_tx_count    = test.mcast_tx_count - temp_reset->mcast_tx_count;
-  extra_info->ucast_rx_count    = test.ucast_rx_count - temp_reset->ucast_rx_count;
-  extra_info->ucast_tx_count    = test.ucast_tx_count - temp_reset->ucast_tx_count;
-  extra_info->overrun_count     = test.overrun_count - temp_reset->overrun_count;
-  return status;
+    sl_status_t status        = SL_STATUS_OK;
+    sl_wifi_statistics_t test = { 0 };
+    status                    = sl_wifi_get_statistics(SL_WIFI_CLIENT_INTERFACE, &test);
+    VERIFY_STATUS_AND_RETURN(status);
+    extra_info->beacon_lost_count = test.beacon_lost_count - temp_reset->beacon_lost_count;
+    extra_info->beacon_rx_count   = test.beacon_rx_count - temp_reset->beacon_rx_count;
+    extra_info->mcast_rx_count    = test.mcast_rx_count - temp_reset->mcast_rx_count;
+    extra_info->mcast_tx_count    = test.mcast_tx_count - temp_reset->mcast_tx_count;
+    extra_info->ucast_rx_count    = test.ucast_rx_count - temp_reset->ucast_rx_count;
+    extra_info->ucast_tx_count    = test.ucast_tx_count - temp_reset->ucast_tx_count;
+    extra_info->overrun_count     = test.overrun_count - temp_reset->overrun_count;
+    return status;
 }
 
 /******************************************************************
@@ -121,18 +120,18 @@ int32_t wfx_rsi_get_ap_ext(wfx_wifi_scan_ext_t * extra_info)
  *********************************************************************/
 int32_t wfx_rsi_reset_count()
 {
-  sl_wifi_statistics_t test = { 0 };
-  sl_status_t status              = SL_STATUS_OK;
-  status = sl_wifi_get_statistics(SL_WIFI_CLIENT_INTERFACE, &test);
-  VERIFY_STATUS_AND_RETURN(status);
-  temp_reset->beacon_lost_count = test.beacon_lost_count;
-  temp_reset->beacon_rx_count   = test.beacon_rx_count;
-  temp_reset->mcast_rx_count    = test.mcast_rx_count;
-  temp_reset->mcast_tx_count    = test.mcast_tx_count;
-  temp_reset->ucast_rx_count    = test.ucast_rx_count;
-  temp_reset->ucast_tx_count    = test.ucast_tx_count;
-  temp_reset->overrun_count     = test.overrun_count;
-  return status;
+    sl_wifi_statistics_t test = { 0 };
+    sl_status_t status        = SL_STATUS_OK;
+    status                    = sl_wifi_get_statistics(SL_WIFI_CLIENT_INTERFACE, &test);
+    VERIFY_STATUS_AND_RETURN(status);
+    temp_reset->beacon_lost_count = test.beacon_lost_count;
+    temp_reset->beacon_rx_count   = test.beacon_rx_count;
+    temp_reset->mcast_rx_count    = test.mcast_rx_count;
+    temp_reset->mcast_tx_count    = test.mcast_tx_count;
+    temp_reset->ucast_rx_count    = test.ucast_rx_count;
+    temp_reset->ucast_tx_count    = test.ucast_tx_count;
+    temp_reset->overrun_count     = test.overrun_count;
+    return status;
 }
 
 /******************************************************************
@@ -145,16 +144,17 @@ int32_t wfx_rsi_reset_count()
  *********************************************************************/
 int32_t wfx_rsi_disconnect()
 {
-  return sl_wifi_disconnect(SL_WIFI_CLIENT_INTERFACE);
+    return sl_wifi_disconnect(SL_WIFI_CLIENT_INTERFACE);
 }
 
-sl_status_t join_callback_handler(sl_wifi_event_t event, char *result, uint32_t result_length, void *arg)
+sl_status_t join_callback_handler(sl_wifi_event_t event, char * result, uint32_t result_length, void * arg)
 {
-  temp_reset = (wfx_wifi_scan_ext_t *) malloc(sizeof(wfx_wifi_scan_ext_t));
-  memset(temp_reset, 0, sizeof(wfx_wifi_scan_ext_t));
-    if (CHECK_IF_EVENT_FAILED(event)) {
+    temp_reset = (wfx_wifi_scan_ext_t *) malloc(sizeof(wfx_wifi_scan_ext_t));
+    memset(temp_reset, 0, sizeof(wfx_wifi_scan_ext_t));
+    if (CHECK_IF_EVENT_FAILED(event))
+    {
         SILABS_LOG("F: Join Event received with %u bytes payload\n", result_length);
-        callback_status = *(sl_status_t *)result;
+        callback_status = *(sl_status_t *) result;
         return SL_STATUS_FAIL;
     }
     /*
@@ -167,8 +167,6 @@ sl_status_t join_callback_handler(sl_wifi_event_t event, char *result, uint32_t 
     return SL_STATUS_OK;
 }
 
-
-
 /*************************************************************************************
  * @fn  static int32_t wfx_rsi_init(void)
  * @brief
@@ -179,23 +177,25 @@ sl_status_t join_callback_handler(sl_wifi_event_t event, char *result, uint32_t 
  *****************************************************************************************/
 static int32_t wfx_rsi_init(void)
 {
-  sl_status_t status;
-  status = sl_wifi_init(&config  , default_wifi_event_handler);
-  if(status != SL_STATUS_OK){
-      SILABS_LOG("wfx_rsi_init failed %x", status);
-	return status;
-  }
+    sl_status_t status;
+    status = sl_wifi_init(&config, default_wifi_event_handler);
+    if (status != SL_STATUS_OK)
+    {
+        SILABS_LOG("wfx_rsi_init failed %x", status);
+        return status;
+    }
 
-  status = sl_wifi_get_mac_address(SL_WIFI_CLIENT_INTERFACE, (sl_mac_address_t *)&wfx_rsi.sta_mac.octet[0]);
-  if(status != SL_STATUS_OK){
-    SILABS_LOG("sl_wifi_get_mac_address failed: %x",status);
+    status = sl_wifi_get_mac_address(SL_WIFI_CLIENT_INTERFACE, (sl_mac_address_t *) &wfx_rsi.sta_mac.octet[0]);
+    if (status != SL_STATUS_OK)
+    {
+        SILABS_LOG("sl_wifi_get_mac_address failed: %x", status);
+        return status;
+    }
+
+    wfx_rsi.events = xEventGroupCreateStatic(&rsiDriverEventGroup);
+    wfx_rsi.dev_state |= WFX_RSI_ST_DEV_READY;
+    osSemaphoreRelease(sl_rs_ble_init_sem);
     return status;
-  }
-
-  wfx_rsi.events = xEventGroupCreateStatic(&rsiDriverEventGroup);
-  wfx_rsi.dev_state |= WFX_RSI_ST_DEV_READY;
-  osSemaphoreRelease(sl_rs_ble_init_sem);
-  return status;
 }
 
 /*************************************************************************************
@@ -211,54 +211,52 @@ void wfx_show_err(char * msg)
     SILABS_LOG("%s: message: %d", __func__, msg);
 }
 
-sl_status_t scan_callback_handler(sl_wifi_event_t event,
-                                  sl_wifi_scan_result_t *scan_result,
-                                  uint32_t result_length,
-                                  void *arg)
+sl_status_t scan_callback_handler(sl_wifi_event_t event, sl_wifi_scan_result_t * scan_result, uint32_t result_length, void * arg)
 {
-  if (CHECK_IF_EVENT_FAILED(event)) {
-    callback_status       = *(sl_status_t *)scan_result;
-    scan_results_complete = true;
+    if (CHECK_IF_EVENT_FAILED(event))
+    {
+        callback_status       = *(sl_status_t *) scan_result;
+        scan_results_complete = true;
 #if WIFI_ENABLE_SECURITY_WPA3_TRANSITION
-    wfx_rsi.sec.security = WFX_SEC_WPA3;
+        wfx_rsi.sec.security = WFX_SEC_WPA3;
 #else
-    wfx_rsi.sec.security = WFX_SEC_WPA2;
+        wfx_rsi.sec.security = WFX_SEC_WPA2;
 #endif /* WIFI_ENABLE_SECURITY_WPA3_TRANSITION */
-    return SL_STATUS_FAIL;
-  }
-  wfx_rsi.sec.security = WFX_SEC_UNSPECIFIED;
-  wfx_rsi.ap_chan      = scan_result->scan_info[0].rf_channel;
-  memcpy(&wfx_rsi.ap_mac.octet[0], scan_result->scan_info[0].bssid[0], BSSID_MAX_STR_LEN);
-  switch (scan_result->scan_info[0].security_mode)
-  {
-     case SL_WIFI_OPEN:
-         wfx_rsi.sec.security = WFX_SEC_NONE;
-         break;
-     case SL_WIFI_WPA:
-     case SL_WIFI_WPA_ENTERPRISE:
-         wfx_rsi.sec.security = WFX_SEC_WPA;
-         break;
-     case SL_WIFI_WPA2:
-     case SL_WIFI_WPA2_ENTERPRISE:
-         wfx_rsi.sec.security = WFX_SEC_WPA2;
-         break;
-     case SL_WIFI_WEP:
-         wfx_rsi.sec.security = WFX_SEC_WEP;
-         break;
-     case SL_WIFI_WPA3_TRANSITION :
- #if WIFI_ENABLE_SECURITY_WPA3_TRANSITION
-     case SL_WIFI_WPA3:
-         wfx_rsi.sec.security = WFX_SEC_WPA3;
- #else
-         wfx_rsi.sec.security = WFX_SEC_WPA2;
- #endif /* WIFI_ENABLE_SECURITY_WPA3_TRANSITION */
-         break;
-     default:
-         wfx_rsi.sec.security = WFX_SEC_UNSPECIFIED;
-         break;
- }
- scan_results_complete = true;
- return SL_STATUS_OK;
+        return SL_STATUS_FAIL;
+    }
+    wfx_rsi.sec.security = WFX_SEC_UNSPECIFIED;
+    wfx_rsi.ap_chan      = scan_result->scan_info[0].rf_channel;
+    memcpy(&wfx_rsi.ap_mac.octet[0], scan_result->scan_info[0].bssid[0], BSSID_MAX_STR_LEN);
+    switch (scan_result->scan_info[0].security_mode)
+    {
+    case SL_WIFI_OPEN:
+        wfx_rsi.sec.security = WFX_SEC_NONE;
+        break;
+    case SL_WIFI_WPA:
+    case SL_WIFI_WPA_ENTERPRISE:
+        wfx_rsi.sec.security = WFX_SEC_WPA;
+        break;
+    case SL_WIFI_WPA2:
+    case SL_WIFI_WPA2_ENTERPRISE:
+        wfx_rsi.sec.security = WFX_SEC_WPA2;
+        break;
+    case SL_WIFI_WEP:
+        wfx_rsi.sec.security = WFX_SEC_WEP;
+        break;
+    case SL_WIFI_WPA3_TRANSITION:
+#if WIFI_ENABLE_SECURITY_WPA3_TRANSITION
+    case SL_WIFI_WPA3:
+        wfx_rsi.sec.security = WFX_SEC_WPA3;
+#else
+        wfx_rsi.sec.security = WFX_SEC_WPA2;
+#endif /* WIFI_ENABLE_SECURITY_WPA3_TRANSITION */
+        break;
+    default:
+        wfx_rsi.sec.security = WFX_SEC_UNSPECIFIED;
+        break;
+    }
+    scan_results_complete = true;
+    return SL_STATUS_OK;
 }
 /***************************************************************************************
  * @fn   static void wfx_rsi_save_ap_info()
@@ -270,22 +268,24 @@ sl_status_t scan_callback_handler(sl_wifi_event_t event,
  *******************************************************************************************/
 static void wfx_rsi_save_ap_info() // translation
 {
-  sl_status_t status = SL_STATUS_OK;
-  sl_wifi_scan_configuration_t wifi_scan_configuration              = { 0 };
-  wifi_scan_configuration = default_wifi_scan_configuration;
-  sl_wifi_ssid_t ssid_arg;
-  ssid_arg.length = strlen(wfx_rsi.sec.ssid);
-  memcpy(ssid_arg.value, (int8_t *) &wfx_rsi.sec.ssid[0], ssid_arg.length);
-  sl_wifi_set_scan_callback(scan_callback_handler, NULL);
-  status = sl_wifi_start_scan(SL_WIFI_CLIENT_2_4GHZ_INTERFACE, &ssid_arg, &wifi_scan_configuration);
-  if (SL_STATUS_IN_PROGRESS == status) {
-    const uint32_t start = osKernelGetTickCount();
-    while (!scan_results_complete && (osKernelGetTickCount() - start) <= WIFI_SCAN_TIMEOUT) {
-      osThreadYield();
+    sl_status_t status                                   = SL_STATUS_OK;
+    sl_wifi_scan_configuration_t wifi_scan_configuration = { 0 };
+    wifi_scan_configuration                              = default_wifi_scan_configuration;
+    sl_wifi_ssid_t ssid_arg;
+    ssid_arg.length = strlen(wfx_rsi.sec.ssid);
+    memcpy(ssid_arg.value, (int8_t *) &wfx_rsi.sec.ssid[0], ssid_arg.length);
+    sl_wifi_set_scan_callback(scan_callback_handler, NULL);
+    status = sl_wifi_start_scan(SL_WIFI_CLIENT_2_4GHZ_INTERFACE, &ssid_arg, &wifi_scan_configuration);
+    if (SL_STATUS_IN_PROGRESS == status)
+    {
+        const uint32_t start = osKernelGetTickCount();
+        while (!scan_results_complete && (osKernelGetTickCount() - start) <= WIFI_SCAN_TIMEOUT)
+        {
+            osThreadYield();
+        }
+        status = scan_results_complete ? callback_status : SL_STATUS_TIMEOUT;
     }
-    status = scan_results_complete ? callback_status : SL_STATUS_TIMEOUT;
-  }
-  return status;
+    return status;
 }
 
 /********************************************************************************************
@@ -301,24 +301,23 @@ static void wfx_rsi_do_join(void)
     sl_wifi_security_t connect_security_mode;
     switch (wfx_rsi.sec.security)
     {
-      case WFX_SEC_WEP:
+    case WFX_SEC_WEP:
         connect_security_mode = SL_WIFI_WEP;
         break;
-      case WFX_SEC_WPA:
-      case WFX_SEC_WPA2:
+    case WFX_SEC_WPA:
+    case WFX_SEC_WPA2:
         connect_security_mode = SL_WIFI_WPA_WPA2_MIXED;
         break;
-      case WFX_SEC_WPA3:
+    case WFX_SEC_WPA3:
         connect_security_mode = SL_WIFI_WPA3;
         break;
-      case WFX_SEC_NONE:
+    case WFX_SEC_NONE:
         connect_security_mode = SL_WIFI_OPEN;
         break;
-      default:
+    default:
         SILABS_LOG("%s: error: unknown security type.");
         return;
     }
-
 
     if (wfx_rsi.dev_state & (WFX_RSI_ST_STA_CONNECTING | WFX_RSI_ST_STA_CONNECTED))
     {
@@ -327,7 +326,7 @@ static void wfx_rsi_do_join(void)
     else
     {
         SILABS_LOG("%s: WLAN: connecting to %s==%s, sec=%d", __func__, &wfx_rsi.sec.ssid[0], &wfx_rsi.sec.passkey[0],
-                    wfx_rsi.sec.security);
+                   wfx_rsi.sec.security);
 
         /*
          * Join the network
@@ -346,10 +345,10 @@ static void wfx_rsi_do_join(void)
         /* Call rsi connect call with given ssid and password
          * And check there is a success
          */
-        sl_wifi_credential_t cred                           = { 0 };
-        cred.type = SL_WIFI_CRED_PSK;
+        sl_wifi_credential_t cred = { 0 };
+        cred.type                 = SL_WIFI_CRED_PSK;
         memcpy(cred.psk.value, &wfx_rsi.sec.passkey[0], strlen(wfx_rsi.sec.passkey));
-        sl_wifi_credential_id_t id        = SL_NET_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID;
+        sl_wifi_credential_id_t id = SL_NET_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID;
         status = sl_net_set_credential(id, SL_NET_WIFI_PSK, &wfx_rsi.sec.passkey[0], strlen(wfx_rsi.sec.passkey));
         if (SL_STATUS_OK != status)
         {
@@ -359,26 +358,30 @@ static void wfx_rsi_do_join(void)
         sl_wifi_client_configuration_t ap = { 0 };
         uint32_t timeout_ms               = 0;
 
-        ap.ssid.length                    = strlen(wfx_rsi.sec.ssid);
+        ap.ssid.length = strlen(wfx_rsi.sec.ssid);
         memcpy(ap.ssid.value, (int8_t *) &wfx_rsi.sec.ssid[0], ap.ssid.length);
         ap.security      = connect_security_mode;
         ap.encryption    = SL_WIFI_NO_ENCRYPTION;
         ap.credential_id = id;
-        if ((status =  sl_wifi_connect(SL_WIFI_CLIENT_INTERFACE, &ap, timeout_ms)) == SL_STATUS_IN_PROGRESS)
+        if ((status = sl_wifi_connect(SL_WIFI_CLIENT_INTERFACE, &ap, timeout_ms)) == SL_STATUS_IN_PROGRESS)
         {
             callback_status = SL_STATUS_IN_PROGRESS;
-            while (callback_status == SL_STATUS_IN_PROGRESS) {
-                    osThreadYield();
+            while (callback_status == SL_STATUS_IN_PROGRESS)
+            {
+                osThreadYield();
             }
             status = callback_status;
-       } else {
-            while (is_wifi_disconnection_event || wfx_rsi.join_retries <= WFX_RSI_CONFIG_MAX_JOIN) {
+        }
+        else
+        {
+            while (is_wifi_disconnection_event || wfx_rsi.join_retries <= WFX_RSI_CONFIG_MAX_JOIN)
+            {
                 SILABS_LOG("%s: failed. retry: %d", __func__, wfx_rsi.join_retries);
                 wfx_retry_interval_handler(is_wifi_disconnection_event, wfx_rsi.join_retries++);
                 if (is_wifi_disconnection_event || wfx_rsi.join_retries <= WFX_RSI_CONFIG_MAX_JOIN)
                     xEventGroupSetBits(wfx_rsi.events, WFX_EVT_STA_START_JOIN);
-                    SILABS_LOG("%s: starting JOIN to %s after %d tries\n", __func__, (char *) &wfx_rsi.sec.ssid[0],
-                            wfx_rsi.join_retries);
+                SILABS_LOG("%s: starting JOIN to %s after %d tries\n", __func__, (char *) &wfx_rsi.sec.ssid[0],
+                           wfx_rsi.join_retries);
             }
         }
     }
@@ -402,7 +405,8 @@ void wfx_rsi_task(void * arg)
     struct netif * sta_netif;
     (void) arg;
     uint32_t rsi_status = wfx_rsi_init();
-    if (rsi_status != RSI_SUCCESS) {
+    if (rsi_status != RSI_SUCCESS)
+    {
         SILABS_LOG("%s: error: wfx_rsi_init with status: %02x", __func__, rsi_status);
         return;
     }
@@ -412,7 +416,8 @@ void wfx_rsi_task(void * arg)
     wfx_started_notify();
 
     SILABS_LOG("%s: starting event wait", __func__);
-    for (;;) {
+    for (;;)
+    {
         /*
          * This is the main job of this task.
          * Wait for commands from the ConnectivityManager
@@ -557,7 +562,7 @@ void wfx_dhcp_got_ipv4(uint32_t ip)
     wfx_rsi.ip4_addr[2] = (ip >> 16) & HEX_VALUE_FF;
     wfx_rsi.ip4_addr[3] = (ip >> 24) & HEX_VALUE_FF;
     SILABS_LOG("%s: DHCP OK: IP=%d.%d.%d.%d", __func__, wfx_rsi.ip4_addr[0], wfx_rsi.ip4_addr[1], wfx_rsi.ip4_addr[2],
-                wfx_rsi.ip4_addr[3]);
+               wfx_rsi.ip4_addr[3]);
     /* Notify the Connectivity Manager - via the app */
     wfx_rsi.dev_state |= WFX_RSI_ST_STA_DHCP_DONE;
     wfx_ip_changed_notify(IP_STATUS_SUCCESS);
@@ -581,19 +586,18 @@ void wfx_dhcp_got_ipv4(uint32_t ip)
  **********************************************************************************************/
 void * wfx_rsi_alloc_pkt(uint16_t data_length)
 {
-   sl_wifi_buffer_t *buffer;
-   sl_si91x_packet_t *packet;
-   sl_status_t status = SL_STATUS_OK;
+    sl_wifi_buffer_t * buffer;
+    sl_si91x_packet_t * packet;
+    sl_status_t status = SL_STATUS_OK;
 
-   /* Confirm if packet is allocated */
+    /* Confirm if packet is allocated */
 
-    status = sl_si91x_allocate_command_buffer(&buffer,
-                                            (void **)&packet,
-                                            sizeof(sl_si91x_packet_t) + data_length,
-                                            SL_WIFI_ALLOCATE_COMMAND_BUFFER_WAIT_TIME);
-//    VERIFY_STATUS_AND_RETURN(status);
-    if (packet == NULL) {
-      return SL_STATUS_ALLOCATION_FAILED;
+    status = sl_si91x_allocate_command_buffer(&buffer, (void **) &packet, sizeof(sl_si91x_packet_t) + data_length,
+                                              SL_WIFI_ALLOCATE_COMMAND_BUFFER_WAIT_TIME);
+    //    VERIFY_STATUS_AND_RETURN(status);
+    if (packet == NULL)
+    {
+        return SL_STATUS_ALLOCATION_FAILED;
     }
     return (void *) packet;
 }
@@ -627,14 +631,14 @@ void wfx_rsi_pkt_add_data(void * p, uint8_t * buf, uint16_t len, uint16_t off)
  **********************************************************************************************/
 int32_t wfx_rsi_send_data(void * p, uint16_t len)
 {
-  int32_t status;
-  sl_wifi_buffer_t *buffer;
-  buffer = (sl_wifi_buffer_t *) p;
+    int32_t status;
+    sl_wifi_buffer_t * buffer;
+    buffer = (sl_wifi_buffer_t *) p;
 
-  if (sl_si91x_driver_send_data_packet(SI91X_WLAN_CMD_QUEUE,buffer, RSI_SEND_RAW_DATA_RESPONSE_WAIT_TIME))
-  {
-      SILABS_LOG("*ERR*EN-RSI:Send fail");
-      return ERR_IF;
-  }
-  return status;
+    if (sl_si91x_driver_send_data_packet(SI91X_WLAN_CMD_QUEUE, buffer, RSI_SEND_RAW_DATA_RESPONSE_WAIT_TIME))
+    {
+        SILABS_LOG("*ERR*EN-RSI:Send fail");
+        return ERR_IF;
+    }
+    return status;
 }

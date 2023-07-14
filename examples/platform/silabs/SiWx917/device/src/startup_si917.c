@@ -15,10 +15,10 @@
  *    limitations under the License.
  */
 
+#include "cmsis_gcc.h"
 #include "system_si917.h"
 #include <stdbool.h>
 #include <stdint.h>
-#include "cmsis_gcc.h"
 
 #ifdef BOOTLOADER_ENABLE
 #include "api/btl_interface.h"

@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "stdbool.h"
 #include "sl_si91x_types.h"
+#include "stdbool.h"
 
 #include "wfx_msgs.h"
 
@@ -211,7 +211,7 @@ bool wfx_is_sta_mode_enabled(void);
 int32_t wfx_get_ap_info(wfx_wifi_scan_result_t * ap);
 int32_t wfx_get_ap_ext(wfx_wifi_scan_ext_t * extra_info);
 int32_t wfx_reset_counts();
-//int32_t wfx_rsi_platform();
+// int32_t wfx_rsi_platform();
 
 void wfx_clear_wifi_provision(void);
 sl_status_t wfx_connect_to_ap(void);
@@ -248,16 +248,12 @@ void wfx_ip_changed_notify(int got_ip);
 void wfx_ipv6_notify(int got_ip);
 
 /* RSI for LWIP */
-//void * wfx_rsi_alloc_pkt(void);
+// void * wfx_rsi_alloc_pkt(void);
 void * wfx_rsi_alloc_pkt(uint16_t data_length);
 void wfx_rsi_pkt_add_data(void * p, uint8_t * buf, uint16_t len, uint16_t off);
 int32_t wfx_rsi_send_data(void * p, uint16_t len);
-sl_status_t sl_si91x_driver_send_data_packet(sl_si91x_queue_type_t queue_type,
-                                             sl_wifi_buffer_t *setbuffer,
-                                             uint32_t wait_time);
-sl_status_t sl_si91x_allocate_command_buffer(sl_wifi_buffer_t **host_buffer,
-                                             void **buffer,
-                                             uint32_t requested_buffer_size,
+sl_status_t sl_si91x_driver_send_data_packet(sl_si91x_queue_type_t queue_type, sl_wifi_buffer_t * setbuffer, uint32_t wait_time);
+sl_status_t sl_si91x_allocate_command_buffer(sl_wifi_buffer_t ** host_buffer, void ** buffer, uint32_t requested_buffer_size,
                                              uint32_t wait_duration_ms);
 
 void wfx_retry_interval_handler(bool is_wifi_disconnection_event, uint16_t retryJoin);

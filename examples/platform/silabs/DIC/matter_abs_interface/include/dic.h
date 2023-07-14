@@ -26,21 +26,23 @@ extern "C" {
 #endif
 #include "stdint.h"
 
-typedef enum {
-	DIC_OK = 0,
-	DIC_ERR_INVAL,
-	DIC_ERR_MEM,
-	DIC_ERR_FAIL,
+typedef enum
+{
+    DIC_OK = 0,
+    DIC_ERR_INVAL,
+    DIC_ERR_MEM,
+    DIC_ERR_FAIL,
 } dic_err_t;
 
-typedef struct {
-	uint8_t *dataP;
-	uint16_t dataLen;
+typedef struct
+{
+    uint8_t * dataP;
+    uint16_t dataLen;
 } dic_buff_t;
 
 dic_err_t DIC_Init(void);
 
-dic_err_t DIC_SendMsg(const char *subject, const char *content);
+dic_err_t DIC_SendMsg(const char * subject, const char * content);
 
 #ifdef __cplusplus
 }

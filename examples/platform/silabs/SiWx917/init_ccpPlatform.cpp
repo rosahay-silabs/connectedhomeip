@@ -24,14 +24,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <assert.h>
-#include <string.h>
-#include "sl_system_init.h"
-#include <mbedtls/platform.h>
 #include "rsi_pll.h"
 #include "rsi_rom_clks.h"
 #include "siwx917_utils.h"
+#include "sl_system_init.h"
 #include "sli_siwx917_soc.h"
+#include <assert.h>
+#include <mbedtls/platform.h>
+#include <string.h>
 
 #include "init_ccpPlatform.h"
 

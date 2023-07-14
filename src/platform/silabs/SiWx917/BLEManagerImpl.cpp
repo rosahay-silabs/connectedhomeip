@@ -60,8 +60,8 @@ extern rsi_ble_event_conn_status_t conn_event_to_app;
 extern sl_wfx_msg_t event_msg;
 
 StaticTask_t rsiBLETaskStruct;
-//rsi_semaphore_handle_t sl_rs_ble_init_sem;
-//rsi_semaphore_handle_t sl_ble_event_sem;
+// rsi_semaphore_handle_t sl_rs_ble_init_sem;
+// rsi_semaphore_handle_t sl_ble_event_sem;
 
 osSemaphoreId_t sl_ble_event_sem;   // Matter
 osSemaphoreId_t sl_rs_ble_init_sem; // Matter
@@ -75,7 +75,7 @@ using namespace ::chip::DeviceLayer::Internal;
 
 void sl_ble_init()
 {
-    //printf("%s starting", __func__);
+    // printf("%s starting", __func__);
 
     // registering the GAP callback functions
     rsi_ble_gap_register_callbacks(NULL, NULL, rsi_ble_on_disconnect_event, NULL, NULL, NULL, rsi_ble_on_enhance_conn_status_event,
@@ -86,7 +86,7 @@ void sl_ble_init()
                                     rsi_ble_on_mtu_event, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
                                     rsi_ble_on_event_indication_confirmation, NULL);
 
-    //printf("registering rsi_ble_add_service");
+    // printf("registering rsi_ble_add_service");
 
     //  Exchange of GATT info with BLE stack
     rsi_ble_add_matter_service();
@@ -94,16 +94,16 @@ void sl_ble_init()
     //  initializing the application events map
     rsi_ble_app_init_events();
 
-    //printf("StartAdvertising");
+    // printf("StartAdvertising");
     chip::DeviceLayer::Internal::BLEManagerImpl().StartAdvertising(); // TODO:: Called on after init of module
-    //printf("%s  Ended", __func__);
+    // printf("%s  Ended", __func__);
 }
 
 void sl_ble_event_handling_task(void)
 {
     int32_t event_id;
 
-    //printf("%s starting", __func__);
+    // printf("%s starting", __func__);
 
     //! This semaphore is waiting for wifi module initialization.
     // rsi_semaphore_wait(&sl_rs_ble_init_sem, 0);
@@ -116,18 +116,18 @@ void sl_ble_event_handling_task(void)
 
         event_id = rsi_ble_app_get_event();
         // checking for events list
-//        if (event_id == -1)
-//        {
-//            //! This semaphore is waiting for next ble event task
-//            osSemaphoreAcquire(sl_ble_event_sem, osWaitForever);
-//            continue;
-//        }
+        //        if (event_id == -1)
+        //        {
+        //            //! This semaphore is waiting for next ble event task
+        //            osSemaphoreAcquire(sl_ble_event_sem, osWaitForever);
+        //            continue;
+        //        }
         switch (event_id)
         {
         case RSI_BLE_CONN_EVENT: {
             rsi_ble_app_clear_event(RSI_BLE_CONN_EVENT);
             BLEMgrImpl().HandleConnectEvent();
-            //printf("%s Module got connected", __func__);
+            // printf("%s Module got connected", __func__);
             // Requests the connection parameters change with the remote device
             rsi_ble_conn_params_update(event_msg.resp_enh_conn.dev_addr, BLE_MIN_CONNECTION_INTERVAL_MS,
                                        BLE_MAX_CONNECTION_INTERVAL_MS, BLE_SLAVE_LATENCY_MS, BLE_TIMEOUT_MS);
@@ -135,7 +135,7 @@ void sl_ble_event_handling_task(void)
         break;
         case RSI_BLE_DISCONN_EVENT: {
             // event invokes when disconnection was completed
-            //printf("%s Module got Disconnected", __func__);
+            // printf("%s Module got Disconnected", __func__);
             BLEMgrImpl().HandleConnectionCloseEvent(event_msg.reason);
             // clear the served event
             rsi_ble_app_clear_event(RSI_BLE_DISCONN_EVENT);
@@ -143,7 +143,7 @@ void sl_ble_event_handling_task(void)
         break;
         case RSI_BLE_MTU_EVENT: {
             // event invokes when write/notification events received
-            //printf("%s RSI_BLE_MTU_EVENT", __func__);
+            // printf("%s RSI_BLE_MTU_EVENT", __func__);
             BLEMgrImpl().UpdateMtu(event_msg.rsi_ble_mtu);
             // clear the served event
             rsi_ble_app_clear_event(RSI_BLE_MTU_EVENT);
@@ -151,28 +151,28 @@ void sl_ble_event_handling_task(void)
         break;
         case RSI_BLE_GATT_WRITE_EVENT: {
             // event invokes when write/notification events received
-            //printf("%s RSI_BLE_GATT_WRITE_EVENT", __func__);
+            // printf("%s RSI_BLE_GATT_WRITE_EVENT", __func__);
             BLEMgrImpl().HandleWriteEvent(event_msg.rsi_ble_write);
             // clear the served event
             rsi_ble_app_clear_event(RSI_BLE_GATT_WRITE_EVENT);
         }
         break;
         case RSI_BLE_GATT_INDICATION_CONFIRMATION: {
-            //printf("%s indication confirmation", __func__);
+            // printf("%s indication confirmation", __func__);
             BLEMgrImpl().HandleTxConfirmationEvent(1);
             rsi_ble_app_clear_event(RSI_BLE_GATT_INDICATION_CONFIRMATION);
         }
         break;
 
         case RSI_BLE_RESP_ATT_VALUE: {
-            //printf("%s RESP_ATT confirmation", __func__);
+            // printf("%s RESP_ATT confirmation", __func__);
         }
         default:
             break;
         }
     }
 
-    //printf("%s Ended", __func__);
+    // printf("%s Ended", __func__);
 }
 
 namespace chip {
@@ -247,7 +247,7 @@ CHIP_ERROR BLEManagerImpl::_Init()
 
     if (wfx_rsi.ble_task == NULL)
     {
-        //printf("%s: error: failed to create ble task.", __func__);
+        // printf("%s: error: failed to create ble task.", __func__);
     }
 
     // Initialize the CHIP BleLayer.
@@ -440,12 +440,12 @@ bool BLEManagerImpl::SendIndication(BLE_CONNECTION_OBJECT conId, const ChipBleUU
                                     PacketBufferHandle data)
 {
     int32_t status = 0;
-    //printf("In send indication");
+    // printf("In send indication");
     status = rsi_ble_indicate_value(event_msg.resp_enh_conn.dev_addr, event_msg.rsi_ble_measurement_hndl, (data->DataLength()),
                                     data->Start());
     if (status != RSI_SUCCESS)
     {
-        //printf("indication %d failed with error code %lx ", status);
+        // printf("indication %d failed with error code %lx ", status);
         return false;
     }
 
@@ -731,17 +731,17 @@ void BLEManagerImpl::HandleConnectionCloseEvent(uint16_t reason)
     status = rsi_bt_power_save_profile(RSI_SLEEP_MODE_2, RSI_MAX_PSP);
     if (status != RSI_SUCCESS)
     {
-        //printf("BT Powersave Config Failed, Error Code : 0x%lX", status);
+        // printf("BT Powersave Config Failed, Error Code : 0x%lX", status);
         return;
     }
 
     status = rsi_wlan_power_save_profile(RSI_SLEEP_MODE_2, RSI_MAX_PSP);
     if (status != RSI_SUCCESS)
     {
-        //printf("WLAN Powersave Config Failed, Error Code : 0x%lX", status);
+        // printf("WLAN Powersave Config Failed, Error Code : 0x%lX", status);
         return;
     }
-    //printf("Powersave Config Success");
+    // printf("Powersave Config Success");
 #endif
 
     if (RemoveConnection(connHandle))
@@ -780,7 +780,7 @@ void BLEManagerImpl::HandleWriteEvent(rsi_ble_event_write_t evt)
     ChipLogProgress(DeviceLayer, "Char Write Req, packet type %d", evt.pkt_type);
     // uint8_t attribute = (uint8_t) event_msg.rsi_ble_measurement_hndl;
 
-    //printf("event_msg.rsi_ble_gatt_server_client_config_hndl = %d", event_msg.rsi_ble_gatt_server_client_config_hndl);
+    // printf("event_msg.rsi_ble_gatt_server_client_config_hndl = %d", event_msg.rsi_ble_gatt_server_client_config_hndl);
 
     if (evt.handle[0] == (uint8_t) event_msg.rsi_ble_gatt_server_client_config_hndl) // TODO:: compare the handle exactly
     {

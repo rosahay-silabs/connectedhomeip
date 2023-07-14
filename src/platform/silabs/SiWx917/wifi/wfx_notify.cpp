@@ -183,7 +183,6 @@ void wfx_ip_changed_notify(int got_ip)
     }
 }
 
-
 /**************************************************************************************
  * @fn  void wfx_retry_interval_handler(bool is_wifi_disconnection_event, uint16_t retryJoin)
  * @brief

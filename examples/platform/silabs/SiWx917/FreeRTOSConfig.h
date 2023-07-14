@@ -103,8 +103,8 @@
 extern "C" {
 #endif
 
-#include <CHIPProjectConfig.h>
 #include "RS1xxxx_9117.h"
+#include <CHIPProjectConfig.h>
 #include <stdint.h>
 
 /*-----------------------------------------------------------

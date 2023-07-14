@@ -15,9 +15,9 @@
  *    limitations under the License.
  */
 
+#include "RS1xxxx_9117.h"
 #include "sli_siwx917_soc.h"
 #include "system_si917.h"
-#include "RS1xxxx_9117.h"
 
 /*----------Stack Configuration-----------------------------------------------*/
 #define STACK_SIZE 0x00000C00 /*!< Stack size (in Words)           */
