@@ -341,74 +341,6 @@ static SemaphoreHandle_t ethout_sem;
  ******************************************************************************/
 static err_t low_level_output(struct netif * netif, struct pbuf * p)
 {
-#if 0
-    void * rsipkt;
-    struct pbuf * q;
-    uint16_t framelength;
-
-    if (xSemaphoreTake(ethout_sem, portMAX_DELAY) != pdTRUE)
-    {
-        return ERR_IF;
-    }
-#ifdef WIFI_DEBUG_ENABLED
-    SILABS_LOG("EN-RSI: Output");
-#endif
-    if ((netif->flags & (NETIF_FLAG_LINK_UP | NETIF_FLAG_UP)) != (NETIF_FLAG_LINK_UP | NETIF_FLAG_UP))
-    {
-        SILABS_LOG("EN-RSI:NOT UP");
-        xSemaphoreGive(ethout_sem);
-        return ERR_IF;
-    }
-    /* Confirm if packet is allocated */
-    rsipkt = wfx_rsi_alloc_pkt(p->len);
-    if (!rsipkt)
-    {
-        SILABS_LOG("EN-RSI:No buf");
-        xSemaphoreGive(ethout_sem);
-        return ERR_IF;
-    }
-
-#ifdef WIFI_DEBUG_ENABLED
-    uint8_t * b = (uint8_t *) p->payload;
-    SILABS_LOG("EN-RSI: Out [%02x:%02x:%02x:%02x:%02x:%02x][%02x:%02x:%02x:%02x:%02x:%02x]type=%02x%02x", b[0], b[1], b[2], b[3],
-               b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13]);
-#endif
-    /* Generate the packet */
-    for (q = p, framelength = 0; q != NULL; q = q->next)
-    {
-        wfx_rsi_pkt_add_data(rsipkt, (uint8_t *) (q->payload), (uint16_t) q->len, framelength);
-        framelength += q->len;
-    }
-    if (framelength < LWIP_FRAME_ALIGNMENT)
-    {
-        /* Add junk data to the end for frame alignment if framelength is less than 60 */
-        wfx_rsi_pkt_add_data(rsipkt, (uint8_t *) (p->payload), LWIP_FRAME_ALIGNMENT - framelength, framelength);
-    }
-#ifdef WIFI_DEBUG_ENABLED
-    SILABS_LOG("EN-RSI: Sending %d", framelength);
-#endif
-
-    /* forward the generated packet to RSI to
-     * send the data over wifi network
-     */
-    if (wfx_rsi_send_data(rsipkt, framelength))
-    {
-        SILABS_LOG("*ERR*EN-RSI:Send fail");
-        xSemaphoreGive(ethout_sem);
-        return ERR_IF;
-    }
-
-#ifdef WIFI_DEBUG_ENABLED
-    SILABS_LOG("EN-RSI:Xmit %d", framelength);
-#endif
-    xSemaphoreGive(ethout_sem);
-
-    return ERR_OK;
-#endif
-
-
-
- #if 1
   sl_wifi_buffer_t *buffer;
   sl_si91x_packet_t *packet;
   sl_status_t status = SL_STATUS_OK;
@@ -435,18 +367,12 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
                                             (void **)&packet,
                                             sizeof(sl_si91x_packet_t) + p->len,
                                             SL_WIFI_ALLOCATE_COMMAND_BUFFER_WAIT_TIME);
-    VERIFY_STATUS_AND_RETURN(status);
-    if (packet == NULL) {
-      SILABS_LOG("EN-RSI:No buf");
-      xSemaphoreGive(ethout_sem);
-      return SL_STATUS_ALLOCATION_FAILED;
+    if (status || packet == NULL)
+    {
+        SILABS_LOG("failed to allocate buffer");
+        xSemaphoreGive(ethout_sem);
+        return SL_STATUS_ALLOCATION_FAILED;
     }
-//    if (!rsipkt)
-//    {
-//        SILABS_LOG("EN-RSI:No buf");
-//        xSemaphoreGive(ethout_sem);
-//        return ERR_IF;
-//    }
     memset(packet->desc, 0, sizeof(packet->desc));
 #ifdef WIFI_DEBUG_ENABLED
     uint8_t * b = (uint8_t *) p->payload;
@@ -470,31 +396,20 @@ static err_t low_level_output(struct netif * netif, struct pbuf * p)
      // Fill frame type
     packet->length  = p->len & 0xFFF;
     packet->command =  0x1;
-    SILABS_LOG("sl_si91x_driver_send_data_packet before");
-    if (sl_si91x_driver_send_data_packet(SI91X_WLAN_CMD_QUEUE,buffer, 1000))
+    status = sl_si91x_driver_send_data_packet(SI91X_WLAN_CMD_QUEUE,buffer, 1000);
+    if (status)
     {
-        SILABS_LOG("*ERR*EN-RSI:Send fail");
+        SILABS_LOG("send_data_packet failed status: %x", status);
         xSemaphoreGive(ethout_sem);
         return ERR_IF;
     }
-    SILABS_LOG("sl_si91x_driver_send_data_packet after");
-    /* forward the generated packet to RSI to
+    /* 
+     * forward the generated packet to RSI to
      * send the data over wifi network
      */
- /*   if (wfx_rsi_send_data(rsipkt, framelength))
-    {
-        SILABS_LOG("*ERR*EN-RSI:Send fail");
-        xSemaphoreGive(ethout_sem);
-        return ERR_IF;
-    }
-
-#ifdef WIFI_DEBUG_ENABLED
-    SILABS_LOG("EN-RSI:Xmit %d", framelength);
-#endif*/
     xSemaphoreGive(ethout_sem);
 
     return ERR_OK;
-#endif
 }
 
 sl_status_t sl_si91x_host_process_data_frame(sl_wifi_interface_t interface, sl_wifi_buffer_t *buffer)
