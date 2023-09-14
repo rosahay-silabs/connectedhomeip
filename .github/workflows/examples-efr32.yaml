@@ -106,6 +106,8 @@ jobs:
                 build \
                 --copy-artifacts-to out/artifacts \
              "
+      - name: Clean out build output
+        run: rm -rf ./out
       - name: Prepare some bloat report from the previous builds
         run: |
           .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
