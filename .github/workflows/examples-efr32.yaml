@@ -97,6 +97,15 @@ jobs:
                 build \
                 --copy-artifacts-to out/artifacts \
              "
+      - name: Build BRD4338A variants
+        run: |
+          ./scripts/run_in_build_env.sh \
+             "./scripts/build/build_examples.py \
+                --enable-flashbundle \
+                --target efr32-brd4338a-light \
+                build \
+                --copy-artifacts-to out/artifacts \
+             "
       - name: Prepare some bloat report from the previous builds
         run: |
           .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \

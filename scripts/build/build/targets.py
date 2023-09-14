@@ -225,6 +225,7 @@ def BuildEfr32Target():
         TargetPart('brd4186a', board=Efr32Board.BRD4186A),
         TargetPart('brd4187a', board=Efr32Board.BRD4187A),
         TargetPart('brd4304a', board=Efr32Board.BRD4304A),
+        TargerPart('brd4338a', board=Efr32Board.BRD4338A),
     ])
 
     # apps
