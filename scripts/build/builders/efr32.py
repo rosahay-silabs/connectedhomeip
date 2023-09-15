@@ -152,7 +152,8 @@ class Efr32Builder(GnBuilder):
                  enable_additional_data_advertising: bool = False,
                  enable_ot_lib: bool = False,
                  enable_ot_coap_lib: bool = False,
-                 no_version: bool = False
+                 no_version: bool = False,
+                 enable_917_soc: bool = False
                  ):
         super(Efr32Builder, self).__init__(
             root=app.BuildRoot(root),
@@ -203,6 +204,8 @@ class Efr32Builder(GnBuilder):
                 self.extra_gn_options.append('use_rs911x=true')
             elif enable_wf200:
                 self.extra_gn_options.append('use_wf200=true')
+            elif enable_917_soc:
+                self.extra_gn_options.append('chip_device_platform=\"SiWx917\"')
             else:
                 raise Exception('Wifi usage: ...-wifi-[rs911x|wf200]-...')
 

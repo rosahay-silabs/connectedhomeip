@@ -97,17 +97,6 @@ jobs:
                 build \
                 --copy-artifacts-to out/artifacts \
              "
-      - name: Build BRD4338A variants
-        run: |
-          ./scripts/run_in_build_env.sh \
-             "./scripts/build/build_examples.py \
-                --enable-flashbundle \
-                --target efr32-brd4338a-light \
-                build \
-                --copy-artifacts-to out/artifacts \
-             "
-      - name: Clean out build output
-        run: rm -rf ./out
       - name: Prepare some bloat report from the previous builds
         run: |
           .environment/pigweed-venv/bin/python3 scripts/tools/memory/gh_sizes.py \
@@ -118,6 +107,17 @@ jobs:
              efr32 BRD4187C window-app \
              out/efr32-brd4187c-window-covering-additional_data_advertising/matter-silabs-window-example.out \
              /tmp/bloat_reports/
+      - name: Clean out build output
+        run: rm -rf ./out
+      - name: Build BRD4338A variants
+        run: |
+          ./scripts/run_in_build_env.sh \
+             "./scripts/build/build_examples.py \
+                --enable-flashbundle \
+                --target efr32-brd4338a-light-wifi-917-soc \
+                build \
+                --copy-artifacts-to out/artifacts \
+             "
       - name: Clean out build output
         run: rm -rf ./out
       - name: Build example EFR32+WF200 WiFi Lock app for BRD4161A
