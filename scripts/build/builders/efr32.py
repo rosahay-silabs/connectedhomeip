@@ -206,6 +206,7 @@ class Efr32Builder(GnBuilder):
                 self.extra_gn_options.append('use_wf200=true')
             elif enable_917_soc:
                 self.extra_gn_options.append('chip_device_platform=\"SiWx917\"')
+
             else:
                 raise Exception('Wifi usage: ...-wifi-[rs911x|wf200]-...')
 
@@ -236,7 +237,8 @@ class Efr32Builder(GnBuilder):
             # case for pre-installed images), use it directly.
             sdk_path = shlex.quote(os.environ['GSDK_ROOT'])
             self.extra_gn_options.append(f"efr32_sdk_root=\"{sdk_path}\"")
-            self.extra_gn_options.append(f"openthread_root=\"{sdk_path}/util/third_party/openthread\"")
+            if not enable_wifi:
+                self.extra_gn_options.append(f"openthread_root=\"{sdk_path}/util/third_party/openthread\"")
 
     def GnBuildArgs(self):
         return self.extra_gn_options
