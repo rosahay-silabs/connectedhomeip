@@ -240,6 +240,10 @@ class Efr32Builder(GnBuilder):
             if not enable_wifi:
                 self.extra_gn_options.append(f"openthread_root=\"{sdk_path}/util/third_party/openthread\"")
 
+        if "WISECONNECT_PATH" in os.environ:
+            wifi_sdk_path = shlex.quote(os.environ['WISECONNECT_PATH'])
+            self.extra_gn_options.append(f"wifi_sdk_root=\"{wifi_sdk_path}\"")
+
     def GnBuildArgs(self):
         return self.extra_gn_options
 

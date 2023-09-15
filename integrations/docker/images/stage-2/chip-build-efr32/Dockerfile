@@ -25,6 +25,14 @@ RUN git clone --depth=1 --branch=MatterCert https://github.com/SiliconLabs/wisec
     rm -rf .git \
     && : # last line
 
+#Clone Wiseconnect SDK 3.0.13 (0f0cdcd)
+RUN git clone --depth=1 --branch=v3.0.13 https://github.com/SiliconLabs/wiseconnect.git && \
+    cd wifi_sdk && \
+    rm -rf .git \
+    && : # last line
+
+ENV WISECONNECT_PATH=/wifi_sdk/
+
 # SLC-cli install
 # TODO: figure out a way to make this a fixed version. Currently a moving target.
 RUN wget https://www.silabs.com/documents/login/software/slc_cli_linux.zip && \
