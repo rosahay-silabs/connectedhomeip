@@ -255,7 +255,7 @@ def BuildEfr32Target():
     target.AppendModifier('rs911x', enable_rs911x=True).OnlyIfRe('-wifi')
     target.AppendModifier('wf200', enable_wf200=True).OnlyIfRe('-wifi')
     target.AppendModifier('wifi_ipv4', enable_wifi_ipv4=True).OnlyIfRe('-wifi')
-    target.AppendModifier('917-soc',enable_917_soc=True).OnlyIfRe('-wifi')
+    target.AppendModifier('917-soc', enable_917_soc=True).OnlyIfRe('-wifi')
     target.AppendModifier('additional_data_advertising',
                           enable_additional_data_advertising=True)
     target.AppendModifier('use_ot_lib', enable_ot_lib=True).ExceptIfRe(
