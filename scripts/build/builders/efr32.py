@@ -237,12 +237,13 @@ class Efr32Builder(GnBuilder):
             # case for pre-installed images), use it directly.
             sdk_path = shlex.quote(os.environ['GSDK_ROOT'])
             self.extra_gn_options.append(f"efr32_sdk_root=\"{sdk_path}\"")
-            if not enable_wifi:
-                self.extra_gn_options.append(f"openthread_root=\"{sdk_path}/util/third_party/openthread\"")
+            self.extra_gn_options.append(f"openthread_root=\"{sdk_path}/util/third_party/openthread\"")
 
-        if "WISECONNECT_PATH" in os.environ:
-            wifi_sdk_path = shlex.quote(os.environ['WISECONNECT_PATH'])
-            self.extra_gn_options.append(f"wifi_sdk_root=\"{wifi_sdk_path}\"")
+        # adding wiseconnect path only for the 917 soc devices
+        if enable_917_soc:
+            if "WISECONNECT_PATH" in os.environ:
+                wifi_sdk_path = shlex.quote(os.environ['WISECONNECT_PATH'])
+                self.extra_gn_options.append(f"wifi_sdk_root=\"{wifi_sdk_path}\"")
 
     def GnBuildArgs(self):
         return self.extra_gn_options
