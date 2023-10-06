@@ -68,7 +68,7 @@ RUN set -x \
 
 ENV GSDK_ROOT=/opt/silabs/gecko_sdk/
 ENV WISECONNECT_SDK_ROOT=/opt/silabs/wiseconnect-wifi-bt-sdk/
-ENV WISECONNECT3_SDK_ROOT=/opt/silabs/wifi_sdk/
+ENV WIFI_SDK_ROOT=/opt/silabs/wifi_sdk/
 ENV PATH="${PATH}:/opt/silabs/slc_cli/"
 
 COPY --from=build /tmp/gecko_sdk /opt/silabs/gecko_sdk
