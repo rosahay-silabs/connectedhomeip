@@ -250,6 +250,11 @@
 	url = https://github.com/SiliconLabs/wiseconnect-wifi-bt-sdk.git
 	branch = 2.7.1-Matter
 	platforms = efr32,silabs_docker
+[submodule "third_party/silabs/wifi_sdk"]
+	path = third_party/silabs/wifi_sdk
+	url = https://github.com/SiliconLabs/wiseconnect
+	branch = v3.1.0-MatterCert1
+	platforms = efr32
 [submodule "editline"]
 	path = third_party/editline/repo
 	url = https://github.com/troglobit/editline.git

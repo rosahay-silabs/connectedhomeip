@@ -19,8 +19,8 @@ RUN git clone --depth=1 --branch=v4.3.1 https://github.com/SiliconLabs/gecko_sdk
     rm -rf .git \
     && : # last line
 
-# Clone Wiseconnect SDK 3.1.0-MatterCert (f84bf66)
-RUN git clone --depth=1 --branch=MatterCert https://github.com/SiliconLabs/wiseconnect.git /tmp/wifi_sdk && \
+# Clone Wiseconnect SDK 3.1.0-MatterCert1 (f84bf66)
+RUN git clone --depth=1 --branch=v3.1.0-MatterCert1 https://github.com/SiliconLabs/wiseconnect.git /tmp/wifi_sdk && \
     cd /tmp/wifi_sdk && \
     rm -rf .git \
     && : # last line
