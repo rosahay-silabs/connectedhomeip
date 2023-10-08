@@ -36,7 +36,7 @@ USE_GIT_SHA_FOR_VERSION=true
 USE_SLC=false
 GN_PATH=gn
 GN_PATH_PROVIDED=false
-SILABS_WIFI_SDK_VERSION=3
+SILABS_WISECONNECT_SDK_VERSION=3
 
 DOTFILE=".gn"
 
@@ -169,10 +169,10 @@ else
             fi
             if [ "$2" = "rs9116" ]; then
                 optArgs+="use_rs9116=true "
-                SILABS_WIFI_SDK_VERSION=2
+                SILABS_WISECONNECT_SDK_VERSION=2
             elif [ "$2" = "SiWx917" ]; then
                 optArgs+="use_SiWx917=true "
-                SILABS_WIFI_SDK_VERSION=3
+                SILABS_WISECONNECT_SDK_VERSION=3
             elif [ "$2" = "wf200" ]; then
                 optArgs+="use_wf200=true "
             else
@@ -319,12 +319,12 @@ else
     fi
 
     if [ "$USE_DOCKER" == true ] && [ "$USE_WIFI" == true ]; then
-        if [ "$SILABS_WIFI_SDK_VERSION" == "2" ]; then
+        if [ "$SILABS_WISECONNECT_SDK_VERSION" == "2" ]; then
             echo "Switching WiseConnect 2 SDK ROOT"
             optArgs+="wiseconnect_sdk_root=\"$WISECONNECT_SDK_ROOT\" "
         fi
 
-        if [ "$SILABS_WIFI_SDK_VERSION" == "3" ]; then
+        if [ "$SILABS_WISECONNECT_SDK_VERSION" == "3" ]; then
             echo "Switching WiseConnect 3 SDK ROOT"
             optArgs+="wifi_sdk_root=\"$WIFI_SDK_ROOT\" "
         fi
