@@ -36,6 +36,7 @@ USE_GIT_SHA_FOR_VERSION=true
 USE_SLC=false
 GN_PATH=gn
 GN_PATH_PROVIDED=false
+SILABS_WIFI_SDK_VERSION=3
 
 DOTFILE=".gn"
 
@@ -168,8 +169,10 @@ else
             fi
             if [ "$2" = "rs9116" ]; then
                 optArgs+="use_rs9116=true "
+                SILABS_WIFI_SDK_VERSION=2
             elif [ "$2" = "SiWx917" ]; then
                 optArgs+="use_SiWx917=true "
+                SILABS_WIFI_SDK_VERSION=3
             elif [ "$2" = "wf200" ]; then
                 optArgs+="use_wf200=true "
             else
@@ -316,11 +319,15 @@ else
     fi
 
     if [ "$USE_DOCKER" == true ] && [ "$USE_WIFI" == true ]; then
-        echo "Switching Wiseconnect 2 SDK ROOT"
-        optArgs+="wiseconnect_sdk_root=\"$WISECONNECT_SDK_ROOT\" "
+        if [ "$SILABS_WIFI_SDK_VERSION" == "2" ]; then
+            echo "Switching WiseConnect 2 SDK ROOT"
+            optArgs+="wiseconnect_sdk_root=\"$WISECONNECT_SDK_ROOT\" "
+        fi
 
-        echo "Switching Wiseconnect 3 SDK ROOT"
-        optArgs+="wifi_sdk_root=\"$WIFI_SDK_ROOT\" "
+        if [ "$SILABS_WIFI_SDK_VERSION" == "3" ]; then
+            echo "Switching WiseConnect 3 SDK ROOT"
+            optArgs+="wifi_sdk_root=\"$WIFI_SDK_ROOT\" "
+        fi
     fi
 
     "$GN_PATH" gen --check --script-executable="$PYTHON_PATH" --fail-on-unused-args --export-compile-commands --root="$ROOT" --dotfile="$DOTFILE" --args="silabs_board=\"$SILABS_BOARD\" $optArgs" "$BUILD_DIR"

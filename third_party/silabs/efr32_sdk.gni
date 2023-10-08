@@ -28,6 +28,8 @@ declare_args() {
   wiseconnect_sdk_root =
       "${chip_root}/third_party/silabs/wiseconnect-wifi-bt-sdk"
   wifi_sdk_root = "${chip_root}/third_party/silabs/wifi_sdk"
+  examples_plat_dir = "${chip_root}/examples/platform/silabs/efr32"
+  wifi_sdk_dir = "${chip_root}/src/platform/silabs/efr32/wifi"
 
   # Build openthread with prebuilt silabs lib
   use_silabs_thread_lib = false
