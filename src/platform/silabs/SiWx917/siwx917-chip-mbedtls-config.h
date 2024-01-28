@@ -149,4 +149,24 @@ typedef void mbedtls_ecp_restart_ctx;
 
 #define MBEDTLS_SSL_CIPHERSUITES MBEDTLS_TLS_ECJPAKE_WITH_AES_128_CCM_8
 
+
+
+
+
+
+
+
+
+
+
+// chirag
+
+
+
+#define MBEDTLS_CAN_ECDH
+#define MBEDTLS_PK_CAN_ECDSA_SIGN
+#define MBEDTLS_RSA_C
+#define MBEDTLS_PK_HAVE_ECC_KEYS
+#define MBEDTLS_PKCS1_V15
+#define MBEDTLS_PKCS1_V21
 #include "mbedtls/check_config.h"
