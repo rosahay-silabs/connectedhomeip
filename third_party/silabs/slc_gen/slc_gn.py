@@ -9,13 +9,13 @@ def read_key_or_pass(key, json):
     try:
         return json[key]
     except:
-        print("returned none")
+        print(f"%s: none" % key)
         return None
 
 
 class SlcObject():
-    condition: str
-    unless: str
+    condition: [str]
+    unless: [str]
 
     def __init__(self, condition=None, unless=None):
         self.condition = condition
@@ -42,9 +42,9 @@ class SlcFileList():
 class SlcProvides(SlcObject):
     name: str
 
-    def __init__(self, provideYAML):
+    def __init__(self, json_payload):
         super().__init__()
-        self.name = provideYAML['name']
+        self.name = read_key_or_pass('name', json_payload)
 
 
 class SlcSource(SlcObject):
@@ -56,9 +56,12 @@ class SlcDefine(SlcObject):
     name: str
     value: str
 
-    def __init__(self, defineYAML):
-
-
+    def __init__(self, json_payload):
+        super().__init__()
+        self.name = read_key_or_pass('name', json_payload)
+        self.value = read_key_or_pass('value', json_payload)
+        self.condition = read_key_or_pass('condition', json_payload)
+        self.unless = read_key_or_pass('unless', json_payload)
 
 
 class SlcRequires(SlcObject):
