@@ -84,6 +84,8 @@ def generate_ninja_file(slcPath):
     with open("BUILD.gn", "w") as build_gn:
         build_gn.write(f"config(\"%s_config\")" % (source_set))
         build_gn.write('{')
+        build_gn.write('\n'.join(f"{x}" for x in provides))
+        build_gn.write('\n')
         build_gn.write('include_dirs = ')
         build_gn.write('[')
         build_gn.write(','.join(f"\"{x}\"" for x in include_dirs))
@@ -107,7 +109,6 @@ def generate_ninja_file(slcPath):
         build_gn.write('[')
         build_gn.write(','.join(f"\"{x}\"" for x in public_configs))
         build_gn.write(']')
-        build_gn.write('\n'.join(f"{x}" for x in provides))
         build_gn.write('}')
     print(f"config(\"%s_config\")" % (source_set))
     print('{')
