@@ -12,6 +12,15 @@ def read_key_or_pass(key, json):
         return None
 
 
+def read_key_or_error(key, json):
+    try:
+        return json[key]
+    except:
+        print(f"ERROR: failed to find %s" % key)
+        pprint(json)
+        os.exit(0)
+
+
 class SlcObject():
     condition: [str]
     unless: [str]
