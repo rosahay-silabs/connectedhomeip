@@ -41,7 +41,7 @@ class SlcPath(SlcObject):
 
 
 class SlcFileList(SlcObject):
-    path: [SlcPath]
+    path = []
 
     def __init__(self, json_payload):
         super().__init__()
@@ -64,8 +64,8 @@ class SlcProvides(SlcObject):
 
 
 class SlcSource(SlcObject):
-    path: [SlcPath]
-    file_list: [SlcFileList]
+    path = []
+    file_list = []
 
     def __init__(self, json_payload):
         super().__init__()
