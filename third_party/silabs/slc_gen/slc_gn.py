@@ -105,32 +105,32 @@ class SlcInclude(SlcObject):
 
 
 class SlcComponent():
-    # id: str
-    # package: str
-    # description: str
-    # label: str
-    # category: str
-    # quality: str
-    # component_root_path: str
-    # provides: [SlcProvides]
-    # source: [SlcSource]
-    # define: [SlcDefine]
-    # requires: [SlcRequires]
-    # include: [SlcInclude]
+    id: str
+    package: str
+    description: str
+    label: str
+    category: str
+    quality: str
+    component_root_path: str
+    provides: [SlcProvides]
+    source: [SlcSource]
+    define: [SlcDefine]
+    requires: [SlcRequires]
+    include: [SlcInclude]
 
     def __init__(self):
-        id = ""
-        package = ""
-        description = ""
-        label = ""
-        category = ""
-        quality = ""
-        component_root_path = ""
-        provides = []
-        source = []
-        define = []
-        requires = []
-        include = []
+        self.id = ""
+        self.package = ""
+        self.description = ""
+        self.label = ""
+        self.category = ""
+        self.quality = ""
+        self.component_root_path = ""
+        self.provides = []
+        self.source = []
+        self.define = []
+        self.requires = []
+        self.include = []
 
     def parse(self, slcc_path):
         slcc_path = Path(slcc_path)
@@ -179,53 +179,46 @@ class SlcComponent():
                 self.requires.append(slc_require)
 
     def __str__(self):
-        print(f"config(\"%s_config\")" % (self.id))
-        print('{')
-        print('include_dirs = ')
-        print(self.include)
-        print('defines = ')
-        print(self.define)
-        print('public_deps = ')
-        print(self.requires)
-        print('}')
-        print(f"source_set(\"%s\")" % (self.id))
-        print('{')
-        print('sources = ')
-        print(self.source)
-        print('}')
-        return
+        return '''
+        config({}_config) {{
+
+        }}
+
+        source_set({}) {{
+
+        }}'''.format(self.id, self.id)
 
 
 class NinjaComponent():
     source_set: str
-    include_dirs = []
-    sources = []
-    defines = []
-    public_deps = []
-    public_configs = []
-    provides = []
+    include_dirs: [str]
+    sources: [str]
+    defines: [str]
+    public_deps: [str]
+    public_configs: [str]
+    provides: [str]
 
     def __init__(self):
-        return
+        self.source_set = ""
+        self.include_dirs = []
+        self.sources = []
+        self.defines = []
+        self.public_deps = []
+        self.public_configs = []
+        self.provides = []
 
-    def print(self):
-        print(f"config(\"%s_config\")" % (slcc_id))
-        print('{')
-        print('include_dirs = ')
-        print(include_dirs)
-        print('defines = ')
-        print(defines)
-        print('public_deps = ')
-        print(public_deps)
-        print('}')
-        print(f"source_set(\"%s\")" % (slcc_id))
-        print('{')
-        print('sources = ')
-        print(sources)
-        print('public_configs = ')
-        print(public_configs)
-        print('}')
-        return
+    def __str__(self):
+        return f"""
+        config({self.source_set}_config) {{
+            include_dirs = {self.include_dirs}
+            defines = {self.defines}
+            public_deps = {self.public_deps}
+        }}
+        source_set({self.source_set}) {{
+            sources = {self.sources}
+            public_configs = {self.public_configs}
+        }}
+        """
 
     def save(self, out_file):
         with open(out_file, "w") as build_gn:
@@ -268,6 +261,7 @@ output_path = ""
 def main():
     slc_component = SlcComponent()
     slc_component.parse("./sl_si91x_wireless.slcc")
+    print(slc_component)
 
 
 if __name__ == "__main__":
