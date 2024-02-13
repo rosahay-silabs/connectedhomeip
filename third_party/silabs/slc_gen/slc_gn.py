@@ -29,6 +29,12 @@ class SlcObject():
         self.condition = condition
         self.unless = unless
 
+    def __str__(self):
+        payload = ""
+        paylod = payload + '&&'.join(f"{x}" for x in self.conditions)
+        paylod = payload + '&&'.join(f"!{x}" for x in self.unless)
+        return payload
+
 
 class SlcPath(SlcObject):
     path: Path
@@ -39,18 +45,29 @@ class SlcPath(SlcObject):
         self.unless = read_key_or_pass('unless', json_payload)
         self.path = read_key_or_pass('path', json_payload)
 
+    def __str__(self):
+        payload = ""
+        payload = f'{self.path}'
+        return payload
+
 
 class SlcFileList(SlcObject):
-    path = []
+    path: [SlcPath]
 
     def __init__(self, json_payload):
         super().__init__()
+        self.path = []
         self.condition = read_key_or_pass('condition', json_payload)
         self.unless = read_key_or_pass('unless', json_payload)
         if json_payload is None:
             return
         for each_path in json_payload:
             self.path.append(SlcPath(each_path))
+
+    def __str__(self):
+        payload = ""
+        payload = payload + ','.join(f"\"{x}\"" for x in self.path)
+        return payload
 
 
 class SlcProvides(SlcObject):
@@ -62,13 +79,20 @@ class SlcProvides(SlcObject):
         self.unless = read_key_or_pass('unless', json_payload)
         self.condition = read_key_or_pass('condition', json_payload)
 
+    def __str__(self):
+        if (self.name is None):
+            return ""
+        return self.name
+
 
 class SlcSource(SlcObject):
-    path = []
-    file_list = []
+    path: [SlcPath]
+    file_list: [SlcFileList]
 
     def __init__(self, json_payload):
         super().__init__()
+        self.path = []
+        self.file_list = []
         self.condition = read_key_or_pass('condition', json_payload)
         self.unless = read_key_or_pass('unless', json_payload)
         for each_path in read_key_or_pass('path', json_payload):
@@ -190,7 +214,6 @@ class SlcComponent():
 
 
 class NinjaComponent():
-    source_set: str
     include_dirs: [str]
     sources: [str]
     defines: [str]
@@ -199,13 +222,24 @@ class NinjaComponent():
     provides: [str]
 
     def __init__(self):
-        self.source_set = ""
         self.include_dirs = []
         self.sources = []
         self.defines = []
         self.public_deps = []
         self.public_configs = []
         self.provides = []
+
+
+class NinjaSourceSet():
+    source_set: str
+    components: {str: NinjaComponent}
+
+    def __init__(self, slc_component: SlcComponent):
+        self.source_set = slc_component.id
+        self.components = {'NULL': NinjaComponent()}
+        c_key = 'NULL'
+        for p in slc_component.provides:
+            return
 
     def __str__(self):
         return f"""
