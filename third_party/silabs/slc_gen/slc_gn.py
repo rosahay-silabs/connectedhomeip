@@ -2,7 +2,8 @@
 
 import yaml
 from pathlib import Path
-import pprint
+from itertools import groupby
+import logging
 
 
 def read_key_or_pass(key, json):
@@ -24,16 +25,23 @@ def read_key_or_error(key, json):
 class SlcObject():
     condition: [str]
     unless: [str]
+    combined_condition: str
 
     def __init__(self, condition=None, unless=None):
         self.condition = condition
         self.unless = unless
 
-    def __str__(self):
+    @property
+    def combined_condition(self):
         payload = ""
-        paylod = payload + '&&'.join(f"{x}" for x in self.conditions)
-        paylod = payload + '&&'.join(f"!{x}" for x in self.unless)
+        if self.condition is not None:
+            paylod = payload + '&&'.join(f"{x}" for x in self.condition)
+        if self.unless is not None:
+            paylod = payload + '&&'.join(f"!{x}" for x in self.unless)
         return payload
+
+    def __str__(self):
+        return self.combined_condition
 
 
 class SlcPath(SlcObject):
@@ -52,21 +60,23 @@ class SlcPath(SlcObject):
 
 
 class SlcFileList(SlcObject):
+    parent_path: SlcPath
     path: [SlcPath]
 
     def __init__(self, json_payload):
+        if json_payload is None:
+            return None
+        logging.debug(f"""slcFileList: {json_payload}""")
         super().__init__()
         self.path = []
         self.condition = read_key_or_pass('condition', json_payload)
         self.unless = read_key_or_pass('unless', json_payload)
-        if json_payload is None:
-            return
         for each_path in json_payload:
             self.path.append(SlcPath(each_path))
 
     def __str__(self):
         payload = ""
-        payload = payload + ','.join(f"\"{x}\"" for x in self.path)
+        payload = payload + ',\n'.join(f"\"{x}\"" for x in self.path)
         return payload
 
 
@@ -99,6 +109,12 @@ class SlcSource(SlcObject):
             self.path.append(SlcPath(each_path))
         self.file_list = SlcFileList(read_key_or_pass('file_list', json_payload))
 
+    def __str__(self):
+        return f"""
+        path: {self.path}
+        filelist: {self.file_list}
+        """
+
 
 class SlcDefine(SlcObject):
     name: str
@@ -121,11 +137,12 @@ class SlcInclude(SlcObject):
     file_list: [SlcFileList]
 
     def __init__(self, json_payload):
+        logging.debug("slcinclude", json_payload)
         super().__init__()
         self.condition = read_key_or_pass('condition', json_payload)
         self.unless = read_key_or_pass('unless', json_payload)
-        self.file_list = SlcFileList(read_key_or_pass('file_list', json_payload))
         self.path = SlcPath(read_key_or_pass('path', json_payload))
+        self.file_list = SlcFileList(read_key_or_pass('file_list', json_payload))
 
 
 class SlcComponent():
@@ -232,17 +249,26 @@ class NinjaComponent():
 
 class NinjaSourceSet():
     source_set: str
-    components: {str: NinjaComponent}
+    args: [str]
+    grouped_sources: {}
+    grouped_includes: {}
+    grouped_defines: {}
+
+    def key_function(slc_component: SlcComponent):
+        return slc_component.condition
 
     def __init__(self, slc_component: SlcComponent):
         self.source_set = slc_component.id
-        self.components = {'NULL': NinjaComponent()}
-        c_key = 'NULL'
+        self.args = []
         for p in slc_component.provides:
-            return
+            self.args.append(p)
+        self.grouped_sources = {key: list(group) for key, group in groupby(
+            slc_component.source, slc_component.source.combined_condition)}
+        return
 
     def __str__(self):
-        return f"""
+        payload = '=true\n'.join(f"{x}" for x in self.args)
+        payload = payload + f"""
         config({self.source_set}_config) {{
             include_dirs = {self.include_dirs}
             defines = {self.defines}
@@ -253,6 +279,8 @@ class NinjaSourceSet():
             public_configs = {self.public_configs}
         }}
         """
+        logging.debug(payload)
+        return payload
 
     def save(self, out_file):
         with open(out_file, "w") as build_gn:
@@ -291,11 +319,17 @@ debug = True
 root_path = ""
 output_path = ""
 
+# Configure the logging system
+logging.basicConfig(level=logging.DEBUG,  # Set the logging level
+                    format='[%(asctime)s] [%(levelname)s] %(funcName)s: %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
+
 
 def main():
     slc_component = SlcComponent()
     slc_component.parse("./sl_si91x_wireless.slcc")
-    print(slc_component)
+    # logging.debug(slc_component.source)
+    # ninja_build_file = NinjaSourceSet(slc_component)
 
 
 if __name__ == "__main__":
