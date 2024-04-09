@@ -46,12 +46,16 @@ class SlcObject():
 
 class SlcPath(SlcObject):
     path: Path
+    file_list: []
 
     def __init__(self, json_payload):
         super().__init__()
+        logging.debug(f"""slcPath: {json_payload}""")
         self.condition = read_key_or_pass('condition', json_payload)
         self.unless = read_key_or_pass('unless', json_payload)
         self.path = read_key_or_pass('path', json_payload)
+        self.file_list = SlcFileList(read_key_or_pass('file_list', json_payload))
+        logging.debug(f"""SlcPathOb: {self}""")
 
     def __str__(self):
         payload = ""
@@ -60,7 +64,6 @@ class SlcPath(SlcObject):
 
 
 class SlcFileList(SlcObject):
-    parent_path: SlcPath
     path: [SlcPath]
 
     def __init__(self, json_payload):
@@ -105,8 +108,7 @@ class SlcSource(SlcObject):
         self.file_list = []
         self.condition = read_key_or_pass('condition', json_payload)
         self.unless = read_key_or_pass('unless', json_payload)
-        for each_path in read_key_or_pass('path', json_payload):
-            self.path.append(SlcPath(each_path))
+        self.path = SlcPath(read_key_or_pass('path', json_payload))
         self.file_list = SlcFileList(read_key_or_pass('file_list', json_payload))
 
     def __str__(self):
@@ -134,7 +136,7 @@ class SlcRequires(SlcObject):
 
 class SlcInclude(SlcObject):
     path: SlcPath
-    file_list: [SlcFileList]
+    file_list: []
 
     def __init__(self, json_payload):
         logging.debug("slcinclude", json_payload)
@@ -321,7 +323,7 @@ output_path = ""
 
 # Configure the logging system
 logging.basicConfig(level=logging.DEBUG,  # Set the logging level
-                    format='[%(asctime)s] [%(levelname)s] %(funcName)s: %(message)s',
+                    format='[%(asctime)s] [%(levelname)s] %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
 
@@ -329,7 +331,7 @@ def main():
     slc_component = SlcComponent()
     slc_component.parse("./sl_si91x_wireless.slcc")
     # logging.debug(slc_component.source)
-    # ninja_build_file = NinjaSourceSet(slc_component)
+    ninja_build_file = NinjaSourceSet(slc_component)
 
 
 if __name__ == "__main__":
