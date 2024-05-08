@@ -156,7 +156,7 @@ public:
     static constexpr Key kConfigKey_OpKeyMap              = SilabsConfigKey(kMatterConfig_KeyBase, 0x20);
     static constexpr Key kConfigKey_BootCount             = SilabsConfigKey(kMatterConfig_KeyBase, 0x21);
     static constexpr Key kConfigKey_TotalOperationalHours = SilabsConfigKey(kMatterConfig_KeyBase, 0x22);
-    static constexpr Key kConfigKey_splitNvm           = 0x087FFFU;
+    static constexpr Key kConfigKey_splitNvm              = SilabsConfigKey(kMatterConfig_KeyBase, 0xFF);
 
     static constexpr Key kConfigKey_GroupKeyMax =
         SilabsConfigKey(kMatterConfig_KeyBase, 0x1E); // Allows 16 Group Keys to be created.
