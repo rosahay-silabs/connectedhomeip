@@ -36,6 +36,8 @@
 #ifndef SLI_SI91X_MCU_INTERFACE // 917soc/wifi-sdk implements the same nvm3 lock/unlock mechanism and it currently can't be overide.
 #include <FreeRTOS.h>
 #include <semphr.h>
+
+#include "silabs_utils.h"
 // Substitute the GSDK weak nvm3_lockBegin and nvm3_lockEnd
 // for an application controlled re-entrance protection
 static SemaphoreHandle_t nvm3_Sem;
@@ -230,7 +232,6 @@ CHIP_ERROR SilabsConfig::ReadConfigValueBin(Key key, uint8_t * buf, size_t bufSi
     outLen = 0;
     VerifyOrExit(ValidConfigKey(key), err = CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND); // Verify key id.
 
-    // Get nvm3 object info.
     err = MapNvm3Error(nvm3_getObjectInfo(nvm3_defaultHandle, key, &objectType, &dataLen));
     SuccessOrExit(err);
     VerifyOrExit(dataLen > 0, err = CHIP_ERROR_INVALID_STRING_LENGTH);
@@ -240,7 +241,30 @@ CHIP_ERROR SilabsConfig::ReadConfigValueBin(Key key, uint8_t * buf, size_t bufSi
         // Read nvm3 bytes directly into output buffer- check buffer is long
         // enough to take the data.
         VerifyOrExit((bufSize >= dataLen), err = CHIP_ERROR_BUFFER_TOO_SMALL);
-
+        if(bufSize > 4092) {
+            Key start_key;
+            // size_t keyLen;
+            uint32_t write_len = 0;
+            err = MapNvm3Error(nvm3_readData(nvm3_defaultHandle,key, &start_key, sizeof(start_key)));
+			SILABS_LOG("Read key-------------: %x    %x      %x",key,start_key,err);
+            // If the Key is empty return
+            SuccessOrExit(err);
+            int32_t len = bufSize;
+            while(len > 0) {
+                SILABS_LOG("************** %x",key);
+                SILABS_LOG("Read key-------------: %x",start_key);
+                if(len < 4092) {
+                    err = MapNvm3Error(nvm3_readData(nvm3_defaultHandle, start_key, buf + write_len, len));
+                } else {
+                    err = MapNvm3Error(nvm3_readData(nvm3_defaultHandle, start_key, buf + write_len, 4092));
+                }
+                SILABS_LOG("error =========== %x",err);
+                // Reducing the key value
+                start_key--;
+                len -= 4092;
+                write_len += 4092;
+            }
+        }
         err = MapNvm3Error(nvm3_readData(nvm3_defaultHandle, key, buf, dataLen));
         SuccessOrExit(err);
 
@@ -389,8 +413,38 @@ CHIP_ERROR SilabsConfig::WriteConfigValueBin(Key key, const uint8_t * data, size
     // Only write NULL pointer if the given size is 0, since in that case, nothing is read at the pointer
     if ((data != NULL) || (dataLen == 0))
     {
-        // Write the binary data to nvm3.
-        err = MapNvm3Error(nvm3_writeData(nvm3_defaultHandle, key, data, dataLen));
+        if(dataLen > 4092) {
+            SILABS_LOG("WRITING KEY VALUE ----------------------");
+            uint32_t start_key;
+            int32_t len = dataLen;
+            uint32_t write_len = 0;
+            err = MapNvm3Error(nvm3_readData(nvm3_defaultHandle, kConfigKey_splitNvm, &start_key, sizeof(uint32_t)));
+            SILABS_LOG("error ==================== %x",err);
+            SILABS_LOG("START KEY :::::: %x",start_key);
+            if (err == CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND) {
+                start_key = 0x087FFEU;
+            }
+            err = MapNvm3Error(nvm3_writeData(nvm3_defaultHandle, key, &start_key, sizeof(start_key)));
+            SILABS_LOG("**************SSSSSSSSSSS %x",err);
+            while(len > 0) {
+                SILABS_LOG("writing nvm3 key: %x",start_key);
+                if(len < 4092){
+                    err = MapNvm3Error(nvm3_writeData(nvm3_defaultHandle, start_key, data + write_len, len));
+                } else {
+                    err = MapNvm3Error(nvm3_writeData(nvm3_defaultHandle, start_key, data + write_len, 4092));
+                }
+                SILABS_LOG("error =========== %x",err);
+                start_key--;
+                len -= 4092;
+                write_len += 4092;
+            }
+            SILABS_LOG("********************--- %x",start_key);
+            err = MapNvm3Error(nvm3_writeData(nvm3_defaultHandle, kConfigKey_splitNvm, &start_key, sizeof(uint32_t)));
+            SILABS_LOG("**************SSSSSSSSSSS %x",err);
+        } else {
+            // Write the binary data to nvm3.
+            err = MapNvm3Error(nvm3_writeData(nvm3_defaultHandle, key, data, dataLen));
+        }
         SuccessOrExit(err);
     }
 
