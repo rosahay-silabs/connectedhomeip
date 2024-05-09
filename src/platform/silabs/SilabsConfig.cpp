@@ -420,6 +420,7 @@ CHIP_ERROR SilabsConfig::WriteConfigValueBin(Key key, const uint8_t * data, size
 #else // For EFR32
         uint16_t sizeLimit = 4092;
 #endif // SLI_SI91X_MCU_INTERFACE
+        // Splitting the NVM key to multiple keys if the buffer size is more than the possible
         if(dataLen > sizeLimit) {
             uint32_t start_key;
             uint32_t write_len = 0;
@@ -428,11 +429,13 @@ CHIP_ERROR SilabsConfig::WriteConfigValueBin(Key key, const uint8_t * data, size
             if (err == CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND) {
                 start_key = 0x0873FEU;
             }
+            // Writing the starting key
             err = MapNvm3Error(nvm3_writeData(nvm3_defaultHandle, key, &start_key, sizeof(start_key)));
             while(write_len < dataLen) {
                 if((dataLen - write_len) < sizeLimit){
-                    err = MapNvm3Error(nvm3_writeData(nvm3_defaultHandle, start_key, data + write_len, dataLen-write_len));
+                    err = MapNvm3Error(nvm3_writeData(nvm3_defaultHandle, start_key, data + write_len, (dataLen-write_len)));
                 } else {
+                    // writing sizeLimit to the buffer
                     err = MapNvm3Error(nvm3_writeData(nvm3_defaultHandle, start_key, data + write_len, sizeLimit));
                 }
                 SuccessOrExit(err);
@@ -512,6 +515,18 @@ CHIP_ERROR SilabsConfig::FactoryResetConfig(void)
 
     // Iterate over all the CHIP Config nvm3 records and delete each one...
     err = ForEachRecord(kMinConfigKey_MatterConfig, kMaxConfigKey_MatterConfig, false,
+                        [](const Key & nvm3Key, const size_t & length) -> CHIP_ERROR {
+                            CHIP_ERROR err2;
+                            // Delete the nvm3 object with the given key id.
+                            err2 = ClearConfigValue(nvm3Key);
+                            SuccessOrExit(err2);
+
+                        exit:
+                            return err2;
+                        });
+    Key start_key;
+    err = MapNvm3Error(nvm3_readData(nvm3_defaultHandle, kConfigKey_splitNvm, &start_key, sizeof(start_key)));
+    err = ForEachRecord(start_key, kConfigKey_splitNvm, false,
                         [](const Key & nvm3Key, const size_t & length) -> CHIP_ERROR {
                             CHIP_ERROR err2;
                             // Delete the nvm3 object with the given key id.
