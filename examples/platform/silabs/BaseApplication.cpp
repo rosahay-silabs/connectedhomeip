@@ -710,11 +710,14 @@ SilabsLCD & BaseApplication::GetLCD(void)
     return slLCD;
 }
 
-void BaseApplication::UpdateLCDStatusScreen(void)
+void BaseApplication::UpdateLCDStatusScreen(bool withLock)
 {
     SilabsLCD::DisplayStatus_t status;
     bool enabled, attached;
-    chip::DeviceLayer::PlatformMgr().LockChipStack();
+    if (withLock)
+    {
+        chip::DeviceLayer::PlatformMgr().LockChipStack();
+    }
 #ifdef SL_WIFI
     enabled  = ConnectivityMgr().IsWiFiStationEnabled();
     attached = ConnectivityMgr().IsWiFiStationConnected();
@@ -739,7 +742,10 @@ void BaseApplication::UpdateLCDStatusScreen(void)
         ? SilabsLCD::ICDMode_e::SIT
         : SilabsLCD::ICDMode_e::LIT;
 #endif
-    chip::DeviceLayer::PlatformMgr().UnlockChipStack();
+    if (withLock)
+    {
+        chip::DeviceLayer::PlatformMgr().UnlockChipStack();
+    }
     slLCD.SetStatus(status);
 }
 #endif
@@ -824,6 +830,9 @@ void BaseApplication::OnPlatformEvent(const ChipDeviceEvent * event, intptr_t)
             SILABS_LOG("Failed to initialize DIC module\n");
         }
 #endif // DIC_ENABLE
+        break;
+    case DeviceEventType::kWiFiConnectivityChange:
+        BaseApplication::UpdateLCDStatusScreen(false);
         break;
     default:
         break;
