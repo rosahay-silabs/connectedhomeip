@@ -838,6 +838,7 @@ void BaseApplication::OnPlatformEvent(const ChipDeviceEvent * event, intptr_t)
         // Update the LCD screen with SSID and connected state
         VerifyOrReturn(screen == SilabsLCD::Screen_e::StatusScreen);
         BaseApplication::UpdateLCDStatusScreen(false);
+        AppTask::GetLCD().SetScreen(screen);
 #endif // DISPLAY_ENABLED
         break;
     default:
