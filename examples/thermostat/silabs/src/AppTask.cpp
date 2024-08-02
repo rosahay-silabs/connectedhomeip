@@ -81,7 +81,7 @@ CHIP_ERROR AppTask::Init()
 #ifdef DISPLAY_ENABLED
     GetLCD().Init((uint8_t *) "Thermostat-App");
     GetLCD().SetCustomUI(ThermostatUI::DrawUI);
-#endif
+#endif // DISPLAY_ENABLED
 
     err = BaseApplication::Init();
     if (err != CHIP_NO_ERROR)
@@ -152,7 +152,7 @@ void AppTask::UpdateThermoStatUI()
     if (ConnectivityMgr().IsThreadProvisioned())
 #endif /* !SL_WIFI */
     {
-        AppTask::GetAppTask().GetLCD().WriteDemoUI(false); // State doesn't Matter
+        GetLCD().WriteDemoUI(false); // State doesn't Matter
     }
 #else
     SILABS_LOG("Thermostat Status - M:%d T:%d'C H:%d'C C:%d'C", TempMgr().GetMode(), TempMgr().GetCurrentTemp(),
