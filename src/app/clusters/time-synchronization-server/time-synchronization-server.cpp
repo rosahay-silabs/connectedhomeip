@@ -24,6 +24,7 @@
 #include <app-common/zap-generated/ids/Attributes.h>
 #include <app-common/zap-generated/ids/Clusters.h>
 #include <app/AttributeAccessInterface.h>
+#include <app/AttributeAccessInterfaceRegistry.h>
 #include <app/CommandHandler.h>
 #include <app/EventLogging.h>
 #include <app/server/Server.h>
@@ -214,6 +215,7 @@ static bool emitTimeFailureEvent(EndpointId ep)
     // TODO: re-schedule event for after min 1hr if no time is still available
     // https://github.com/project-chip/connectedhomeip/issues/27200
     ChipLogProgress(Zcl, "Emit TimeFailure event [ep=%d]", ep);
+    GetDelegate()->NotifyTimeFailure();
     return true;
 }
 
@@ -355,6 +357,7 @@ void TimeSynchronizationServer::OnDone(ReadClient * apReadClient)
             SetUTCTime(kRootEndpointId, mTimeReadInfo->utcTime.Value(), ourGranularity, TimeSourceEnum::kNodeTimeCluster);
         if (err == CHIP_NO_ERROR)
         {
+            mTimeReadInfo = nullptr;
             return;
         }
     }
@@ -503,6 +506,7 @@ CHIP_ERROR TimeSynchronizationServer::SetTrustedTimeSource(const DataModel::Null
     {
         AttemptToGetTime();
     }
+    GetDelegate()->TrustedTimeSourceAvailabilityChanged(!mTrustedTimeSource.IsNull(), mGranularity);
     return err;
 }
 
@@ -905,7 +909,7 @@ TimeState TimeSynchronizationServer::UpdateDSTOffsetState()
         int32_t previousOffset         = dstList[activeDstIndex].offset;
         dstList[activeDstIndex].offset = 0; // not using dst and last DST item in the list is not active yet
         // TODO: This enum mixes state and transitions in a way that's very confusing. This should return either an active, an
-        // inactive or an invalid and the caller should make the judgement about whether that has changed OR this function should
+        // inactive or an invalid and the caller should make the judgment about whether that has changed OR this function should
         // just return a bool indicating whether a change happened
         return previousOffset == 0 ? TimeState::kStopped : TimeState::kChanged;
     }
@@ -1286,5 +1290,5 @@ bool emberAfTimeSynchronizationClusterSetDefaultNTPCallback(
 void MatterTimeSynchronizationPluginServerInitCallback()
 {
     TimeSynchronizationServer::Instance().Init();
-    registerAttributeAccessOverride(&gAttrAccess);
+    AttributeAccessInterfaceRegistry::Instance().Register(&gAttrAccess);
 }

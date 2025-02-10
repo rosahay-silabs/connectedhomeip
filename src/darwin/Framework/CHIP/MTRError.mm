@@ -19,6 +19,7 @@
 
 #import "MTRError.h"
 #import "MTRError_Internal.h"
+#import "MTRLogging_Internal.h"
 
 #import <app/MessageDef/StatusIB.h>
 #import <inet/InetError.h>
@@ -42,6 +43,11 @@ NSString * const MTRInteractionErrorDomain = @"MTRInteractionErrorDomain";
 @end
 
 @implementation MTRError
+
++ (NSError *)errorWithCode:(MTRErrorCode)code
+{
+    return [NSError errorWithDomain:MTRErrorDomain code:code userInfo:nil];
+}
 
 + (NSError *)errorForCHIPErrorCode:(CHIP_ERROR)errorCode
 {
@@ -101,6 +107,10 @@ NSString * const MTRInteractionErrorDomain = @"MTRInteractionErrorDomain";
         code = MTRErrorCodeFabricExists;
         description = NSLocalizedString(@"The device is already a member of this fabric.", nil);
         break;
+    case CHIP_ERROR_SCHEMA_MISMATCH.AsInteger():
+        code = MTRErrorCodeSchemaMismatch;
+        description = NSLocalizedString(@"Data does not match expected schema.", nil);
+        break;
     case CHIP_ERROR_DECODE_FAILED.AsInteger():
         code = MTRErrorCodeTLVDecodeFailed;
         description = NSLocalizedString(@"TLV decoding failed.", nil);
@@ -115,6 +125,18 @@ NSString * const MTRInteractionErrorDomain = @"MTRInteractionErrorDomain";
     case CHIP_ERROR_CANCELLED.AsInteger():
         code = MTRErrorCodeCancelled;
         description = NSLocalizedString(@"The operation was cancelled.", nil);
+        break;
+    case CHIP_ERROR_ACCESS_DENIED.AsInteger():
+        code = MTRErrorCodeAccessDenied;
+        description = NSLocalizedString(@"Access denied.", nil);
+        break;
+    case CHIP_ERROR_BUSY.AsInteger():
+        code = MTRErrorCodeBusy;
+        description = NSLocalizedString(@"Operation cannot be completed at this time: resource busy.", nil);
+        break;
+    case CHIP_ERROR_NOT_FOUND.AsInteger():
+        code = MTRErrorCodeNotFound;
+        description = NSLocalizedString(@"Requested resource was not found.", nil);
         break;
     default:
         code = MTRErrorCodeGeneralError;
@@ -133,6 +155,11 @@ NSString * const MTRInteractionErrorDomain = @"MTRInteractionErrorDomain";
     void * key = (__bridge void *) [MTRErrorHolder class];
     objc_setAssociatedObject(error, key, [[MTRErrorHolder alloc] initWithError:errorCode], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     return error;
+}
+
++ (NSError *)errorForCHIPIntegerCode:(uint32_t)errorCode
+{
+    return [MTRError errorForCHIPErrorCode:chip::ChipError(errorCode)];
 }
 
 + (NSError *)errorForIMStatus:(const chip::app::StatusIB &)status
@@ -297,6 +324,9 @@ NSString * const MTRInteractionErrorDomain = @"MTRInteractionErrorDomain";
     case MTRErrorCodeFabricExists:
         code = CHIP_ERROR_FABRIC_EXISTS.AsInteger();
         break;
+    case MTRErrorCodeSchemaMismatch:
+        code = CHIP_ERROR_SCHEMA_MISMATCH.AsInteger();
+        break;
     case MTRErrorCodeTLVDecodeFailed:
         code = CHIP_ERROR_DECODE_FAILED.AsInteger();
         break;
@@ -305,6 +335,15 @@ NSString * const MTRInteractionErrorDomain = @"MTRInteractionErrorDomain";
         break;
     case MTRErrorCodeCancelled:
         code = CHIP_ERROR_CANCELLED.AsInteger();
+        break;
+    case MTRErrorCodeAccessDenied:
+        code = CHIP_ERROR_ACCESS_DENIED.AsInteger();
+        break;
+    case MTRErrorCodeBusy:
+        code = CHIP_ERROR_BUSY.AsInteger();
+        break;
+    case MTRErrorCodeNotFound:
+        code = CHIP_ERROR_NOT_FOUND.AsInteger();
         break;
     case MTRErrorCodeGeneralError: {
         id userInfoErrorCode = error.userInfo[@"errorCode"];
@@ -322,6 +361,11 @@ NSString * const MTRInteractionErrorDomain = @"MTRInteractionErrorDomain";
     return chip::ChipError(code);
 }
 
++ (uint32_t)errorToCHIPIntegerCode:(NSError * _Nullable)error
+{
+    return [self errorToCHIPErrorCode:error].AsInteger();
+}
+
 @end
 
 @implementation MTRErrorHolder
@@ -337,3 +381,9 @@ NSString * const MTRInteractionErrorDomain = @"MTRInteractionErrorDomain";
 }
 
 @end
+
+void MTRThrowInvalidArgument(NSString * reason)
+{
+    MTR_LOG_ERROR("Invalid argument: %@", reason);
+    @throw [NSException exceptionWithName:NSInvalidArgumentException reason:reason userInfo:nil];
+}

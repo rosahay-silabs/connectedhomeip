@@ -92,8 +92,8 @@ _TEST_STEP_RESPONSE_SCHEMA = {
 _TEST_STEP_RESPONSE_CONSTRAINTS_SCHEMA = {
     'hasValue': bool,
     'type': str,
-    'minLength': int,
-    'maxLength': int,
+    'minLength': (int, str),  # Can be a variable.
+    'maxLength': (int, str),  # Can be a variable.
     'isHexString': bool,
     'startsWith': str,
     'endsWith': str,
@@ -106,7 +106,8 @@ _TEST_STEP_RESPONSE_CONSTRAINTS_SCHEMA = {
     'hasMasksSet': list,
     'hasMasksClear': list,
     'notValue': (type(None), bool, str, int, float, list, dict),
-    'anyOf': list
+    'anyOf': list,
+    'python': str,
 }
 
 # Note: this is not used in the loader, just provided for information in the schema tree

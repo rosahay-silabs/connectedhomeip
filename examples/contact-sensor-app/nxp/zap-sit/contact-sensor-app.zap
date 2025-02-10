@@ -1,6 +1,6 @@
 {
   "fileFormat": 2,
-  "featureLevel": 99,
+  "featureLevel": 106,
   "creator": "zap",
   "keyValuePairs": [
     {
@@ -19,17 +19,18 @@
   "package": [
     {
       "pathRelativity": "relativeToZap",
+      "path": "../../../../src/app/zap-templates/app-templates.json",
+      "type": "gen-templates-json",
+      "category": "matter",
+      "version": "chip-v1"
+    },
+    {
+      "pathRelativity": "relativeToZap",
       "path": "../../../../src/app/zap-templates/zcl/zcl.json",
       "type": "zcl-properties",
       "category": "matter",
       "version": 1,
       "description": "Matter SDK ZCL data"
-    },
-    {
-      "pathRelativity": "relativeToZap",
-      "path": "../../../../src/app/zap-templates/app-templates.json",
-      "type": "gen-templates-json",
-      "version": "chip-v1"
     }
   ],
   "endpointTypes": [
@@ -40,21 +41,32 @@
         "code": 22,
         "profileId": 259,
         "label": "MA-rootdevice",
-        "name": "MA-rootdevice"
+        "name": "MA-rootdevice",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 22,
           "profileId": 259,
           "label": "MA-rootdevice",
-          "name": "MA-rootdevice"
+          "name": "MA-rootdevice",
+          "deviceTypeOrder": 0
+        },
+        {
+          "code": 18,
+          "profileId": 259,
+          "label": "MA-otarequestor",
+          "name": "MA-otarequestor",
+          "deviceTypeOrder": 1
         }
       ],
       "deviceVersions": [
-        2
+        2,
+        1
       ],
       "deviceIdentifiers": [
-        22
+        22,
+        18
       ],
       "deviceTypeName": "MA-rootdevice",
       "deviceTypeCode": 22,
@@ -133,6 +145,54 @@
               "reportableChange": 0
             },
             {
+              "name": "GeneratedCommandList",
+              "code": 65528,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AcceptedCommandList",
+              "code": 65529,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AttributeList",
+              "code": 65531,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "FeatureMap",
               "code": 65532,
               "mfgCode": null,
@@ -177,22 +237,6 @@
             {
               "name": "ACL",
               "code": 0,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "Extension",
-              "code": 1,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -273,22 +317,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -553,6 +581,22 @@
               "reportableChange": 0
             },
             {
+              "name": "UniqueID",
+              "code": 18,
+              "mfgCode": null,
+              "side": "server",
+              "type": "char_string",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 1,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "CapabilityMinima",
               "code": 19,
               "mfgCode": null,
@@ -633,22 +677,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 1,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -690,7 +718,7 @@
               "storageOption": "RAM",
               "singleton": 1,
               "bounded": 0,
-              "defaultValue": "3",
+              "defaultValue": "4",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -768,24 +796,6 @@
               "source": "client",
               "isIncoming": 0,
               "isEnabled": 1
-            }
-          ],
-          "attributes": [
-            {
-              "name": "ClusterRevision",
-              "code": 65533,
-              "mfgCode": null,
-              "side": "client",
-              "type": "int16u",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "1",
-              "reportable": 1,
-              "minInterval": 0,
-              "maxInterval": 65344,
-              "reportableChange": 0
             }
           ]
         },
@@ -866,6 +876,54 @@
               "singleton": 0,
               "bounded": 0,
               "defaultValue": "0",
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "GeneratedCommandList",
+              "code": 65528,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AcceptedCommandList",
+              "code": 65529,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AttributeList",
+              "code": 65531,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -1099,22 +1157,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -1156,7 +1198,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "1",
+              "defaultValue": "2",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -1431,22 +1473,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -1488,7 +1514,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "2",
+              "defaultValue": "3",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -1541,22 +1567,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -1753,22 +1763,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -2968,22 +2962,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -3025,7 +3003,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "2",
+              "defaultValue": "3",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -3097,6 +3075,54 @@
               "mfgCode": null,
               "side": "server",
               "type": "vendor_id",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "GeneratedCommandList",
+              "code": 65528,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AcceptedCommandList",
+              "code": 65529,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AttributeList",
+              "code": 65531,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
               "included": 1,
               "storageOption": "External",
               "singleton": 0,
@@ -3344,6 +3370,54 @@
               "reportableChange": 0
             },
             {
+              "name": "GeneratedCommandList",
+              "code": 65528,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AcceptedCommandList",
+              "code": 65529,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AttributeList",
+              "code": 65531,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "FeatureMap",
               "code": 65532,
               "mfgCode": null,
@@ -3500,6 +3574,54 @@
               "reportableChange": 0
             },
             {
+              "name": "GeneratedCommandList",
+              "code": 65528,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AcceptedCommandList",
+              "code": 65529,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AttributeList",
+              "code": 65531,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "FeatureMap",
               "code": 65532,
               "mfgCode": null,
@@ -3622,22 +3744,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -3660,10 +3766,10 @@
               "side": "server",
               "type": "bitmap32",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "External",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x0000",
+              "defaultValue": null,
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -3679,7 +3785,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "2",
+              "defaultValue": "3",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -3696,14 +3802,16 @@
         "code": 21,
         "profileId": 259,
         "label": "MA-contactsensor",
-        "name": "MA-contactsensor"
+        "name": "MA-contactsensor",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 21,
           "profileId": 259,
           "label": "MA-contactsensor",
-          "name": "MA-contactsensor"
+          "name": "MA-contactsensor",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -3848,7 +3956,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "4",
+              "defaultValue": "5",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -4067,22 +4175,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -4150,14 +4242,16 @@
       "endpointTypeIndex": 0,
       "profileId": 259,
       "endpointId": 0,
-      "networkId": 0
+      "networkId": 0,
+      "parentEndpointIdentifier": null
     },
     {
       "endpointTypeName": "MA-dimmablelight",
       "endpointTypeIndex": 1,
       "profileId": 259,
       "endpointId": 1,
-      "networkId": 0
+      "networkId": 0,
+      "parentEndpointIdentifier": null
     }
   ]
 }

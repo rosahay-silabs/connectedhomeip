@@ -1,6 +1,6 @@
 {
   "fileFormat": 2,
-  "featureLevel": 100,
+  "featureLevel": 106,
   "creator": "zap",
   "keyValuePairs": [
     {
@@ -29,6 +29,7 @@
       "pathRelativity": "relativeToZap",
       "path": "../../../../src/app/zap-templates/app-templates.json",
       "type": "gen-templates-json",
+      "category": "matter",
       "version": "chip-v1"
     }
   ],
@@ -40,14 +41,16 @@
         "code": 22,
         "profileId": 259,
         "label": "MA-rootdevice",
-        "name": "MA-rootdevice"
+        "name": "MA-rootdevice",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 22,
           "profileId": 259,
           "label": "MA-rootdevice",
-          "name": "MA-rootdevice"
+          "name": "MA-rootdevice",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -897,40 +900,6 @@
               "isIncoming": 0,
               "isEnabled": 1
             }
-          ],
-          "attributes": [
-            {
-              "name": "FeatureMap",
-              "code": 65532,
-              "mfgCode": null,
-              "side": "client",
-              "type": "bitmap32",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "0",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "ClusterRevision",
-              "code": 65533,
-              "mfgCode": null,
-              "side": "client",
-              "type": "int16u",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "1",
-              "reportable": 1,
-              "minInterval": 0,
-              "maxInterval": 65344,
-              "reportableChange": 0
-            }
           ]
         },
         {
@@ -1543,6 +1512,38 @@
               "reportableChange": 0
             },
             {
+              "name": "SupportedThreadFeatures",
+              "code": 9,
+              "mfgCode": null,
+              "side": "server",
+              "type": "ThreadCapabilitiesBitmap",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": "",
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "ThreadVersion",
+              "code": 10,
+              "mfgCode": null,
+              "side": "server",
+              "type": "int16u",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": "",
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "GeneratedCommandList",
               "code": 65528,
               "mfgCode": null,
@@ -1804,6 +1805,22 @@
               "mfgCode": null,
               "side": "server",
               "type": "int64u",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "TotalOperationalHours",
+              "code": 3,
+              "mfgCode": null,
+              "side": "server",
+              "type": "int32u",
               "included": 1,
               "storageOption": "External",
               "singleton": 0,
@@ -4103,14 +4120,16 @@
         "code": 269,
         "profileId": 259,
         "label": "MA-extendedcolorlight",
-        "name": "MA-extendedcolorlight"
+        "name": "MA-extendedcolorlight",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 269,
           "profileId": 259,
           "label": "MA-extendedcolorlight",
-          "name": "MA-extendedcolorlight"
+          "name": "MA-extendedcolorlight",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -4663,7 +4682,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "5",
+              "defaultValue": "6",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -4755,7 +4774,7 @@
               "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x01",
+              "defaultValue": "0xFE",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -4931,7 +4950,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "5",
+              "defaultValue": "6",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -5262,7 +5281,7 @@
               "side": "server",
               "type": "int8u",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
               "defaultValue": "0x00",
@@ -5278,7 +5297,7 @@
               "side": "server",
               "type": "int8u",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
               "defaultValue": "0x00",
@@ -5310,7 +5329,7 @@
               "side": "server",
               "type": "int16u",
               "included": 1,
-              "storageOption": "NVM",
+              "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
               "defaultValue": "0x616B",
@@ -5326,7 +5345,7 @@
               "side": "server",
               "type": "int16u",
               "included": 1,
-              "storageOption": "NVM",
+              "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
               "defaultValue": "0x607D",
@@ -5356,7 +5375,7 @@
               "code": 8,
               "mfgCode": null,
               "side": "server",
-              "type": "enum8",
+              "type": "ColorModeEnum",
               "included": 1,
               "storageOption": "RAM",
               "singleton": 0,
@@ -5372,7 +5391,7 @@
               "code": 15,
               "mfgCode": null,
               "side": "server",
-              "type": "bitmap8",
+              "type": "OptionsBitmap",
               "included": 1,
               "storageOption": "RAM",
               "singleton": 0,
@@ -5708,7 +5727,7 @@
               "code": 16385,
               "mfgCode": null,
               "side": "server",
-              "type": "enum8",
+              "type": "EnhancedColorModeEnum",
               "included": 1,
               "storageOption": "RAM",
               "singleton": 0,
@@ -5804,7 +5823,7 @@
               "code": 16394,
               "mfgCode": null,
               "side": "server",
-              "type": "bitmap16",
+              "type": "ColorCapabilitiesBitmap",
               "included": 1,
               "storageOption": "RAM",
               "singleton": 0,
@@ -5825,7 +5844,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x0000",
+              "defaultValue": "0x009A",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -5841,7 +5860,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0xFEFF",
+              "defaultValue": "0x01C6",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -5873,7 +5892,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "",
+              "defaultValue": "0x00FA",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -5953,7 +5972,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "6",
+              "defaultValue": "7",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,

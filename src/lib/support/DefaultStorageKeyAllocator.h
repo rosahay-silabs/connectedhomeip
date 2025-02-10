@@ -1,6 +1,6 @@
 /*
  *
- *    Copyright (c) 2021 Project CHIP Authors
+ *    Copyright (c) 2021-2024 Project CHIP Authors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -193,6 +193,17 @@ public:
         return StorageKeyName::Formatted("f/%x/icd/%x", fabric, index);
     }
 
+    // Thread Network Directory
+
+    static StorageKeyName ThreadNetworkDirectoryIndex() { return StorageKeyName::FromConst("g/tnd/i"); }
+    static StorageKeyName ThreadNetworkDirectoryDataset(uint64_t extendedPanId)
+    {
+        return StorageKeyName::Formatted("g/tnd/n/%08" PRIx32 "%08" PRIx32, // some platforms can't format uint64
+                                         static_cast<uint32_t>(extendedPanId >> 32), static_cast<uint32_t>(extendedPanId));
+    }
+
+    // OTA
+
     static StorageKeyName OTADefaultProviders() { return StorageKeyName::FromConst("g/o/dp"); }
     static StorageKeyName OTACurrentProvider() { return StorageKeyName::FromConst("g/o/cp"); }
     static StorageKeyName OTAUpdateToken() { return StorageKeyName::FromConst("g/o/ut"); }
@@ -245,6 +256,10 @@ public:
     // when new fabric is created, this list needs to be updated,
     // when client init DefaultICDClientStorage, this table needs to be loaded.
     static StorageKeyName ICDFabricList() { return StorageKeyName::FromConst("g/icdfl"); }
+
+    // Terms and Conditions Acceptance Key
+    // Stores the terms and conditions acceptance including terms and conditions revision, TLV encoded
+    static StorageKeyName TermsAndConditionsAcceptance() { return StorageKeyName::FromConst("g/tc"); }
 };
 
 } // namespace chip

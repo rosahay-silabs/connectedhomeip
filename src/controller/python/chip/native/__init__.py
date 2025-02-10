@@ -16,6 +16,7 @@
 
 import ctypes
 import enum
+import functools
 import glob
 import os
 import platform
@@ -23,7 +24,7 @@ import typing
 from dataclasses import dataclass
 
 import chip.exceptions
-import construct
+import construct  # type: ignore
 
 
 class Library(enum.Enum):
@@ -69,7 +70,7 @@ class ErrorSDKPart(enum.IntEnum):
 class PyChipError(ctypes.Structure):
     ''' The ChipError for Python library.
 
-    We are using the following struct for passing the infomations of CHIP_ERROR between C++ and Python:
+    We are using the following struct for passing the information of CHIP_ERROR between C++ and Python:
 
     ```c
     struct PyChipError
@@ -84,7 +85,13 @@ class PyChipError(ctypes.Structure):
 
     def raise_on_error(self) -> None:
         if self.code != 0:
-            raise self.to_exception()
+            exception = self.to_exception()
+            if exception is not None:  # Ensure exception is not None to avoid mypy error and only raise valid exceptions
+                raise exception
+
+    @classmethod
+    def from_code(cls, code):
+        return cls(code=code, line=0, file=ctypes.c_void_p())
 
     @property
     def is_success(self) -> bool:
@@ -103,20 +110,21 @@ class PyChipError(ctypes.Structure):
         return (self.code) & 0xFFFFFF
 
     @property
-    def sdk_part(self) -> ErrorSDKPart:
+    def sdk_part(self) -> typing.Optional[ErrorSDKPart]:
         if not self.is_sdk_error:
             return None
         return ErrorSDKPart((self.code >> 8) & 0x07)
 
     @property
-    def sdk_code(self) -> int:
+    def sdk_code(self) -> typing.Optional[int]:
         if not self.is_sdk_error:
             return None
         return self.code & 0xFF
 
-    def to_exception(self) -> typing.Union[None, chip.exceptions.ChipStackError]:
+    def to_exception(self) -> typing.Optional[chip.exceptions.ChipStackError]:
         if not self.is_success:
-            return chip.exceptions.ChipStackError(self.code, str(self))
+            return chip.exceptions.ChipStackError.from_chip_error(self)
+        return None
 
     def __str__(self):
         buf = ctypes.create_string_buffer(256)
@@ -139,19 +147,29 @@ class PyChipError(ctypes.Structure):
         return not self == other
 
 
-PostAttributeChangeCallback = ctypes.CFUNCTYPE(
+c_PostAttributeChangeCallback = ctypes.CFUNCTYPE(
     None,
     ctypes.c_uint16,
     ctypes.c_uint16,
     ctypes.c_uint16,
     ctypes.c_uint8,
     ctypes.c_uint16,
-    # TODO: This should be a pointer to uint8_t, but ctypes does not provide
-    #       such a type. The best approximation is c_char_p, however, this
-    #       requires the caller to pass NULL-terminate C-string which might
-    #       not be the case here.
-    ctypes.c_char_p,
+    ctypes.POINTER(ctypes.c_char),
 )
+
+
+def PostAttributeChangeCallback(func):
+    @functools.wraps(func)
+    def wrapper(
+        endpoint: int,
+        clusterId: int,
+        attributeId: int,
+        xx_type: int,
+        size: int,
+        value: ctypes.POINTER(ctypes.c_char),
+    ):
+        return func(endpoint, clusterId, attributeId, xx_type, size, value[:size])
+    return c_PostAttributeChangeCallback(wrapper)
 
 
 def FindNativeLibraryPath(library: Library) -> str:
@@ -199,19 +217,19 @@ class NativeLibraryHandleMethodArguments:
     def Set(self, methodName: str, resultType, argumentTypes: list):
         method = getattr(self.handle, methodName)
         method.restype = resultType
-        method.argtype = argumentTypes
+        method.argtypes = argumentTypes
 
 
 @dataclass
 class _Handle:
-    dll: ctypes.CDLL = None
+    dll: ctypes.CDLL
     initialized: bool = False
 
 
 _nativeLibraryHandles: typing.Dict[Library, _Handle] = {}
 
 
-def _GetLibraryHandle(lib: Library, expectAlreadyInitialized: bool) -> ctypes.CDLL:
+def _GetLibraryHandle(lib: Library, expectAlreadyInitialized: bool) -> _Handle:
     """Get a memoized _Handle to the chip native code dll."""
 
     global _nativeLibraryHandles
@@ -227,7 +245,7 @@ def _GetLibraryHandle(lib: Library, expectAlreadyInitialized: bool) -> ctypes.CD
                        [ctypes.POINTER(PyChipError), ctypes.c_char_p, ctypes.c_uint32])
         elif lib == Library.SERVER:
             setter.Set("pychip_server_native_init", PyChipError, [])
-            setter.Set("pychip_server_set_callbacks", None, [PostAttributeChangeCallback])
+            setter.Set("pychip_server_set_callbacks", None, [c_PostAttributeChangeCallback])
 
     handle = _nativeLibraryHandles[lib]
     if expectAlreadyInitialized and not handle.initialized:
@@ -236,7 +254,7 @@ def _GetLibraryHandle(lib: Library, expectAlreadyInitialized: bool) -> ctypes.CD
     return handle
 
 
-def Init(bluetoothAdapter: int = None):
+def Init(bluetoothAdapter: typing.Optional[int] = None):
     CommonStackParams = construct.Struct(
         "BluetoothAdapterId" / construct.Int32ul,
     )

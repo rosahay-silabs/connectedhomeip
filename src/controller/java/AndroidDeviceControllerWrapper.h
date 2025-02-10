@@ -28,19 +28,18 @@
 #include <app/icd/client/CheckInHandler.h>
 #include <app/icd/client/DefaultICDClientStorage.h>
 #include <controller/CHIPDeviceController.h>
+#include <controller/java/CHIPP256KeypairBridge.h>
 #include <credentials/GroupDataProviderImpl.h>
 #include <credentials/PersistentStorageOpCertStore.h>
 #include <credentials/attestation_verifier/DacOnlyPartialAttestationVerifier.h>
 #include <crypto/RawKeySessionKeystore.h>
 #include <lib/support/TimeUtils.h>
 #include <platform/internal/DeviceNetworkInfo.h>
-
 #ifdef JAVA_MATTER_CONTROLLER_TEST
 #include <controller/ExampleOperationalCredentialsIssuer.h>
 #include <controller/ExamplePersistentStorage.h>
 #else
 #include <platform/android/AndroidChipPlatform-JNI.h>
-#include <platform/android/CHIPP256KeypairBridge.h>
 #endif // JAVA_MATTER_CONTROLLER_TEST
 
 #include "AndroidCheckInDelegate.h"
@@ -71,7 +70,6 @@ public:
     jobject JavaObjectRef() { return mJavaObjectRef.ObjectRef(); }
     jlong ToJNIHandle();
 
-#ifndef JAVA_MATTER_CONTROLLER_TEST
     /**
      * Returns a CHIPP256KeypairBridge which can be used to delegate signing operations
      * to a KeypairDelegate in the Java layer. Note that this will always return a pointer
@@ -85,7 +83,6 @@ public:
         }
         return mKeypairBridge;
     }
-#endif // JAVA_MATTER_CONTROLLER_TEST
 
     void CallJavaIntMethod(const char * methodName, jint argument);
     void CallJavaLongMethod(const char * methodName, jlong argument);
@@ -118,7 +115,7 @@ public:
         const chip::app::Clusters::NetworkCommissioning::Commands::ScanNetworksResponse::DecodableType & dataResponse) override;
     void OnScanNetworksFailure(CHIP_ERROR error) override;
     void OnICDRegistrationInfoRequired() override;
-    void OnICDRegistrationComplete(chip::NodeId icdNodeId, uint32_t icdCounter) override;
+    void OnICDRegistrationComplete(chip::ScopedNodeId icdNodeId, uint32_t icdCounter) override;
 
     // PersistentStorageDelegate implementation
     CHIP_ERROR SyncSetKeyValue(const char * key, const void * value, uint16_t size) override;
@@ -212,9 +209,11 @@ public:
 
     CHIP_ERROR FinishOTAProvider();
 
-    chip::app::DefaultICDClientStorage * getICDClientStorage() { return &mICDClientStorage; }
-
     CHIP_ERROR SetICDCheckInDelegate(jobject checkInDelegate);
+
+    void StartDnssd();
+
+    void StopDnssd();
 
 private:
     using ChipDeviceControllerPtr = std::unique_ptr<chip::Controller::DeviceCommissioner>;
@@ -228,18 +227,17 @@ private:
     // TODO: This may need to be injected as a SessionKeystore*
     chip::Crypto::RawKeySessionKeystore mSessionKeystore;
 
-    chip::app::DefaultICDClientStorage mICDClientStorage;
     chip::app::AndroidCheckInDelegate mCheckInDelegate;
     chip::app::CheckInHandler mCheckInHandler;
 
     JavaVM * mJavaVM = nullptr;
     chip::JniGlobalReference mJavaObjectRef;
+    CHIPP256KeypairBridge * mKeypairBridge = nullptr;
 #ifdef JAVA_MATTER_CONTROLLER_TEST
     ExampleOperationalCredentialsIssuerPtr mOpCredsIssuer;
     PersistentStorage mExampleStorage;
 #else
     AndroidOperationalCredentialsIssuerPtr mOpCredsIssuer;
-    CHIPP256KeypairBridge * mKeypairBridge = nullptr;
 #endif // JAVA_MATTER_CONTROLLER_TEST
 
     // These fields allow us to release the string/byte array memory later.
@@ -276,7 +274,7 @@ private:
     uint32_t mActiveModeDuration  = 0;
     uint16_t mActiveModeThreshold = 0;
     chip::Controller::CommissioningParameters mCommissioningParameter;
-
+    bool mIsInitialized = false;
     AndroidDeviceControllerWrapper(ChipDeviceControllerPtr controller,
 #ifdef JAVA_MATTER_CONTROLLER_TEST
                                    ExampleOperationalCredentialsIssuerPtr opCredsIssuer

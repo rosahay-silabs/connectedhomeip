@@ -1,6 +1,6 @@
 {
   "fileFormat": 2,
-  "featureLevel": 100,
+  "featureLevel": 106,
   "creator": "zap",
   "keyValuePairs": [
     {
@@ -29,6 +29,7 @@
       "pathRelativity": "relativeToZap",
       "path": "../../../src/app/zap-templates/app-templates.json",
       "type": "gen-templates-json",
+      "category": "matter",
       "version": "chip-v1"
     }
   ],
@@ -40,14 +41,16 @@
         "code": 22,
         "profileId": 259,
         "label": "MA-rootdevice",
-        "name": "MA-rootdevice"
+        "name": "MA-rootdevice",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 22,
           "profileId": 259,
           "label": "MA-rootdevice",
-          "name": "MA-rootdevice"
+          "name": "MA-rootdevice",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -779,22 +782,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 1,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -1790,7 +1777,7 @@
           ]
         },
         {
-          "name": "WiFi Network Diagnostics",
+          "name": "Wi-Fi Network Diagnostics",
           "code": 54,
           "mfgCode": null,
           "define": "WIFI_NETWORK_DIAGNOSTICS_CLUSTER",
@@ -2677,14 +2664,16 @@
         "code": 121,
         "profileId": 259,
         "label": "MA-microwave-oven",
-        "name": "MA-microwave-oven"
+        "name": "MA-microwave-oven",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 121,
           "profileId": 259,
           "label": "MA-microwave-oven",
-          "name": "MA-microwave-oven"
+          "name": "MA-microwave-oven",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -2829,7 +2818,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "4",
+              "defaultValue": "5",
               "reportable": 1,
               "minInterval": 0,
               "maxInterval": 65344,
@@ -2942,22 +2931,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -3014,7 +2987,6 @@
           "define": "MICROWAVE_OVEN_MODE_CLUSTER",
           "side": "server",
           "enabled": 1,
-          "apiMaturity": "provisional",
           "attributes": [
             {
               "name": "SupportedModes",
@@ -3067,22 +3039,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -3153,7 +3109,6 @@
           "define": "MICROWAVE_OVEN_CONTROL_CLUSTER",
           "side": "server",
           "enabled": 1,
-          "apiMaturity": "provisional",
           "commands": [
             {
               "name": "SetCookingParameters",
@@ -3304,22 +3259,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -3562,22 +3501,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -3619,7 +3542,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "2",
+              "defaultValue": "3",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,

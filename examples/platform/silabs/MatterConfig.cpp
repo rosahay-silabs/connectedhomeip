@@ -19,31 +19,31 @@
 
 #include "AppConfig.h"
 #include "BaseApplication.h"
-#include "OTAConfig.h"
 #include <MatterConfig.h>
 #include <cmsis_os2.h>
 
 #include <mbedtls/platform.h>
 
 #ifdef SL_WIFI
-#include "wfx_host_events.h"
-#endif /* SL_WIFI */
+#include <platform/silabs/wifi/WifiInterface.h>
+
+// TODO: We shouldn't need any platform specific includes in this file
+#if (defined(SLI_SI91X_MCU_INTERFACE) && SLI_SI91X_MCU_INTERFACE == 1)
+#include <platform/silabs/SiWx917/SiWxPlatformInterface.h>
+#endif // (defined(SLI_SI91X_MCU_INTERFACE) && SLI_SI91X_MCU_INTERFACE == 1)
+#endif // SL_WIFI
 
 #if PW_RPC_ENABLED
 #include "Rpc.h"
 #endif
 
 #ifdef ENABLE_CHIP_SHELL
-#include "matter_shell.h"
+#include "MatterShell.h"
 #endif
 
 #ifdef HEAP_MONITORING
 #include "MemMonitoring.h"
 #endif
-
-#ifdef SLI_SI91X_MCU_INTERFACE
-#include "wfx_rsi.h"
-#endif /* SLI_SI91X_MCU_INTERFACE */
 
 #include <crypto/CHIPCryptoPAL.h>
 // If building with the EFR32-provided crypto backend, we can use the
@@ -53,10 +53,14 @@
 static chip::DeviceLayer::Internal::Efr32PsaOperationalKeystore gOperationalKeystore;
 #endif
 
-#include "SilabsDeviceDataProvider.h"
-#include "SilabsTestEventTriggerDelegate.h"
 #include <app/InteractionModelEngine.h>
 #include <app/TimerDelegates.h>
+#include <data-model-providers/codegen/Instance.h>
+#include <headers/ProvisionManager.h>
+
+#ifdef SL_MATTER_TEST_EVENT_TRIGGER_ENABLED
+#include "SilabsTestEventTriggerDelegate.h" // nogncheck
+#endif
 
 #if CHIP_CONFIG_SYNCHRONOUS_REPORTS_ENABLED
 #include <app/reporting/SynchronizedReportSchedulerImpl.h>
@@ -74,8 +78,6 @@ static chip::DeviceLayer::Internal::Efr32PsaOperationalKeystore gOperationalKeys
 
 #include <DeviceInfoProviderImpl.h>
 #include <app/server/Server.h>
-#include <credentials/DeviceAttestationCredsProvider.h>
-#include <examples/platform/silabs/SilabsDeviceAttestationCreds.h>
 
 #include <platform/silabs/platformAbstraction/SilabsPlatform.h>
 
@@ -86,7 +88,7 @@ static chip::DeviceLayer::Internal::Efr32PsaOperationalKeystore gOperationalKeys
 using namespace ::chip;
 using namespace ::chip::Inet;
 using namespace ::chip::DeviceLayer;
-using namespace ::chip::Credentials::Silabs;
+using namespace ::chip::Credentials;
 using namespace chip::DeviceLayer::Silabs;
 
 #if CHIP_ENABLE_OPENTHREAD
@@ -121,7 +123,7 @@ void UnlockOpenThreadTask(void)
 
 CHIP_ERROR SilabsMatterConfig::InitOpenThread(void)
 {
-    SILABS_LOG("Initializing OpenThread stack");
+    ChipLogProgress(DeviceLayer, "Initializing OpenThread stack");
     ReturnErrorOnFailure(ThreadStackMgr().InitThreadStack());
 
 #if CHIP_DEVICE_CONFIG_THREAD_FTD
@@ -138,7 +140,7 @@ CHIP_ERROR SilabsMatterConfig::InitOpenThread(void)
 #endif // CHIP_CONFIG_ENABLE_ICD_SERVER
 #endif // CHIP_DEVICE_CONFIG_THREAD_FTD
 
-    SILABS_LOG("Starting OpenThread task");
+    ChipLogProgress(DeviceLayer, "Starting OpenThread task");
     return ThreadStackMgrImpl().StartThreadTask();
 }
 #endif // CHIP_ENABLE_OPENTHREAD
@@ -168,10 +170,10 @@ void ApplicationStart(void * unused)
 
     chip::DeviceLayer::PlatformMgr().LockChipStack();
     // Initialize device attestation config
-    SetDeviceAttestationCredentialsProvider(Credentials::Silabs::GetSilabsDacProvider());
+    SetDeviceAttestationCredentialsProvider(&Provision::Manager::GetInstance().GetStorage());
     chip::DeviceLayer::PlatformMgr().UnlockChipStack();
 
-    SILABS_LOG("Starting App Task");
+    ChipLogProgress(DeviceLayer, "Starting App Task");
     err = AppTask::GetAppTask().StartAppTask();
     if (err != CHIP_NO_ERROR)
         appError(err);
@@ -184,83 +186,60 @@ void ApplicationStart(void * unused)
 void SilabsMatterConfig::AppInit()
 {
     GetPlatform().Init();
-
     sMainTaskHandle = osThreadNew(ApplicationStart, nullptr, &kMainTaskAttr);
-    SILABS_LOG("Starting scheduler");
+    ChipLogProgress(DeviceLayer, "Starting scheduler");
     VerifyOrDie(sMainTaskHandle); // We can't proceed if the Main Task creation failed.
     GetPlatform().StartScheduler();
 
     // Should never get here.
     chip::Platform::MemoryShutdown();
-    SILABS_LOG("Start Scheduler Failed");
+    ChipLogProgress(DeviceLayer, "Start Scheduler Failed");
     appError(CHIP_ERROR_INTERNAL);
 }
-
-#if SILABS_OTA_ENABLED
-void SilabsMatterConfig::InitOTARequestorHandler(System::Layer * systemLayer, void * appState)
-{
-    OTAConfig::Init();
-}
-#endif
-
-void SilabsMatterConfig::ConnectivityEventCallback(const ChipDeviceEvent * event, intptr_t arg)
-{
-    // Initialize OTA only when Thread or WiFi connectivity is established
-    if (((event->Type == DeviceEventType::kThreadConnectivityChange) &&
-         (event->ThreadConnectivityChange.Result == kConnectivity_Established)) ||
-        ((event->Type == DeviceEventType::kInternetConnectivityChange) &&
-         (event->InternetConnectivityChange.IPv6 == kConnectivity_Established)))
-    {
-#if SILABS_OTA_ENABLED
-        SILABS_LOG("Scheduling OTA Requestor initialization")
-        chip::DeviceLayer::SystemLayer().StartTimer(chip::System::Clock::Seconds32(OTAConfig::kInitOTARequestorDelaySec),
-                                                    InitOTARequestorHandler, nullptr);
-#endif
-    }
-}
-
-#if SILABS_TEST_EVENT_TRIGGER_ENABLED
-static uint8_t sTestEventTriggerEnableKey[TestEventTriggerDelegate::kEnableKeyLength] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55,
-                                                                                          0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb,
-                                                                                          0xcc, 0xdd, 0xee, 0xff };
-#endif // SILABS_TEST_EVENT_TRIGGER_ENABLED
 
 CHIP_ERROR SilabsMatterConfig::InitMatter(const char * appName)
 {
     CHIP_ERROR err;
-
+#ifdef SL_WIFI
+    // Because OpenThread needs to use memory allocation during its Key operations, we initialize the memory management for thread
+    // and set the allocation functions inside sl_ot_create_instance, which is called by sl_system_init in the OpenThread stack
+    // initialization.
     mbedtls_platform_set_calloc_free(CHIPPlatformMemoryCalloc, CHIPPlatformMemoryFree);
-
-    SILABS_LOG("==================================================");
-    SILABS_LOG("%s starting", appName);
-    SILABS_LOG("==================================================");
+#endif
+    ChipLogProgress(DeviceLayer, "==================================================");
+    ChipLogProgress(DeviceLayer, "%s starting", appName);
+    ChipLogProgress(DeviceLayer, "==================================================");
 
 #if PW_RPC_ENABLED
     chip::rpc::Init();
 #endif
 
 #ifdef HEAP_MONITORING
-    MemMonitoring::startHeapMonitoring();
+    MemMonitoring::StartMonitor();
 #endif
 
     //==============================================
     // Init Matter Stack
     //==============================================
-    SILABS_LOG("Init CHIP Stack");
-    // Init Chip memory management before the stack
-    ReturnErrorOnFailure(chip::Platform::MemoryInit());
+    ChipLogProgress(DeviceLayer, "Init CHIP Stack");
 
-// WiFi needs to be initialized after Memory Init for some reason
 #ifdef SL_WIFI
+    // Init Chip memory management before the stack
+    // See comment above about OpenThread memory allocation as to why this is WIFI only here.
+    ReturnErrorOnFailure(chip::Platform::MemoryInit());
     ReturnErrorOnFailure(InitWiFi());
 #endif
 
     ReturnErrorOnFailure(PlatformMgr().InitChipStack());
 
-    SetDeviceInstanceInfoProvider(&Silabs::SilabsDeviceDataProvider::GetDeviceDataProvider());
-    SetCommissionableDataProvider(&Silabs::SilabsDeviceDataProvider::GetDeviceDataProvider());
-
     chip::DeviceLayer::ConnectivityMgr().SetBLEDeviceName(appName);
+
+    // Provision Manager
+    Silabs::Provision::Manager & provision = Silabs::Provision::Manager::GetInstance();
+    ReturnErrorOnFailure(provision.Init());
+    SetDeviceInstanceInfoProvider(&provision.GetStorage());
+    SetCommissionableDataProvider(&provision.GetStorage());
+    ChipLogProgress(DeviceLayer, "Provision mode %s", provision.IsProvisionRequired() ? "ENABLED" : "disabled");
 
 #if CHIP_ENABLE_OPENTHREAD
     ReturnErrorOnFailure(InitOpenThread());
@@ -283,18 +262,10 @@ CHIP_ERROR SilabsMatterConfig::InitMatter(const char * appName)
 
     initParams.reportScheduler = &sReportScheduler;
 
-#if SILABS_TEST_EVENT_TRIGGER_ENABLED
-    if (Encoding::HexToBytes(SILABS_TEST_EVENT_TRIGGER_ENABLE_KEY, strlen(SILABS_TEST_EVENT_TRIGGER_ENABLE_KEY),
-                             sTestEventTriggerEnableKey,
-                             TestEventTriggerDelegate::kEnableKeyLength) != TestEventTriggerDelegate::kEnableKeyLength)
-    {
-        SILABS_LOG("Failed to convert the EnableKey string to octstr type value");
-        memset(sTestEventTriggerEnableKey, 0, sizeof(sTestEventTriggerEnableKey));
-    }
-    // TODO(#31723): Show to customers that they can do `Server::GetInstance().GetTestEventTriggerDelegate().AddHandler()`
-    static SilabsTestEventTriggerDelegate sTestEventTriggerDelegate{ ByteSpan(sTestEventTriggerEnableKey) };
+#ifdef SL_MATTER_TEST_EVENT_TRIGGER_ENABLED
+    static SilabsTestEventTriggerDelegate sTestEventTriggerDelegate;
     initParams.testEventTriggerDelegate = &sTestEventTriggerDelegate;
-#endif // SILABS_TEST_EVENT_TRIGGER_ENABLED
+#endif // SL_MATTER_TEST_EVENT_TRIGGER_ENABLED
 
 #if CHIP_CRYPTO_PLATFORM && !(defined(SLI_SI91X_MCU_INTERFACE))
     // When building with EFR32 crypto, use the opaque key store
@@ -303,15 +274,9 @@ CHIP_ERROR SilabsMatterConfig::InitMatter(const char * appName)
     initParams.operationalKeystore = &gOperationalKeystore;
 #endif
 
-#ifdef PERFORMANCE_TEST_ENABLED
-    // Set up Test Event Trigger command of the General Diagnostics cluster. Used only in performance testing
-    // TODO(#31723): Show to customers that they can do `Server::GetInstance().GetTestEventTriggerDelegate().AddHandler()`
-    static SilabsTestEventTriggerDelegate sTestEventTriggerDelegate{ ByteSpan(kTestEventTriggerEnableKey) };
-    initParams.testEventTriggerDelegate = &sTestEventTriggerDelegate;
-#endif
-
     // Initialize the remaining (not overridden) providers to the SDK example defaults
     (void) initParams.InitializeStaticResourcesBeforeServerInit();
+    initParams.dataModelProvider = app::CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
 
 #if CHIP_ENABLE_OPENTHREAD
     // Set up OpenThread configuration when OpenThread is included
@@ -322,18 +287,13 @@ CHIP_ERROR SilabsMatterConfig::InitMatter(const char * appName)
     initParams.endpointNativeParams    = static_cast<void *>(&nativeParams);
 #endif
 
-#if CHIP_CONFIG_ENABLE_ICD_SERVER && SLI_SI917
     initParams.appDelegate = &BaseApplication::sAppDelegate;
-#endif // CHIP_CONFIG_ENABLE_ICD_SERVER && SLI_SI917
     // Init Matter Server and Start Event Loop
     err = chip::Server::GetInstance().Init(initParams);
 
     chip::DeviceLayer::PlatformMgr().UnlockChipStack();
 
     ReturnErrorOnFailure(err);
-
-    // OTA Requestor initialization will be triggered by the connectivity events
-    PlatformMgr().AddEventHandler(ConnectivityEventCallback, reinterpret_cast<intptr_t>(nullptr));
 
     SILABS_LOG("Starting Platform Manager Event Loop");
     ReturnErrorOnFailure(PlatformMgr().StartEventLoopTask());
@@ -348,24 +308,7 @@ CHIP_ERROR SilabsMatterConfig::InitMatter(const char * appName)
 #ifdef SL_WIFI
 CHIP_ERROR SilabsMatterConfig::InitWiFi(void)
 {
-#ifdef WF200_WIFI
-    // Start wfx bus communication task.
-    wfx_bus_start();
-#ifdef SL_WFX_USE_SECURE_LINK
-    wfx_securelink_task_start(); // start securelink key renegotiation task
-#endif                           // SL_WFX_USE_SECURE_LINK
-#endif                           /* WF200_WIFI */
-
-#ifdef SLI_SI91X_MCU_INTERFACE
-    sl_status_t status;
-    if ((status = wfx_wifi_rsi_init()) != SL_STATUS_OK)
-    {
-        SILABS_LOG("wfx_wifi_rsi_init failed with status: %x", status);
-        ReturnErrorOnFailure((CHIP_ERROR) status);
-    }
-#endif // SLI_SI91X_MCU_INTERFACE
-
-    return CHIP_NO_ERROR;
+    return InitWiFiStack();
 }
 #endif // SL_WIFI
 
@@ -374,7 +317,10 @@ CHIP_ERROR SilabsMatterConfig::InitWiFi(void)
 // ================================================================================
 extern "C" void vApplicationIdleHook(void)
 {
-#if SLI_SI91X_MCU_INTERFACE && CHIP_CONFIG_ENABLE_ICD_SERVER
-    sl_wfx_host_si91x_sleep_wakeup();
+#if (SLI_SI91X_MCU_INTERFACE && CHIP_CONFIG_ENABLE_ICD_SERVER)
+#ifdef SL_CATALOG_SIMPLE_BUTTON_PRESENT
+    SiWxPlatformInterface::sl_si91x_btn_event_handler();
+#endif // SL_CATALOG_SIMPLE_BUTTON_PRESENT
+    SiWxPlatformInterface::sl_si91x_uart_power_requirement_handler();
 #endif
 }

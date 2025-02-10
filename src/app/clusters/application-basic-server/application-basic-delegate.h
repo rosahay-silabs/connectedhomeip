@@ -20,7 +20,7 @@
 
 #include <app-common/zap-generated/cluster-objects.h>
 
-#include <app/AttributeAccessInterface.h>
+#include <app/AttributeValueEncoder.h>
 #include <lib/support/CHIPMemString.h>
 
 #include <list>
@@ -57,6 +57,8 @@ public:
         catalogVendorId = vendorId;
         Platform::CopyString(applicationId, sizeof(applicationId), appId);
     }
+
+    const char * GetApplicationId() { return applicationId; }
 
     static const int kApplicationIdSize = 32;
     char applicationId[kApplicationIdSize];

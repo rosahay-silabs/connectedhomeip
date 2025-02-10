@@ -41,8 +41,6 @@ declare_args() {
   # By default, the resources used by each fabric is unlimited if they are allocated on heap. This flag is for checking the resource usage even when they are allocated on heap to increase code coverage in integration tests.
   chip_im_force_fabric_quota_check = false
 
-  enable_eventlist_attribute = false
-
   # Allow building ota-requestor-app with a non-spec-compliant floor
   # (i.e. smaller than 2 minutes) for action delays.
   non_spec_compliant_ota_action_delay_floor = -1
@@ -71,13 +69,14 @@ buildconfig_header("app_buildconfig") {
     "CHIP_CONFIG_ACCESS_CONTROL_POLICY_LOGGING_VERBOSITY=${chip_access_control_policy_logging_verbosity}",
     "CHIP_CONFIG_PERSIST_SUBSCRIPTIONS=${chip_persist_subscriptions}",
     "CHIP_CONFIG_SUBSCRIPTION_TIMEOUT_RESUMPTION=${chip_subscription_timeout_resumption}",
-    "CHIP_CONFIG_ENABLE_EVENTLIST_ATTRIBUTE=${enable_eventlist_attribute}",
     "CHIP_CONFIG_ENABLE_READ_CLIENT=${chip_enable_read_client}",
     "CHIP_CONFIG_STATIC_GLOBAL_INTERACTION_MODEL_ENGINE=${chip_im_static_global_interaction_model_engine}",
     "TIME_SYNC_ENABLE_TSC_FEATURE=${time_sync_enable_tsc_feature}",
     "NON_SPEC_COMPLIANT_OTA_ACTION_DELAY_FLOOR=${non_spec_compliant_ota_action_delay_floor}",
     "CHIP_DEVICE_CONFIG_DYNAMIC_SERVER=${chip_build_controller_dynamic_server}",
     "CHIP_CONFIG_ENABLE_BUSY_HANDLING_FOR_OPERATIONAL_SESSION_SETUP=${chip_enable_busy_handling_for_operational_session_setup}",
+    "CHIP_CONFIG_DATA_MODEL_EXTRA_LOGGING=${chip_data_model_extra_logging}",
+    "CHIP_CONFIG_TERMS_AND_CONDITIONS_REQUIRED=${chip_terms_and_conditions_required}",
   ]
 
   visibility = [ ":app_config" ]
@@ -108,16 +107,22 @@ source_set("paths") {
     "${chip_root}/src/app/util:types",
     "${chip_root}/src/lib/core",
     "${chip_root}/src/lib/core:types",
+    "${chip_root}/src/lib/support",
   ]
 }
 
 source_set("global-attributes") {
-  sources = [ "GlobalAttributes.h" ]
+  sources = [
+    "GlobalAttributes.cpp",
+    "GlobalAttributes.h",
+  ]
 
   # This also depends on zap-generated code which is currently impossible to split out
   # as a dependency
   public_deps = [
     ":app_config",
+    "${chip_root}/src/app/common:ids",
+    "${chip_root}/src/app/data-model-provider",
     "${chip_root}/src/lib/support",
   ]
 }
@@ -144,6 +149,14 @@ source_set("constants") {
     "${chip_root}/src/lib/core",
     "${chip_root}/src/system",
   ]
+}
+
+source_set("test-event-trigger") {
+  sources = [ "TestEventTriggerDelegate.h" ]
+}
+
+source_set("event-reporter") {
+  sources = [ "EventReporter.h" ]
 }
 
 # interaction-model is a static-library because it currently requires global functions (app/util/...) that are stubbed in different test files that depend on the app static_library
@@ -174,9 +187,6 @@ static_library("interaction-model") {
     "ReadClient.h",  # TODO: cpp is only included conditionally. Needs logic
                      # fixing
     "ReadPrepareParams.h",
-    "RequiredPrivilege.h",
-    "StatusResponse.cpp",
-    "StatusResponse.h",
     "SubscriptionResumptionStorage.h",
     "TimedHandler.cpp",
     "TimedHandler.h",
@@ -201,14 +211,22 @@ static_library("interaction-model") {
     "reporting/reporting.h",
   ]
 
-  deps = [ "${chip_root}/src/app:events" ]
+  deps = [
+    ":path-expansion",
+    "${chip_root}/src/app:events",
+    "${chip_root}/src/app:global-attributes",
+  ]
 
   public_deps = [
     ":app_config",
+    ":command-handler-impl",
     ":constants",
+    ":event-reporter",
     ":paths",
     ":subscription-info-provider",
+    "${chip_root}/src/access",
     "${chip_root}/src/app/MessageDef",
+    "${chip_root}/src/app/data-model-provider",
     "${chip_root}/src/app/icd/server:icd-server-config",
     "${chip_root}/src/app/icd/server:manager",
     "${chip_root}/src/app/icd/server:observer",
@@ -242,7 +260,78 @@ static_library("interaction-model") {
       "clusters/ota-provider/ota-provider.cpp",
       "dynamic_server/AccessControl.cpp",
       "dynamic_server/AccessControl.h",
+    ]
+
+    # DynamicDispatcher is actually an ember-override that takes over
+    # util/attribute-storage.cpp and util/attribute-table.cpp functions.
+    #
+    # We likely should formalize and change this with a proper DataModel::Provider that
+    # is consistent instead
+    sources += [
+      "${chip_root}/src/app/util/ember-io-storage.cpp",
       "dynamic_server/DynamicDispatcher.cpp",
+    ]
+
+    public_deps += [
+      ":global-attributes",
+      "${chip_root}/src/access",
+      "${chip_root}/src/access:provider-impl",
+      "${chip_root}/src/app/common:attribute-type",
+    ]
+
+    public_configs += [ ":config-controller-dynamic-server" ]
+  }
+}
+
+source_set("events") {
+  sources = [
+    "EventHeader.h",
+    "EventLoggingDelegate.h",
+    "EventLoggingTypes.h",
+  ]
+
+  deps = [
+    ":paths",
+    "${chip_root}/src/access:types",
+    "${chip_root}/src/lib/core",
+  ]
+}
+
+static_library("attribute-access") {
+  sources = [
+    "AttributeAccessInterface.h",
+    "AttributeAccessInterfaceCache.h",
+    "AttributeAccessInterfaceRegistry.cpp",
+    "AttributeAccessInterfaceRegistry.h",
+    "AttributeEncodeState.h",
+    "AttributeReportBuilder.cpp",
+    "AttributeReportBuilder.h",
+    "AttributeValueDecoder.h",
+    "AttributeValueEncoder.cpp",
+    "AttributeValueEncoder.h",
+  ]
+
+  deps = [
+    ":paths",
+    "${chip_root}/src/access:types",
+    "${chip_root}/src/app/MessageDef",
+    "${chip_root}/src/app/data-model",
+    "${chip_root}/src/app/util:af-types",
+    "${chip_root}/src/lib/core",
+    "${chip_root}/src/lib/support",
+  ]
+}
+
+source_set("required-privileges") {
+  sources = [ "RequiredPrivilege.h" ]
+
+  public_deps = [
+    ":paths",
+    "${chip_root}/src/access:types",
+  ]
+
+  if (chip_build_controller_dynamic_server) {
+    sources += [
       "util/privilege-storage.cpp",
       "util/privilege-storage.h",
     ]
@@ -253,19 +342,107 @@ static_library("interaction-model") {
       "${chip_root}/src/app/dynamic_server:mock-codegen-includes",
     ]
 
-    public_configs += [ ":config-controller-dynamic-server" ]
+    public_configs = [ ":config-controller-dynamic-server" ]
   }
 }
 
-source_set("events") {
+source_set("status-response") {
   sources = [
-    "EventHeader.h",
-    "EventLoggingTypes.h",
+    "StatusResponse.cpp",
+    "StatusResponse.h",
+  ]
+  public_deps = [
+    ":constants",
+    "${chip_root}/src/app/MessageDef",
+    "${chip_root}/src/messaging",
+    "${chip_root}/src/protocols/interaction_model",
+  ]
+}
+
+source_set("command-handler-interface") {
+  sources = [
+    "CommandHandler.cpp",
+    "CommandHandler.h",
+    "CommandHandlerExchangeInterface.h",
+    "CommandHandlerInterface.h",
+    "CommandHandlerInterfaceRegistry.cpp",
+    "CommandHandlerInterfaceRegistry.h",
   ]
 
-  deps = [
+  public_deps = [
     ":paths",
     "${chip_root}/src/access:types",
+    "${chip_root}/src/app/data-model",
+    "${chip_root}/src/lib/core",
+    "${chip_root}/src/lib/support",
+    "${chip_root}/src/messaging",
+    "${chip_root}/src/protocols/interaction_model",
+  ]
+}
+
+source_set("command-handler-impl") {
+  sources = [
+    "CommandHandlerImpl.cpp",
+    "CommandHandlerImpl.h",
+  ]
+
+  public_deps = [
+    ":command-handler-interface",
+    ":paths",
+    ":required-privileges",
+    ":status-response",
+    "${chip_root}/src/access:types",
+    "${chip_root}/src/app/MessageDef",
+    "${chip_root}/src/app/common:cluster-objects",
+    "${chip_root}/src/app/data-model",
+    "${chip_root}/src/app/data-model-provider",
+    "${chip_root}/src/app/util:callbacks",
+    "${chip_root}/src/lib/support",
+    "${chip_root}/src/messaging",
+  ]
+}
+
+source_set("storage-wrapper") {
+  sources = [
+    "StorageDelegateWrapper.cpp",
+    "StorageDelegateWrapper.h",
+  ]
+
+  public_deps = [
+    "${chip_root}/src/lib/core",
+    "${chip_root}/src/lib/support",
+  ]
+}
+
+source_set("path-expansion") {
+  sources = [
+    "AttributePathExpandIterator.cpp",
+    "AttributePathExpandIterator.h",
+  ]
+
+  public_deps = [
+    ":global-attributes",
+    ":paths",
+    "${chip_root}/src/app/data-model-provider",
+    "${chip_root}/src/lib/core:types",
+    "${chip_root}/src/lib/support",
+  ]
+}
+
+source_set("attribute-persistence") {
+  sources = [
+    "DefaultSafeAttributePersistenceProvider.h",
+    "SafeAttributePersistenceProvider.cpp",
+    "SafeAttributePersistenceProvider.h",
+  ]
+
+  public_deps = [
+    ":paths",
+    ":storage-wrapper",
+    "${chip_root}/src/app/data-model:nullable",
+    "${chip_root}/src/app/util:types",
+    "${chip_root}/src/lib/support",
+    "${chip_root}/src/lib/support:span",
   ]
 }
 
@@ -275,30 +452,19 @@ static_library("app") {
   output_name = "libCHIPDataModel"
 
   sources = [
-    "AttributeAccessInterface.cpp",
-    "AttributeAccessInterfaceCache.h",
-    "AttributePathExpandIterator.cpp",
-    "AttributePathExpandIterator.h",
-    "AttributePersistenceProvider.h",
     "ChunkedWriteCallback.cpp",
     "ChunkedWriteCallback.h",
-    "CommandHandler.cpp",
-    "CommandHandlerExchangeInterface.h",
     "CommandResponseHelper.h",
     "CommandResponseSender.cpp",
-    "DefaultAttributePersistenceProvider.cpp",
-    "DefaultAttributePersistenceProvider.h",
-    "DeferredAttributePersistenceProvider.cpp",
-    "DeferredAttributePersistenceProvider.h",
     "EventLogging.h",
-    "EventLoggingDelegate.h",
     "EventManagement.cpp",
     "EventManagement.h",
     "FailSafeContext.cpp",
     "FailSafeContext.h",
+    "GenericEventManagementTestEventTriggerHandler.cpp",
+    "GenericEventManagementTestEventTriggerHandler.h",
     "OTAUserConsentCommon.h",
     "ReadHandler.cpp",
-    "SafeAttributePersistenceProvider.h",
     "TimerDelegates.cpp",
     "TimerDelegates.h",
     "WriteHandler.cpp",
@@ -307,22 +473,20 @@ static_library("app") {
     #       (app depending on im and im including these headers):
     #       Name with _ so that linter does not recognize it
     # "CommandResponseSender._h"
-    # "CommandHandler._h"
     # "ReadHandler._h",
     # "WriteHandler._h"
-
-    # TODO: the following items cannot be included due to platform includes not being
-    #       able to depend on src/app
-    #       Name with _ so that linter does not recognize it
-    # "_AttributeAccessInterface._h",
   ]
 
   public_deps = [
     ":app_config",
+    ":attribute-access",
     ":constants",
+    ":event-reporter",
     ":global-attributes",
     ":interaction-model",
+    ":path-expansion",
     "${chip_root}/src/app/data-model",
+    "${chip_root}/src/app/data-model-provider",
     "${chip_root}/src/app/icd/server:icd-server-config",
     "${chip_root}/src/app/util:callbacks",
     "${chip_root}/src/lib/address_resolve",

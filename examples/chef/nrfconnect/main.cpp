@@ -15,8 +15,6 @@
  *    limitations under the License.
  */
 
-#include <lib/shell/Engine.h>
-
 #include <app/server/Dnssd.h>
 #include <lib/core/CHIPCore.h>
 #include <lib/support/Base64.h>
@@ -27,17 +25,14 @@
 #include <lib/support/CHIPMem.h>
 #include <platform/CHIPDeviceLayer.h>
 
-#include <app/server/OnboardingCodesUtil.h>
 #include <app/server/Server.h>
+#include <data-model-providers/codegen/Instance.h>
+#include <setup_payload/OnboardingCodesUtil.h>
 
 #include <credentials/DeviceAttestationCredsProvider.h>
 #include <credentials/examples/DeviceAttestationCredsExample.h>
 
 #include <zephyr/logging/log.h>
-
-#if CONFIG_ENABLE_CHIP_SHELL || CONFIG_CHIP_LIB_SHELL
-#include <ChipShellCollection.h>
-#endif
 
 #ifdef CONFIG_CHIP_PW_RPC
 #include "Rpc.h"
@@ -53,7 +48,6 @@
 LOG_MODULE_REGISTER(app, CONFIG_CHIP_APP_LOG_LEVEL);
 
 using namespace chip;
-using namespace chip::Shell;
 using namespace chip::DeviceLayer;
 
 namespace {
@@ -63,6 +57,13 @@ constexpr int kExtDiscoveryTimeoutSecs = 20;
 chip::Crypto::PSAOperationalKeystore sPSAOperationalKeystore{};
 #endif
 } // namespace
+
+extern void ApplicationInit();
+
+void InitServer(intptr_t)
+{
+    ApplicationInit();
+}
 
 int main()
 {
@@ -109,7 +110,7 @@ int main()
         ChipLogError(AppServer, "ConnectivityMgr().SetThreadDeviceType() failed");
         return 1;
     }
-#elif !defined(CONFIG_WIFI_NRF700X)
+#elif !defined(CONFIG_WIFI_NRF70)
     return CHIP_ERROR_INTERNAL;
 #endif
 
@@ -125,7 +126,8 @@ int main()
     initParams.operationalKeystore = &sPSAOperationalKeystore;
 #endif
     (void) initParams.InitializeStaticResourcesBeforeServerInit();
-    err = chip::Server::GetInstance().Init(initParams);
+    initParams.dataModelProvider = app::CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
+    err                          = chip::Server::GetInstance().Init(initParams);
     if (err != CHIP_NO_ERROR)
     {
         return 1;
@@ -152,25 +154,7 @@ int main()
         ChipLogError(AppServer, "OpenBasicCommissioningWindow() failed");
     }
 
-#if CONFIG_CHIP_LIB_SHELL
-    int rc = Engine::Root().Init();
-    if (rc != 0)
-    {
-        ChipLogError(AppServer, "Streamer initialization failed: %d", rc);
-        return 1;
-    }
-
-    cmd_misc_init();
-    cmd_otcli_init();
-#endif
-
-#if CHIP_SHELL_ENABLE_CMD_SERVER
-    cmd_app_server_init();
-#endif
-
-#if CONFIG_CHIP_LIB_SHELL
-    Engine::Root().RunMainLoop();
-#endif
+    chip::DeviceLayer::PlatformMgr().ScheduleWork(InitServer);
 
     return 0;
 }

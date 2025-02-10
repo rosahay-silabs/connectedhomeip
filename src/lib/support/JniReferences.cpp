@@ -310,8 +310,8 @@ CHIP_ERROR JniReferences::GetOptionalValue(jobject optionalObj, jobject & option
 {
     JNIEnv * env = GetEnvForCurrentThread();
     VerifyOrReturnError(env != nullptr, CHIP_JNI_ERROR_NULL_OBJECT);
-    jclass optionalCls = nullptr;
-    ReturnErrorOnFailure(chip::JniReferences::GetInstance().GetLocalClassRef(env, "java/util/Optional", optionalCls));
+    VerifyOrReturnError(optionalObj != nullptr, CHIP_JNI_ERROR_NULL_OBJECT);
+    jclass optionalCls        = env->GetObjectClass(optionalObj);
     jmethodID isPresentMethod = env->GetMethodID(optionalCls, "isPresent", "()Z");
     VerifyOrReturnError(isPresentMethod != nullptr, CHIP_JNI_ERROR_METHOD_NOT_FOUND);
     jboolean isPresent = optionalObj && env->CallBooleanMethod(optionalObj, isPresentMethod);
@@ -390,6 +390,19 @@ jdouble JniReferences::DoubleToPrimitive(jobject boxedDouble)
 
     jmethodID valueMethod = env->GetMethodID(boxedTypeCls, "doubleValue", "()D");
     return env->CallDoubleMethod(boxedDouble, valueMethod);
+}
+
+jshort JniReferences::ShortToPrimitive(jobject boxedShort)
+{
+    JNIEnv * env = GetEnvForCurrentThread();
+    VerifyOrReturnValue(env != nullptr, 0, ChipLogError(Support, "env cannot be nullptr"));
+    jclass boxedTypeCls = nullptr;
+    CHIP_ERROR err      = chip::JniReferences::GetInstance().GetLocalClassRef(env, "java/lang/Short", boxedTypeCls);
+    VerifyOrReturnValue(err == CHIP_NO_ERROR, 0,
+                        ChipLogError(Support, "ShortToPrimitive failed due to %" CHIP_ERROR_FORMAT, err.Format()));
+
+    jmethodID valueMethod = env->GetMethodID(boxedTypeCls, "shortValue", "()S");
+    return env->CallShortMethod(boxedShort, valueMethod);
 }
 
 CHIP_ERROR JniReferences::CallSubscriptionEstablished(jobject javaCallback, long subscriptionId)

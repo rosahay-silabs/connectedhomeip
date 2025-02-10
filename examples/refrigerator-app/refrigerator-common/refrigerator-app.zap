@@ -1,6 +1,6 @@
 {
   "fileFormat": 2,
-  "featureLevel": 100,
+  "featureLevel": 106,
   "creator": "zap",
   "keyValuePairs": [
     {
@@ -29,6 +29,7 @@
       "pathRelativity": "relativeToZap",
       "path": "../../../src/app/zap-templates/app-templates.json",
       "type": "gen-templates-json",
+      "category": "matter",
       "version": "chip-v1"
     }
   ],
@@ -40,14 +41,16 @@
         "code": 22,
         "profileId": 259,
         "label": "MA-rootdevice",
-        "name": "MA-rootdevice"
+        "name": "MA-rootdevice",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 22,
           "profileId": 259,
           "label": "MA-rootdevice",
-          "name": "MA-rootdevice"
+          "name": "MA-rootdevice",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -862,234 +865,6 @@
               "mfgCode": null,
               "side": "server",
               "included": 1
-            }
-          ]
-        },
-        {
-          "name": "Localization Configuration",
-          "code": 43,
-          "mfgCode": null,
-          "define": "LOCALIZATION_CONFIGURATION_CLUSTER",
-          "side": "server",
-          "enabled": 1,
-          "attributes": [
-            {
-              "name": "ActiveLocale",
-              "code": 0,
-              "mfgCode": null,
-              "side": "server",
-              "type": "char_string",
-              "included": 1,
-              "storageOption": "NVM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "en-US",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "SupportedLocales",
-              "code": 1,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "GeneratedCommandList",
-              "code": 65528,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "AcceptedCommandList",
-              "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "AttributeList",
-              "code": 65531,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "FeatureMap",
-              "code": 65532,
-              "mfgCode": null,
-              "side": "server",
-              "type": "bitmap32",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "0",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "ClusterRevision",
-              "code": 65533,
-              "mfgCode": null,
-              "side": "server",
-              "type": "int16u",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "1",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            }
-          ]
-        },
-        {
-          "name": "Time Format Localization",
-          "code": 44,
-          "mfgCode": null,
-          "define": "TIME_FORMAT_LOCALIZATION_CLUSTER",
-          "side": "server",
-          "enabled": 1,
-          "attributes": [
-            {
-              "name": "HourFormat",
-              "code": 0,
-              "mfgCode": null,
-              "side": "server",
-              "type": "HourFormatEnum",
-              "included": 1,
-              "storageOption": "NVM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "0",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "GeneratedCommandList",
-              "code": 65528,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "AcceptedCommandList",
-              "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "AttributeList",
-              "code": 65531,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "FeatureMap",
-              "code": 65532,
-              "mfgCode": null,
-              "side": "server",
-              "type": "bitmap32",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "0",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "ClusterRevision",
-              "code": 65533,
-              "mfgCode": null,
-              "side": "server",
-              "type": "int16u",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "1",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
             }
           ]
         },
@@ -2002,7 +1777,7 @@
           ]
         },
         {
-          "name": "WiFi Network Diagnostics",
+          "name": "Wi-Fi Network Diagnostics",
           "code": 54,
           "mfgCode": null,
           "define": "WIFI_NETWORK_DIAGNOSTICS_CLUSTER",
@@ -2889,14 +2664,16 @@
         "code": 112,
         "profileId": 259,
         "label": "MA-refrigerator",
-        "name": "MA-refrigerator"
+        "name": "MA-refrigerator",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 112,
           "profileId": 259,
           "label": "MA-refrigerator",
-          "name": "MA-refrigerator"
+          "name": "MA-refrigerator",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -3072,14 +2849,16 @@
         "code": 113,
         "profileId": 259,
         "label": "MA-temperature-controlled-cabinet",
-        "name": "MA-temperature-controlled-cabinet"
+        "name": "MA-temperature-controlled-cabinet",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 113,
           "profileId": 259,
           "label": "MA-temperature-controlled-cabinet",
-          "name": "MA-temperature-controlled-cabinet"
+          "name": "MA-temperature-controlled-cabinet",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -3403,14 +3182,16 @@
         "code": 113,
         "profileId": 259,
         "label": "MA-temperature-controlled-cabinet",
-        "name": "MA-temperature-controlled-cabinet"
+        "name": "MA-temperature-controlled-cabinet",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 113,
           "profileId": 259,
           "label": "MA-temperature-controlled-cabinet",
-          "name": "MA-temperature-controlled-cabinet"
+          "name": "MA-temperature-controlled-cabinet",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [

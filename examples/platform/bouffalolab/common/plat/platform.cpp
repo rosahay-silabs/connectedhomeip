@@ -18,11 +18,12 @@
 #include <DeviceInfoProviderImpl.h>
 #include <OTAConfig.h>
 #include <app/server/Dnssd.h>
-#include <app/server/OnboardingCodesUtil.h>
 #include <app/server/Server.h>
 #include <credentials/DeviceAttestationCredsProvider.h>
 #include <credentials/examples/DeviceAttestationCredsExample.h>
+#include <data-model-providers/codegen/Instance.h>
 #include <platform/bouffalolab/common/PlatformManagerImpl.h>
+#include <setup_payload/OnboardingCodesUtil.h>
 #include <system/SystemClock.h>
 
 #if HEAP_MONITORING
@@ -42,7 +43,7 @@
 #include <uart.h>
 #endif
 
-#if CONFIG_BOUFFALOLAB_FACTORY_DATA_ENABLE || CONFIG_BOUFFALOLAB_FACTORY_DATA_TEST
+#if CONFIG_BOUFFALOLAB_FACTORY_DATA_ENABLE
 #include <platform/bouffalolab/common/FactoryDataProvider.h>
 #endif
 
@@ -87,7 +88,7 @@ chip::app::Clusters::NetworkCommissioning::Instance
 }
 #endif
 
-#if CONFIG_BOUFFALOLAB_FACTORY_DATA_ENABLE || CONFIG_BOUFFALOLAB_FACTORY_DATA_TEST
+#if CONFIG_BOUFFALOLAB_FACTORY_DATA_ENABLE
 namespace {
 FactoryDataProvider sFactoryDataProvider;
 }
@@ -158,7 +159,7 @@ void ChipEventHandler(const ChipDeviceEvent * event, intptr_t arg)
         break;
     case DeviceEventType::kCommissioningComplete:
         ChipLogProgress(NotSpecified, "Commissioning complete");
-        GetAppTask().PostEvent(AppTask::APP_EVENT_LIGHTING_MASK);
+        GetAppTask().PostEvent(AppTask::APP_EVENT_COMMISSION_COMPLETE);
         break;
     default:
         break;
@@ -180,7 +181,7 @@ void UnlockOpenThreadTask(void)
 CHIP_ERROR PlatformManagerImpl::PlatformInit(void)
 {
     chip::RendezvousInformationFlags rendezvousMode(chip::RendezvousInformationFlag::kOnNetwork);
-#if CONFIG_BOUFFALOLAB_FACTORY_DATA_ENABLE || CONFIG_BOUFFALOLAB_FACTORY_DATA_TEST
+#if CONFIG_BOUFFALOLAB_FACTORY_DATA_ENABLE
     CHIP_ERROR retFactoryData = sFactoryDataProvider.Init();
 #endif
 
@@ -211,7 +212,11 @@ CHIP_ERROR PlatformManagerImpl::PlatformInit(void)
 #if CHIP_DEVICE_CONFIG_THREAD_FTD
     ReturnLogErrorOnFailure(ConnectivityMgr().SetThreadDeviceType(ConnectivityManager::kThreadDeviceType_Router));
 #else
-    ReturnLogErrorOnFailure(ConnectivityMgr().SetThreadDeviceType(ConnectivityManager::kThreadDeviceType_MinimalEndDevice));
+#if CHIP_CONFIG_ENABLE_ICD_SERVER
+    ReturnErrorOnFailure(ConnectivityMgr().SetThreadDeviceType(ConnectivityManager::kThreadDeviceType_SleepyEndDevice));
+#else
+    ReturnErrorOnFailure(ConnectivityMgr().SetThreadDeviceType(ConnectivityManager::kThreadDeviceType_MinimalEndDevice));
+#endif
 #endif
 
 #endif
@@ -221,7 +226,7 @@ CHIP_ERROR PlatformManagerImpl::PlatformInit(void)
 #endif
 
     // Initialize device attestation config
-#if CONFIG_BOUFFALOLAB_FACTORY_DATA_ENABLE || CONFIG_BOUFFALOLAB_FACTORY_DATA_TEST
+#if CONFIG_BOUFFALOLAB_FACTORY_DATA_ENABLE
     if (CHIP_NO_ERROR == retFactoryData)
     {
         SetDeviceInstanceInfoProvider(&sFactoryDataProvider);
@@ -246,6 +251,7 @@ CHIP_ERROR PlatformManagerImpl::PlatformInit(void)
 
     static CommonCaseDeviceServerInitParams initParams;
     (void) initParams.InitializeStaticResourcesBeforeServerInit();
+    initParams.dataModelProvider = CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
     chip::Inet::EndPointStateOpenThread::OpenThreadEndpointInitParam nativeParams;

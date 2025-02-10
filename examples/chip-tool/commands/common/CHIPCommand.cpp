@@ -18,8 +18,11 @@
 
 #include "CHIPCommand.h"
 
+#include <commands/icd/ICDCommand.h>
 #include <controller/CHIPDeviceControllerFactory.h>
 #include <credentials/attestation_verifier/FileAttestationTrustStore.h>
+#include <credentials/attestation_verifier/TestDACRevocationDelegateImpl.h>
+#include <data-model-providers/codegen/Instance.h>
 #include <lib/core/CHIPConfig.h>
 #include <lib/core/CHIPVendorIdentifiers.hpp>
 #include <lib/support/CodeUtils.h>
@@ -47,12 +50,13 @@ constexpr chip::FabricId kIdentityOtherFabricId = 4;
 constexpr char kPAATrustStorePathVariable[]     = "CHIPTOOL_PAA_TRUST_STORE_PATH";
 constexpr char kCDTrustStorePathVariable[]      = "CHIPTOOL_CD_TRUST_STORE_PATH";
 
-const chip::Credentials::AttestationTrustStore * CHIPCommand::sTrustStore = nullptr;
+const chip::Credentials::AttestationTrustStore * CHIPCommand::sTrustStore                 = nullptr;
+chip::Credentials::DeviceAttestationRevocationDelegate * CHIPCommand::sRevocationDelegate = nullptr;
+
 chip::Credentials::GroupDataProviderImpl CHIPCommand::sGroupDataProvider{ kMaxGroupsPerFabric, kMaxGroupKeysPerFabric };
 // All fabrics share the same ICD client storage.
 chip::app::DefaultICDClientStorage CHIPCommand::sICDClientStorage;
 chip::Crypto::RawKeySessionKeystore CHIPCommand::sSessionKeystore;
-chip::app::DefaultCheckInDelegate CHIPCommand::sCheckInDelegate;
 chip::app::CheckInHandler CHIPCommand::sCheckInHandler;
 
 namespace {
@@ -84,6 +88,20 @@ CHIP_ERROR GetAttestationTrustStore(const char * paaTrustStorePath, const chip::
     }
 
     *trustStore = &attestationTrustStore;
+    return CHIP_NO_ERROR;
+}
+
+CHIP_ERROR GetAttestationRevocationDelegate(const char * revocationSetPath,
+                                            chip::Credentials::DeviceAttestationRevocationDelegate ** revocationDelegate)
+{
+    if (revocationSetPath == nullptr)
+    {
+        return CHIP_NO_ERROR;
+    }
+
+    static chip::Credentials::TestDACRevocationDelegateImpl testDacRevocationDelegate;
+    ReturnErrorOnFailure(testDacRevocationDelegate.SetDeviceAttestationRevocationSetPath(revocationSetPath));
+    *revocationDelegate = &testDacRevocationDelegate;
     return CHIP_NO_ERROR;
 }
 
@@ -120,6 +138,7 @@ CHIP_ERROR CHIPCommand::MaybeSetUpStack()
     factoryInitParams.opCertStore              = &mOpCertStore;
     factoryInitParams.enableServerInteractions = NeedsOperationalAdvertising();
     factoryInitParams.sessionKeystore          = &sSessionKeystore;
+    factoryInitParams.dataModelProvider        = chip::app::CodegenDataModelProviderInstance(&mDefaultStorage);
 
     // Init group data provider that will be used for all group keys and IPKs for the
     // chip-tool-configured fabrics. This is OK to do once since the fabric tables
@@ -151,11 +170,13 @@ CHIP_ERROR CHIPCommand::MaybeSetUpStack()
 
     ReturnErrorOnFailure(GetAttestationTrustStore(mPaaTrustStorePath.ValueOr(nullptr), &sTrustStore));
 
+    ReturnLogErrorOnFailure(GetAttestationRevocationDelegate(mDacRevocationSetPath.ValueOr(nullptr), &sRevocationDelegate));
+
     auto engine = chip::app::InteractionModelEngine::GetInstance();
     VerifyOrReturnError(engine != nullptr, CHIP_ERROR_INCORRECT_STATE);
-    ReturnLogErrorOnFailure(sCheckInDelegate.Init(&sICDClientStorage, engine));
+    ReturnLogErrorOnFailure(ChipToolCheckInDelegate()->Init(&sICDClientStorage, engine));
     ReturnLogErrorOnFailure(sCheckInHandler.Init(DeviceControllerFactory::GetInstance().GetSystemState()->ExchangeMgr(),
-                                                 &sICDClientStorage, &sCheckInDelegate, engine));
+                                                 &sICDClientStorage, ChipToolCheckInDelegate(), engine));
 
     CommissionerIdentity nullIdentity{ kIdentityNull, chip::kUndefinedNodeId };
     ReturnLogErrorOnFailure(InitializeCommissioner(nullIdentity, kIdentityNullFabricId));
@@ -448,9 +469,14 @@ void CHIPCommand::ShutdownCommissioner(const CommissionerIdentity & key)
 CHIP_ERROR CHIPCommand::InitializeCommissioner(CommissionerIdentity & identity, chip::FabricId fabricId)
 {
     std::unique_ptr<ChipDeviceCommissioner> commissioner = std::make_unique<ChipDeviceCommissioner>();
+#if CHIP_DEVICE_CONFIG_ENABLE_COMMISSIONER_DISCOVERY
+    VerifyOrReturnError(chip::CanCastTo<uint16_t>(CHIP_UDC_PORT + fabricId), CHIP_ERROR_INVALID_ARGUMENT);
+    uint16_t udcListenPort = static_cast<uint16_t>(CHIP_UDC_PORT + fabricId);
+    commissioner->SetUdcListenPort(udcListenPort);
+#endif // CHIP_DEVICE_CONFIG_ENABLE_COMMISSIONER_DISCOVERY
     chip::Controller::SetupParams commissionerParams;
 
-    ReturnLogErrorOnFailure(mCredIssuerCmds->SetupDeviceAttestation(commissionerParams, sTrustStore));
+    ReturnLogErrorOnFailure(mCredIssuerCmds->SetupDeviceAttestation(commissionerParams, sTrustStore, sRevocationDelegate));
 
     chip::Crypto::P256Keypair ephemeralKey;
 

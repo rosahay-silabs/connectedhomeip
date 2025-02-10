@@ -18,7 +18,6 @@
 
 #include "CastingPlayerDiscovery-JNI.h"
 
-#include "../JNIDACProvider.h"
 #include "../support/Converters-JNI.h"
 #include "../support/RotatingDeviceIdUniqueIdProvider-JNI.h"
 #include "core/CastingApp.h"             // from tv-casting-common
@@ -246,7 +245,7 @@ JNI_METHOD(jobject, removeCastingPlayerChangeListener)(JNIEnv * env, jobject, jo
 
         return support::convertMatterErrorFromCppToJava(CHIP_NO_ERROR);
     }
-    else if (DiscoveryDelegateImpl::GetInstance()->castingPlayerChangeListenerJavaObject.ObjectRef() == nullptr)
+    else if (!DiscoveryDelegateImpl::GetInstance()->castingPlayerChangeListenerJavaObject.HasValidObjectRef())
     {
         ChipLogError(
             AppServer,

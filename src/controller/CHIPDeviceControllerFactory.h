@@ -145,6 +145,9 @@ struct FactoryInitParams
 #if CONFIG_NETWORK_LAYER_BLE
     Ble::BleLayer * bleLayer = nullptr;
 #endif
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFIPAF
+    Transport::WiFiPAFLayer * wifipaf_layer = nullptr;
+#endif
 
     //
     // Controls enabling server cluster interactions on a controller. This in turn
@@ -157,6 +160,11 @@ struct FactoryInitParams
     /* The port used for operational communication to listen for and send messages over UDP/TCP.
      * The default value of `0` will pick any available port. */
     uint16_t listenPort = 0;
+
+    // MUST NOT be null during initialization: every application must define the
+    // data model it wants to use. Backwards-compatibility can use `CodegenDataModelProviderInstance`
+    // for ember/zap-generated models.
+    chip::app::DataModel::Provider * dataModelProvider = nullptr;
 };
 
 class DeviceControllerFactory
@@ -172,7 +180,9 @@ public:
 
     // Shuts down matter and frees the system state.
     //
-    // Must not be called while any controllers are alive.
+    // Must not be called while any controllers are alive, or while any calls
+    // to RetainSystemState or EnsureAndRetainSystemState have not been balanced
+    // by a call to ReleaseSystemState.
     void Shutdown();
 
     CHIP_ERROR SetupController(SetupParams params, DeviceController & controller);
@@ -195,7 +205,8 @@ public:
     // all device controllers have ceased to exist. To avoid that, this method has been
     // created to permit retention of the underlying system state.
     //
-    // NB: The system state will still be freed in Shutdown() regardless of this call.
+    // Calls to this method must be balanced by calling ReleaseSystemState before Shutdown.
+    //
     void RetainSystemState();
 
     //
@@ -205,7 +216,13 @@ public:
     //
     // This should only be invoked if a matching call to RetainSystemState() was called prior.
     //
-    void ReleaseSystemState();
+    // Returns true if stack was shut down in response to this call, or false otherwise.
+    //
+    bool ReleaseSystemState();
+
+    // Like RetainSystemState(), but will re-initialize the system state first if necessary.
+    // Calls to this method must be balanced by calling ReleaseSystemState before Shutdown.
+    CHIP_ERROR EnsureAndRetainSystemState();
 
     //
     // Retrieve a read-only pointer to the system state object that contains pointers to key stack
@@ -270,7 +287,7 @@ private:
     DeviceControllerFactory() {}
     void PopulateInitParams(ControllerInitParams & controllerParams, const SetupParams & params);
     CHIP_ERROR InitSystemState(FactoryInitParams params);
-    CHIP_ERROR InitSystemState();
+    CHIP_ERROR ReinitSystemStateIfNecessary();
     void ControllerInitialized(const DeviceController & controller);
 
     uint16_t mListenPort;

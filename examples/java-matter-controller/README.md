@@ -30,7 +30,7 @@ system or not. In order to install the Java Runtime Environment on your system,
 run the following command as root:
 
 ```
-sudo apt install default-jre Install Java default JRE
+sudo apt install default-jre
 ```
 
 After installing the JRE, let us check if we have the Java Development Kit
@@ -120,7 +120,7 @@ the top Matter directory:
 ```
 
 The Java executable file `java-matter-controller` will be generated at
-`out/android-x86-java-matter-controller/bin/`
+`out/linux-x64-java-matter-controller/bin/`
 
 Run the java-matter-controller
 

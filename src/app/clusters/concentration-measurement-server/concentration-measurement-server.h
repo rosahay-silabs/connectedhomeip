@@ -20,6 +20,7 @@
 
 #include "concentration-measurement-cluster-objects.h"
 #include <app/AttributeAccessInterface.h>
+#include <app/AttributeAccessInterfaceRegistry.h>
 #include <app/data-model/Nullable.h>
 #include <app/reporting/reporting.h>
 #include <app/util/attribute-storage.h>
@@ -326,7 +327,7 @@ public:
         this->mMeasurementUnit = aMeasurementUnit;
     };
 
-    ~Instance() override { unregisterAttributeAccessOverride(this); };
+    ~Instance() override { AttributeAccessInterfaceRegistry::Instance().Unregister(this); };
 
     CHIP_ERROR Init()
     {
@@ -352,7 +353,7 @@ public:
         VerifyOrReturnError(emberAfContainsServer(mEndpointId, mClusterId), CHIP_ERROR_INCORRECT_STATE);
 
         // Register the object as attribute provider
-        VerifyOrReturnError(registerAttributeAccessOverride(this), CHIP_ERROR_INCORRECT_STATE);
+        VerifyOrReturnError(AttributeAccessInterfaceRegistry::Instance().Register(this), CHIP_ERROR_INCORRECT_STATE);
 
         mFeatureMap = GenerateFeatureMap();
 

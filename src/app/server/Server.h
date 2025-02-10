@@ -24,7 +24,7 @@
 #include <access/examples/ExampleAccessControlDelegate.h>
 #include <app/CASEClientPool.h>
 #include <app/CASESessionManager.h>
-#include <app/DefaultAttributePersistenceProvider.h>
+#include <app/DefaultSafeAttributePersistenceProvider.h>
 #include <app/FailSafeContext.h>
 #include <app/OperationalSessionSetupPool.h>
 #include <app/SimpleSubscriptionResumptionStorage.h>
@@ -65,17 +65,31 @@
 #if CONFIG_NETWORK_LAYER_BLE
 #include <transport/raw/BLE.h>
 #endif
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFIPAF
+#include <transport/raw/WiFiPAF.h>
+#endif
 #include <app/TimerDelegates.h>
 #include <app/reporting/ReportSchedulerImpl.h>
 #include <transport/raw/UDP.h>
 
 #if CHIP_CONFIG_ENABLE_ICD_SERVER
 #include <app/icd/server/ICDManager.h> // nogncheck
-#endif
+
+#if CHIP_CONFIG_ENABLE_ICD_CIP
+#include <app/icd/server/DefaultICDCheckInBackOffStrategy.h> // nogncheck
+#include <app/icd/server/ICDCheckInBackOffStrategy.h>        // nogncheck
+#endif                                                       // CHIP_CONFIG_ENABLE_ICD_CIP
+#endif                                                       // CHIP_CONFIG_ENABLE_ICD_SERVER
 
 namespace chip {
 
 inline constexpr size_t kMaxBlePendingPackets = 1;
+
+#if INET_CONFIG_ENABLE_TCP_ENDPOINT
+inline constexpr size_t kMaxTcpActiveConnectionCount = CHIP_CONFIG_MAX_ACTIVE_TCP_CONNECTIONS;
+
+inline constexpr size_t kMaxTcpPendingPackets = CHIP_CONFIG_MAX_TCP_PENDING_PACKETS;
+#endif // INET_CONFIG_ENABLE_TCP_ENDPOINT
 
 //
 // NOTE: Please do not alter the order of template specialization here as the logic
@@ -89,6 +103,14 @@ using ServerTransportMgr = chip::TransportMgr<chip::Transport::UDP
 #if CONFIG_NETWORK_LAYER_BLE
                                               ,
                                               chip::Transport::BLE<kMaxBlePendingPackets>
+#endif
+#if INET_CONFIG_ENABLE_TCP_ENDPOINT
+                                              ,
+                                              chip::Transport::TCP<kMaxTcpActiveConnectionCount, kMaxTcpPendingPackets>
+#endif
+#if CHIP_DEVICE_CONFIG_ENABLE_WIFIPAF
+                                              ,
+                                              chip::Transport::WiFiPAFBase
 #endif
                                               >;
 
@@ -141,6 +163,13 @@ struct ServerInitParams
     // ACL storage: MUST be injected. Used to store ACL entries in persistent storage. Must NOT
     // be initialized before being provided.
     app::AclStorage * aclStorage = nullptr;
+
+#if CHIP_CONFIG_USE_ACCESS_RESTRICTIONS
+    // Access Restriction implementation: MUST be injected if MNGD feature enabled. Used to enforce
+    // access restrictions that are managed by the device.
+    Access::AccessRestrictionProvider * accessRestrictionProvider = nullptr;
+#endif
+
     // Network native params can be injected depending on the
     // selected Endpoint implementation
     void * endpointNativeParams = nullptr;
@@ -154,6 +183,16 @@ struct ServerInitParams
     Credentials::OperationalCertificateStore * opCertStore = nullptr;
     // Required, if not provided, the Server::Init() WILL fail.
     app::reporting::ReportScheduler * reportScheduler = nullptr;
+#if CHIP_CONFIG_ENABLE_ICD_CIP
+    // Optional. Support for the ICD Check-In BackOff strategy. Must be initialized before being provided.
+    // If the ICD Check-In protocol use-case is supported and no strategy is provided, server will use the default strategy.
+    app::ICDCheckInBackOffStrategy * icdCheckInBackOffStrategy = nullptr;
+#endif // CHIP_CONFIG_ENABLE_ICD_CIP
+
+    // MUST NOT be null during initialization: every application must define the
+    // data model it wants to use. Backwards-compatibility can use `CodegenDataModelProviderInstance`
+    // for ember/zap-generated models.
+    chip::app::DataModel::Provider * dataModelProvider = nullptr;
 };
 
 /**
@@ -268,6 +307,13 @@ struct CommonCaseDeviceServerInitParams : public ServerInitParams
         ChipLogProgress(AppServer, "Subscription persistence not supported");
 #endif
 
+#if CHIP_CONFIG_ENABLE_ICD_CIP
+        if (this->icdCheckInBackOffStrategy == nullptr)
+        {
+            this->icdCheckInBackOffStrategy = &sDefaultICDCheckInBackOffStrategy;
+        }
+#endif
+
         return CHIP_NO_ERROR;
     }
 
@@ -287,6 +333,9 @@ private:
 #endif
     static app::DefaultAclStorage sAclStorage;
     static Crypto::DefaultSessionKeystore sSessionKeystore;
+#if CHIP_CONFIG_ENABLE_ICD_CIP
+    static app::DefaultICDCheckInBackOffStrategy sDefaultICDCheckInBackOffStrategy;
+#endif
 };
 
 /**
@@ -363,7 +412,7 @@ public:
 
     Credentials::OperationalCertificateStore * GetOpCertStore() { return mOpCertStore; }
 
-    app::DefaultAttributePersistenceProvider & GetDefaultAttributePersister() { return mAttributePersister; }
+    app::DefaultSafeAttributePersistenceProvider & GetDefaultAttributePersister() { return mAttributePersister; }
 
     app::reporting::ReportScheduler * GetReportScheduler() { return mReportScheduler; }
 
@@ -636,7 +685,7 @@ private:
     app::SubscriptionResumptionStorage * mSubscriptionResumptionStorage;
     Credentials::GroupDataProvider * mGroupsProvider;
     Crypto::SessionKeystore * mSessionKeystore;
-    app::DefaultAttributePersistenceProvider mAttributePersister;
+    app::DefaultSafeAttributePersistenceProvider mAttributePersister;
     GroupDataProviderListener mListener;
     ServerFabricDelegate mFabricDelegate;
     app::reporting::ReportScheduler * mReportScheduler;

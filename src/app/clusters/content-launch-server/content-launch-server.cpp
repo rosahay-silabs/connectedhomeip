@@ -20,6 +20,7 @@
 
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app/AttributeAccessInterface.h>
+#include <app/AttributeAccessInterfaceRegistry.h>
 #include <app/CommandHandler.h>
 #include <app/ConcreteCommandPath.h>
 #include <app/data-model/Encode.h>
@@ -28,7 +29,8 @@
 #include <platform/CHIPDeviceConfig.h>
 
 #if CHIP_DEVICE_CONFIG_APP_PLATFORM_ENABLED
-#include <app/app-platform/ContentAppPlatform.h>
+#include <app/app-platform/ContentAppPlatform.h> // nogncheck
+
 #endif // CHIP_DEVICE_CONFIG_APP_PLATFORM_ENABLED
 
 #include <list>
@@ -285,5 +287,5 @@ exit:
 
 void MatterContentLauncherPluginServerInitCallback()
 {
-    registerAttributeAccessOverride(&gContentLauncherAttrAccess);
+    AttributeAccessInterfaceRegistry::Instance().Register(&gContentLauncherAttrAccess);
 }

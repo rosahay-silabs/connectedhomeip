@@ -1,6 +1,6 @@
 {
   "fileFormat": 2,
-  "featureLevel": 100,
+  "featureLevel": 106,
   "creator": "zap",
   "keyValuePairs": [
     {
@@ -29,6 +29,7 @@
       "pathRelativity": "relativeToZap",
       "path": "../../../src/app/zap-templates/app-templates.json",
       "type": "gen-templates-json",
+      "category": "matter",
       "version": "chip-v1"
     }
   ],
@@ -40,14 +41,16 @@
         "code": 22,
         "profileId": 259,
         "label": "MA-rootdevice",
-        "name": "MA-rootdevice"
+        "name": "MA-rootdevice",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 22,
           "profileId": 259,
           "label": "MA-rootdevice",
-          "name": "MA-rootdevice"
+          "name": "MA-rootdevice",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -665,6 +668,22 @@
               "reportableChange": 0
             },
             {
+              "name": "UniqueID",
+              "code": 18,
+              "mfgCode": null,
+              "side": "server",
+              "type": "char_string",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 1,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "CapabilityMinima",
               "code": 19,
               "mfgCode": null,
@@ -864,40 +883,6 @@
               "source": "client",
               "isIncoming": 0,
               "isEnabled": 1
-            }
-          ],
-          "attributes": [
-            {
-              "name": "FeatureMap",
-              "code": 65532,
-              "mfgCode": null,
-              "side": "client",
-              "type": "bitmap32",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "0",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "ClusterRevision",
-              "code": 65533,
-              "mfgCode": null,
-              "side": "client",
-              "type": "int16u",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "1",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
             }
           ]
         },
@@ -2814,14 +2799,16 @@
         "code": 772,
         "profileId": 2457,
         "label": "MA-pumpcontroller",
-        "name": "MA-pumpcontroller"
+        "name": "MA-pumpcontroller",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 772,
           "profileId": 2457,
           "label": "MA-pumpcontroller",
-          "name": "MA-pumpcontroller"
+          "name": "MA-pumpcontroller",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -2997,40 +2984,6 @@
               "source": "client",
               "isIncoming": 0,
               "isEnabled": 1
-            }
-          ],
-          "attributes": [
-            {
-              "name": "FeatureMap",
-              "code": 65532,
-              "mfgCode": null,
-              "side": "client",
-              "type": "bitmap32",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "0",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "ClusterRevision",
-              "code": 65533,
-              "mfgCode": null,
-              "side": "client",
-              "type": "int16u",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "5",
-              "reportable": 1,
-              "minInterval": 0,
-              "maxInterval": 65344,
-              "reportableChange": 0
             }
           ]
         },
@@ -3300,41 +3253,7 @@
           "mfgCode": null,
           "define": "PUMP_CONFIGURATION_AND_CONTROL_CLUSTER",
           "side": "client",
-          "enabled": 1,
-          "attributes": [
-            {
-              "name": "FeatureMap",
-              "code": 65532,
-              "mfgCode": null,
-              "side": "client",
-              "type": "bitmap32",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "0",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "ClusterRevision",
-              "code": 65533,
-              "mfgCode": null,
-              "side": "client",
-              "type": "int16u",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "3",
-              "reportable": 1,
-              "minInterval": 0,
-              "maxInterval": 65344,
-              "reportableChange": 0
-            }
-          ]
+          "enabled": 1
         },
         {
           "name": "Temperature Measurement",
@@ -3342,41 +3261,7 @@
           "mfgCode": null,
           "define": "TEMPERATURE_MEASUREMENT_CLUSTER",
           "side": "client",
-          "enabled": 1,
-          "attributes": [
-            {
-              "name": "FeatureMap",
-              "code": 65532,
-              "mfgCode": null,
-              "side": "client",
-              "type": "bitmap32",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "0",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "ClusterRevision",
-              "code": 65533,
-              "mfgCode": null,
-              "side": "client",
-              "type": "int16u",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "4",
-              "reportable": 1,
-              "minInterval": 0,
-              "maxInterval": 65344,
-              "reportableChange": 0
-            }
-          ]
+          "enabled": 1
         },
         {
           "name": "Pressure Measurement",
@@ -3384,41 +3269,7 @@
           "mfgCode": null,
           "define": "PRESSURE_MEASUREMENT_CLUSTER",
           "side": "client",
-          "enabled": 1,
-          "attributes": [
-            {
-              "name": "FeatureMap",
-              "code": 65532,
-              "mfgCode": null,
-              "side": "client",
-              "type": "bitmap32",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "0",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "ClusterRevision",
-              "code": 65533,
-              "mfgCode": null,
-              "side": "client",
-              "type": "int16u",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "3",
-              "reportable": 1,
-              "minInterval": 0,
-              "maxInterval": 65344,
-              "reportableChange": 0
-            }
-          ]
+          "enabled": 1
         },
         {
           "name": "Flow Measurement",
@@ -3426,41 +3277,7 @@
           "mfgCode": null,
           "define": "FLOW_MEASUREMENT_CLUSTER",
           "side": "client",
-          "enabled": 1,
-          "attributes": [
-            {
-              "name": "FeatureMap",
-              "code": 65532,
-              "mfgCode": null,
-              "side": "client",
-              "type": "bitmap32",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "0",
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "ClusterRevision",
-              "code": 65533,
-              "mfgCode": null,
-              "side": "client",
-              "type": "int16u",
-              "included": 1,
-              "storageOption": "RAM",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": "3",
-              "reportable": 1,
-              "minInterval": 0,
-              "maxInterval": 65344,
-              "reportableChange": 0
-            }
-          ]
+          "enabled": 1
         }
       ]
     }

@@ -22,6 +22,7 @@
  *          for Silabs platforms using the Silicon Labs SDK.
  */
 /* this file behaves like a config.h, comes first */
+#include <cmsis_os2.h>
 #include <platform/ConfigurationManager.h>
 #include <platform/DiagnosticDataProvider.h>
 #include <platform/internal/CHIPDeviceLayerInternal.h>
@@ -30,7 +31,7 @@
 #include <platform/silabs/platformAbstraction/SilabsPlatform.h>
 
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI_STATION
-#include "wfx_host_events.h"
+#include <platform/silabs/wifi/WifiInterface.h>
 #endif
 
 namespace chip {
@@ -121,7 +122,7 @@ CHIP_ERROR ConfigurationManagerImpl::GetBootReason(uint32_t & bootReason)
         matterBootCause = BootReasonType::kPowerOnReboot;
     }
     else if (rebootCause & EMU_RSTCAUSE_AVDDBOD || rebootCause & EMU_RSTCAUSE_DVDDBOD || rebootCause & EMU_RSTCAUSE_DECBOD ||
-             rebootCause & EMU_RSTCAUSE_VREGIN || rebootCause & EMU_RSTCAUSE_IOVDD0BOD || rebootCause & EMU_RSTCAUSE_DVDDLEBOD)
+             rebootCause & EMU_RSTCAUSE_IOVDD0BOD || rebootCause & EMU_RSTCAUSE_DVDDLEBOD)
     {
         matterBootCause = BootReasonType::kBrownOutReset;
     }
@@ -255,21 +256,14 @@ CHIP_ERROR ConfigurationManagerImpl::WriteConfigValueBin(Key key, const uint8_t 
 
 void ConfigurationManagerImpl::RunConfigUnitTest(void)
 {
+#if CONFIG_BUILD_FOR_HOST_UNIT_TEST
     SilabsConfig::RunConfigUnitTest();
+#endif // CONFIG_BUILD_FOR_HOST_UNIT_TEST
 }
 
-void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
+/// @brief Helper to erase Thread info from device
+void ConfigurationManagerImpl::ClearThreadStack()
 {
-    CHIP_ERROR err;
-
-    ChipLogProgress(DeviceLayer, "Performing factory reset");
-
-    err = SilabsConfig::FactoryResetConfig();
-    if (err != CHIP_NO_ERROR)
-    {
-        ChipLogError(DeviceLayer, "FactoryResetConfig() failed: %s", chip::ErrorStr(err));
-    }
-
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD_SRP_CLIENT
     ThreadStackMgr().ClearAllSrpHostAndServices();
@@ -277,10 +271,31 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
     ChipLogProgress(DeviceLayer, "Clearing Thread provision");
     ThreadStackMgr().ErasePersistentInfo();
 #endif // CHIP_DEVICE_CONFIG_ENABLE_THREAD
+}
+
+void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
+{
+    CHIP_ERROR error = CHIP_NO_ERROR;
+
+    ChipLogProgress(DeviceLayer, "Performing factory reset");
+
+    error = SilabsConfig::FactoryResetConfig();
+    if (error != CHIP_NO_ERROR)
+    {
+        ChipLogError(DeviceLayer, "FactoryResetConfig() failed: %s", chip::ErrorStr(error));
+    }
+
+    GetDefaultInstance().ClearThreadStack();
 
     PersistedStorage::KeyValueStoreMgrImpl().ErasePartition();
 
 #if CHIP_DEVICE_CONFIG_ENABLE_WIFI_STATION
+    error = TriggerDisconnection();
+    if (error != CHIP_NO_ERROR)
+    {
+        ChipLogError(DeviceLayer, "TriggerDisconnection() failed: %s", chip::ErrorStr(error));
+    }
+
     ChipLogProgress(DeviceLayer, "Clearing WiFi provision");
     wfx_clear_wifi_provision();
 #endif // CHIP_DEVICE_CONFIG_ENABLE_WIFI_STATION
@@ -291,7 +306,7 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
     // When called from an RPC, the following reset occurs before the RPC can respond,
     // which breaks tests (because it looks like the RPC hasn't successfully completed).
     // Block the task for 500 ms before the reset occurs to allow RPC response to be sent
-    vTaskDelay(pdMS_TO_TICKS(500));
+    osDelay(pdMS_TO_TICKS(500));
 
     NVIC_SystemReset();
 }
@@ -299,11 +314,10 @@ void ConfigurationManagerImpl::DoFactoryReset(intptr_t arg)
 #ifdef SL_WIFI
 CHIP_ERROR ConfigurationManagerImpl::GetPrimaryWiFiMACAddress(uint8_t * buf)
 {
-    sl_wfx_mac_address_t macaddr;
-    wfx_get_wifi_mac_addr(SL_WFX_STA_INTERFACE, &macaddr);
-    memcpy(buf, &macaddr.octet[0], sizeof(macaddr.octet));
+    VerifyOrReturnError(buf != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
 
-    return CHIP_NO_ERROR;
+    MutableByteSpan byteSpan(buf, kPrimaryMACAddressLength);
+    return GetMacAddress(SL_WFX_STA_INTERFACE, byteSpan);
 }
 #endif
 

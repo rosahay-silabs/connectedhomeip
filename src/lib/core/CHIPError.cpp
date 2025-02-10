@@ -22,14 +22,22 @@
 
 namespace chip {
 
+static ErrorFormatter sCHIPErrorFormatter = { FormatCHIPError, nullptr };
+
 /**
  * Register a text error formatter for CHIP core errors.
  */
 void RegisterCHIPLayerErrorFormatter()
 {
-    static ErrorFormatter sCHIPErrorFormatter = { FormatCHIPError, nullptr };
-
     RegisterErrorFormatter(&sCHIPErrorFormatter);
+}
+
+/**
+ * Deregister a text error formatter for CHIP core errors.
+ */
+void DeregisterCHIPLayerErrorFormatter()
+{
+    DeregisterErrorFormatter(&sCHIPErrorFormatter);
 }
 
 /**
@@ -145,6 +153,9 @@ bool FormatCHIPError(char * buf, uint16_t bufSize, CHIP_ERROR err)
         break;
     case CHIP_ERROR_INVALID_LIST_LENGTH.AsInteger():
         desc = "Invalid list length";
+        break;
+    case CHIP_ERROR_FAILED_DEVICE_ATTESTATION.AsInteger():
+        desc = "Failed Device Attestation";
         break;
     case CHIP_END_OF_TLV.AsInteger():
         desc = "End of TLV";
@@ -358,6 +369,9 @@ bool FormatCHIPError(char * buf, uint16_t bufSize, CHIP_ERROR err)
         break;
     case CHIP_ERROR_VERSION_MISMATCH.AsInteger():
         desc = "Version mismatch";
+        break;
+    case CHIP_ERROR_ACCESS_RESTRICTED_BY_ARL.AsInteger():
+        desc = "The CHIP message's access is restricted by ARL";
         break;
     case CHIP_EVENT_ID_FOUND.AsInteger():
         desc = "Event ID matching criteria was found";

@@ -28,19 +28,29 @@ else
     CHIP_ROOT="$MATTER_ROOT"
 fi
 
+if [[ -z "${PW_ENVIRONMENT_ROOT}" ]]; then
+    echo "Using the bootstrapped pigweed ENV in Matter root"
+    PW_PATH="$CHIP_ROOT/.environment/cipd/packages/pigweed"
+else
+    echo "Using provided $PW_ENVIRONMENT_ROOT as Pigweed ENV root"
+    PW_PATH="$PW_ENVIRONMENT_ROOT/cipd/packages/pigweed"
+fi
+
 set -x
 env
 USE_WIFI=false
 USE_DOCKER=false
 USE_GIT_SHA_FOR_VERSION=true
 USE_SLC=false
-GN_PATH=gn
-GN_PATH_PROVIDED=false
+GN_PATH="$PW_PATH/gn"
 USE_BOOTLOADER=false
 DOTFILE=".gn"
 
 SILABS_THREAD_TARGET=\""../silabs:ot-efr32-cert"\"
 USAGE="./scripts/examples/gn_silabs_example.sh <AppRootFolder> <outputFolder> <silabs_board_name> [<Build options>]"
+
+PROTOCOL_DIR_SUFFIX="thread"
+NCP_DIR_SUFFIX=""
 
 if [ "$#" == "0" ]; then
     echo "Build script for EFR32 Matter apps
@@ -56,14 +66,18 @@ if [ "$#" == "0" ]; then
     <silabs_board_name>
         Identifier of the board for which this app is built
         Currently Supported :
-            BRD4161A
-            BRD4163A
-            BRD4164A
-            BRD4166A
-            BRD4170A
             BRD4186A
             BRD4187A
-            BRD4304A
+            BRD4186C
+            BRD4187C
+            BRD2601B
+            BRD2703A
+            BRD2704A
+            BRD4316A
+            BRD4317A
+            BRD4318A
+            BRD4319A
+
 
     <Build options> - optional noteworthy build options for EFR32
         chip_build_libshell
@@ -107,7 +121,7 @@ if [ "$#" == "0" ]; then
             (default: /third_party/silabs/slc_gen/<board>/)
         sl_pre_gen_path
             Allow users to define a path to pre-generated board files
-            (default: /third_party/silabs/matter_support/matter/<family>/<board>/)
+            (default: third_party/silabs/matter_support/board-support/<family>/<board>/)
         sl_matter_version
             Use provided software version at build time
         sl_matter_version_str
@@ -177,6 +191,7 @@ else
                     echo "--wifi requires rs9116 or SiWx917 or wf200"
                     exit 1
                 fi
+
                 if [ "$2" = "rs9116" ]; then
                     optArgs+="use_rs9116=true "
                 elif [ "$2" = "SiWx917" ]; then
@@ -187,13 +202,15 @@ else
                     echo "Wifi usage: --wifi rs9116|SiWx917|wf200"
                     exit 1
                 fi
+
+                NCP_DIR_SUFFIX="/"$2
                 USE_WIFI=true
-                optArgs+="chip_device_platform =\"efr32\" "
+                optArgs+="chip_device_platform =\"efr32\" chip_crypto_keystore=\"psa\" "
                 shift
                 shift
                 ;;
             --icd)
-                optArgs+="chip_enable_icd_server=true chip_openthread_ftd=false "
+                optArgs+="chip_enable_icd_server=true chip_openthread_ftd=false sl_enable_test_event_trigger=true "
                 shift
                 ;;
             --low-power)
@@ -256,7 +273,6 @@ else
                 ;;
             --slc_reuse_files)
                 optArgs+="slc_reuse_files=true "
-                USE_SLC=true
                 shift
                 ;;
             --gn_path)
@@ -266,7 +282,6 @@ else
                 else
                     GN_PATH="$2"
                 fi
-                GN_PATH_PROVIDED=true
                 shift
                 shift
                 ;;
@@ -293,10 +308,9 @@ else
     fi
 
     # 917 exception. TODO find a more generic way
-    if [ "$SILABS_BOARD" == "BRD4338A" ]; then
+    if [ "$SILABS_BOARD" == "BRD4338A" ] || [ "$SILABS_BOARD" == "BRD2605A" ] || [ "$SILABS_BOARD" == "BRD4343A" ] || [ "$SILABS_BOARD" == "BRD4342A" ]; then
         echo "Compiling for 917 WiFi SOC"
         USE_WIFI=true
-        optArgs+="chip_device_platform =\"SiWx917\" is_debug=false "
     fi
 
     if [ "$USE_GIT_SHA_FOR_VERSION" == true ]; then
@@ -307,28 +321,25 @@ else
         } &>/dev/null
     fi
 
-    if [ "$USE_SLC" == true ]; then
-        if [ "$GN_PATH_PROVIDED" == false ]; then
-            GN_PATH=./.environment/cipd/packages/pigweed/gn
-        fi
-    elif [ "$USE_SLC" == false ]; then
+    if [ "$USE_SLC" == false ]; then
         # Activation needs to be after SLC generation which is done in gn gen.
         # Zap generation requires activation and is done in the build phase
         source "$CHIP_ROOT/scripts/activate.sh"
     fi
 
+    if [ "$USE_WIFI" == true ]; then
+        DOTFILE="$ROOT/build_for_wifi_gnfile.gn"
+        PROTOCOL_DIR_SUFFIX="wifi"
+    else
+        DOTFILE="$ROOT/openthread.gn"
+    fi
+
     PYTHON_PATH="$(which python3)"
-    BUILD_DIR=$OUTDIR/$SILABS_BOARD
+    BUILD_DIR=$OUTDIR/$PROTOCOL_DIR_SUFFIX/$SILABS_BOARD$NCP_DIR_SUFFIX
     echo BUILD_DIR="$BUILD_DIR"
 
     if [ "$DIR_CLEAN" == true ]; then
         rm -rf "$BUILD_DIR"
-    fi
-
-    if [ "$USE_WIFI" == true ]; then
-        DOTFILE="$ROOT/build_for_wifi_gnfile.gn"
-    else
-        DOTFILE="$ROOT/openthread.gn"
     fi
 
     if [ "$USE_DOCKER" == true ] && [ "$USE_WIFI" == false ]; then
@@ -336,7 +347,7 @@ else
         optArgs+="openthread_root=\"$GSDK_ROOT/util/third_party/openthread\" "
     fi
 
-    "$GN_PATH" gen --check --script-executable="$PYTHON_PATH" --fail-on-unused-args --export-compile-commands --root="$ROOT" --dotfile="$DOTFILE" --args="silabs_board=\"$SILABS_BOARD\" $optArgs" "$BUILD_DIR"
+    "$GN_PATH" gen --check --script-executable="$PYTHON_PATH" --fail-on-unused-args --add-export-compile-commands=* --root="$ROOT" --dotfile="$DOTFILE" --args="silabs_board=\"$SILABS_BOARD\" $optArgs" "$BUILD_DIR"
 
     if [ "$USE_SLC" == true ]; then
         # Activation needs to be after SLC generation which is done in gn gen.
@@ -368,7 +379,7 @@ else
         fi
 
         # search bootloader directory for the respective bootloaders for the input board
-        bootloaderFiles=("$(find "$MATTER_ROOT/third_party/silabs/matter_support/matter/efr32/bootloader_binaries/" -maxdepth 1 -name "*$SILABS_BOARD*" | tr '\n' ' ')")
+        bootloaderFiles=("$(find "$MATTER_ROOT/third_party/silabs/matter_support/board-support/efr32/bootloader_binaries/" -maxdepth 1 -name "*$SILABS_BOARD*" | tr '\n' ' ')")
 
         if [ "${#bootloaderFiles[@]}" -gt 1 ]; then
             for i in "${!bootloaderFiles[@]}"; do

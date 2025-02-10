@@ -28,9 +28,6 @@
 #include "AppEvent.h"
 #include "AppTask.h"
 #include "ota.h"
-#include "powercycle_counting.h"
-
-#include <app/server/OnboardingCodesUtil.h>
 
 #include <app-common/zap-generated/attributes/Accessors.h>
 #include <app/TestEventTriggerDelegate.h>
@@ -38,13 +35,18 @@
 #include <app/clusters/general-diagnostics-server/general-diagnostics-server.h>
 #include <app/clusters/identify-server/identify-server.h>
 #include <app/clusters/on-off-server/on-off-server.h>
+#include <app/util/persistence/DefaultAttributePersistenceProvider.h>
+#include <data-model-providers/codegen/Instance.h>
+#include <lib/core/CHIPError.h>
+#include <lib/core/CHIPPersistentStorageDelegate.h>
+#include <setup_payload/OnboardingCodesUtil.h>
 
 #include <app/server/Dnssd.h>
 #include <app/server/Server.h>
 #include <app/util/attribute-storage.h>
 #include <lib/support/TypeTraits.h>
 
-#include <app/DeferredAttributePersistenceProvider.h>
+#include <app/util/persistence/DeferredAttributePersistenceProvider.h>
 #include <credentials/DeviceAttestationCredsProvider.h>
 #include <credentials/examples/DeviceAttestationCredsExample.h>
 
@@ -70,6 +72,8 @@ using namespace ::chip::DeviceLayer;
 #define APP_TASK_PRIORITY 2
 #define APP_EVENT_QUEUE_SIZE 10
 #define QPG_LIGHT_ENDPOINT_ID (1)
+#define SECONDS_IN_HOUR (3600)                                              // we better keep this 3600
+#define TOTAL_OPERATIONAL_HOURS_SAVE_INTERVAL_SECONDS (1 * SECONDS_IN_HOUR) // increment every hour
 
 static uint8_t countdown = 0;
 
@@ -96,22 +100,25 @@ StaticTask_t appTaskStruct;
 Clusters::Identify::EffectIdentifierEnum sIdentifyEffect = Clusters::Identify::EffectIdentifierEnum::kStopEffect;
 chip::DeviceLayer::DeviceInfoProviderImpl gExampleDeviceInfoProvider;
 
-// Define a custom attribute persister which makes actual write of the attribute value
+// Define a custom attribute persister which makes actual write of the ColorX attribute value
 // to the non-volatile storage only when it has remained constant for 5 seconds. This is to reduce
-// the flash wearout when the attribute changes frequently as a result of commands.
+// the flash wearout when the attribute changes frequently as a result of MoveToLevel command.
 // DeferredAttribute object describes a deferred attribute, but also holds a buffer with a value to
 // be written, so it must live so long as the DeferredAttributePersistenceProvider object.
 //
-DeferredAttribute gPersisters[] = { DeferredAttribute(ConcreteAttributePath(kLightEndpointId, Clusters::ColorControl::Id,
-                                                                            Clusters::ColorControl::Attributes::CurrentX::Id)),
-                                    DeferredAttribute(ConcreteAttributePath(kLightEndpointId, Clusters::ColorControl::Id,
-                                                                            Clusters::ColorControl::Attributes::CurrentY::Id)),
-                                    DeferredAttribute(ConcreteAttributePath(kLightEndpointId, Clusters::LevelControl::Id,
-                                                                            Clusters::LevelControl::Attributes::CurrentLevel::Id))
+DeferredAttribute gPersisters[] = {
+    DeferredAttribute(
+        ConcreteAttributePath(kLightEndpointId, Clusters::ColorControl::Id, Clusters::ColorControl::Attributes::CurrentHue::Id)),
+    DeferredAttribute(ConcreteAttributePath(kLightEndpointId, Clusters::ColorControl::Id,
+                                            Clusters::ColorControl::Attributes::CurrentSaturation::Id)),
+    DeferredAttribute(
+        ConcreteAttributePath(kLightEndpointId, Clusters::LevelControl::Id, Clusters::LevelControl::Attributes::CurrentLevel::Id))
 
 };
 
-DeferredAttributePersistenceProvider gDeferredAttributePersister(Server::GetInstance().GetDefaultAttributePersister(),
+// Deferred persistence will be auto-initialized as soon as the default persistence is initialized
+DefaultAttributePersistenceProvider gSimpleAttributePersistence;
+DeferredAttributePersistenceProvider gDeferredAttributePersister(gSimpleAttributePersistence,
                                                                  Span<DeferredAttribute>(gPersisters, 3),
                                                                  System::Clock::Milliseconds32(5000));
 
@@ -119,12 +126,10 @@ DeferredAttributePersistenceProvider gDeferredAttributePersister(Server::GetInst
  * Identify Callbacks
  *********************************************************/
 
-namespace {
 void OnTriggerIdentifyEffectCompleted(chip::System::Layer * systemLayer, void * appState)
 {
     sIdentifyEffect = Clusters::Identify::EffectIdentifierEnum::kStopEffect;
 }
-} // namespace
 
 void OnTriggerIdentifyEffect(Identify * identify)
 {
@@ -256,7 +261,9 @@ void AppTask::InitServer(intptr_t arg)
     static chip::CommonCaseDeviceServerInitParams initParams;
     (void) initParams.InitializeStaticResourcesBeforeServerInit();
 
+    VerifyOrDie(gSimpleAttributePersistence.Init(initParams.persistentStorageDelegate) == CHIP_NO_ERROR);
     gExampleDeviceInfoProvider.SetStorageDelegate(initParams.persistentStorageDelegate);
+
     chip::DeviceLayer::SetDeviceInfoProvider(&gExampleDeviceInfoProvider);
 
     chip::Inet::EndPointStateOpenThread::OpenThreadEndpointInitParam nativeParams;
@@ -271,6 +278,7 @@ void AppTask::InitServer(intptr_t arg)
     VerifyOrDie(sTestEventTriggerDelegate.Init(ByteSpan(sTestEventTriggerEnableKey)) == CHIP_NO_ERROR);
     VerifyOrDie(sTestEventTriggerDelegate.AddHandler(&sFaultTestEventTriggerHandler) == CHIP_NO_ERROR);
     (void) initParams.InitializeStaticResourcesBeforeServerInit();
+    initParams.dataModelProvider        = CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
     initParams.testEventTriggerDelegate = &sTestEventTriggerDelegate;
 
     chip::Server::GetInstance().Init(initParams);
@@ -341,6 +349,14 @@ CHIP_ERROR AppTask::Init()
     sHaveBLEConnections      = (ConnectivityMgr().NumBLEConnections() != 0);
     sIsBLEAdvertisingEnabled = ConnectivityMgr().IsBLEAdvertisingEnabled();
     UpdateLEDs();
+
+    err = chip::DeviceLayer::SystemLayer().StartTimer(chip::System::Clock::Seconds32(TOTAL_OPERATIONAL_HOURS_SAVE_INTERVAL_SECONDS),
+                                                      TotalHoursTimerHandler, this);
+
+    if (err != CHIP_NO_ERROR)
+    {
+        ChipLogError(NotSpecified, "StartTimer failed %s: ", chip::ErrorStr(err));
+    }
 
     return err;
 }
@@ -436,6 +452,40 @@ void AppTask::TimerEventHandler(chip::System::Layer * aLayer, void * aAppState)
     event.TimerEvent.Context = aAppState;
     event.Handler            = FunctionTimerEventHandler;
     sAppTask.PostEvent(&event);
+}
+
+void AppTask::TotalHoursTimerHandler(chip::System::Layer * aLayer, void * aAppState)
+{
+    ChipLogProgress(NotSpecified, "HourlyTimer");
+
+    CHIP_ERROR err;
+    uint32_t totalOperationalHours = 0;
+
+    err = ConfigurationMgr().GetTotalOperationalHours(totalOperationalHours);
+
+    if (err == CHIP_NO_ERROR)
+    {
+        ConfigurationMgr().StoreTotalOperationalHours(totalOperationalHours +
+                                                      (TOTAL_OPERATIONAL_HOURS_SAVE_INTERVAL_SECONDS / SECONDS_IN_HOUR));
+    }
+    else if (err == CHIP_DEVICE_ERROR_CONFIG_NOT_FOUND)
+    {
+        totalOperationalHours = 0; // set this explicitly to 0 for safety
+        ConfigurationMgr().StoreTotalOperationalHours(totalOperationalHours +
+                                                      (TOTAL_OPERATIONAL_HOURS_SAVE_INTERVAL_SECONDS / SECONDS_IN_HOUR));
+    }
+    else
+    {
+        ChipLogError(DeviceLayer, "Failed to get total operational hours of the Node");
+    }
+
+    err = chip::DeviceLayer::SystemLayer().StartTimer(chip::System::Clock::Seconds32(TOTAL_OPERATIONAL_HOURS_SAVE_INTERVAL_SECONDS),
+                                                      TotalHoursTimerHandler, nullptr);
+
+    if (err != CHIP_NO_ERROR)
+    {
+        ChipLogError(NotSpecified, "StartTimer failed %s: ", chip::ErrorStr(err));
+    }
 }
 
 void AppTask::FunctionTimerEventHandler(AppEvent * aEvent)
@@ -670,10 +720,14 @@ void AppTask::UpdateLEDs(void)
     // If the system has ble connection(s) uptill the stage above, THEN blink
     // the LEDs at an even rate of 100ms.
     //
-    // Otherwise, blink the LED ON for a very short time.
+    // Otherwise, turn the LED OFF.
     if (sIsThreadProvisioned && sIsThreadEnabled)
     {
         qvIO_LedSet(SYSTEM_STATE_LED, true);
+    }
+    else if (sIsThreadProvisioned && !sIsThreadEnabled)
+    {
+        qvIO_LedBlink(SYSTEM_STATE_LED, 950, 50);
     }
     else if (sHaveBLEConnections)
     {
@@ -686,7 +740,7 @@ void AppTask::UpdateLEDs(void)
     else
     {
         // not commisioned yet
-        qvIO_LedBlink(SYSTEM_STATE_LED, 50, 950);
+        qvIO_LedSet(SYSTEM_STATE_LED, false);
     }
 }
 

@@ -27,6 +27,9 @@
 #pragma once
 
 #include <crypto/CHIPCryptoPAL.h>
+#if CHIP_CRYPTO_PSA_SPAKE2P
+#include <crypto/PSASpake2p.h>
+#endif
 #include <lib/support/Base64.h>
 #include <messaging/ExchangeContext.h>
 #include <messaging/ExchangeDelegate.h>
@@ -40,7 +43,9 @@
 #include <transport/raw/PeerAddress.h>
 
 namespace chip {
-
+namespace Testing {
+class TestPASESession;
+}
 extern const char kSpake2pI2RSessionInfo[];
 extern const char kSpake2pR2ISessionInfo[];
 
@@ -96,6 +101,8 @@ public:
      *                            ownership of the exchangeCtxt to PASESession object. PASESession
      *                            will close the exchange on (successful/failed) handshake completion.
      * @param delegate            Callback object
+     *                            The delegate will be notified if and only if Pair() returns success. Errors occurring after Pair()
+     *                            returns success will be reported via the delegate.
      *
      * @return CHIP_ERROR      The result of initialization
      */
@@ -125,7 +132,7 @@ public:
      * @param session     Reference to the secure session that will be initialized once pairing is complete
      * @return CHIP_ERROR The result of session derivation
      */
-    CHIP_ERROR DeriveSecureSession(CryptoContext & session) const override;
+    CHIP_ERROR DeriveSecureSession(CryptoContext & session) override;
 
     // TODO: remove Clear, we should create a new instance instead reset the old instance.
     /** @brief This function zeroes out and resets the memory used by the object.
@@ -169,6 +176,7 @@ private:
         kInvalidKeyConfirmation = 0x00,
         kUnexpected             = 0xff,
     };
+    friend class Testing::TestPASESession;
 
     CHIP_ERROR Init(SessionManager & sessionManager, uint32_t setupCode, SessionEstablishmentDelegate * delegate);
 
@@ -198,7 +206,11 @@ private:
     // mNextExpectedMsg is set when we are expecting a message.
     Optional<Protocols::SecureChannel::MsgType> mNextExpectedMsg;
 
+#if CHIP_CRYPTO_PSA_SPAKE2P
+    Crypto::PSASpake2p_P256_SHA256_HKDF_HMAC mSpake2p;
+#else
     Crypto::Spake2p_P256_SHA256_HKDF_HMAC mSpake2p;
+#endif
 
     Crypto::Spake2pVerifier mPASEVerifier;
 

@@ -38,10 +38,11 @@ static_library("Zephyr") {
     "ConnectivityManagerImpl.h",
     "DiagnosticDataProviderImpl.cpp",
     "DiagnosticDataProviderImpl.h",
+    "DiagnosticDataProviderImplGetter.cpp",
     "InetPlatformConfig.h",
+    "InetUtils.cpp",
     "KeyValueStoreManagerImpl.cpp",
     "KeyValueStoreManagerImpl.h",
-    "Logging.cpp",
     "PlatformManagerImpl.cpp",
     "PlatformManagerImpl.h",
     "SysHeapMalloc.h",
@@ -52,7 +53,10 @@ static_library("Zephyr") {
   ]
 
   public_deps = [ "${chip_root}/src/platform:platform_base" ]
-  deps = [ "${chip_root}/src/platform/logging:headers" ]
+  deps = [
+    "${chip_root}/src/app:app_config",
+    "${chip_root}/src/platform/logging:headers",
+  ]
 
   if (chip_enable_openthread) {
     sources += [
@@ -60,6 +64,7 @@ static_library("Zephyr") {
       "ThreadStackManagerImpl.cpp",
       "ThreadStackManagerImpl.h",
     ]
+    deps += [ "${chip_root}/src/app:app_config" ]
 
     if (chip_mdns == "platform") {
       sources += [
@@ -71,10 +76,10 @@ static_library("Zephyr") {
     }
   }
 
-  if (chip_enable_nfc) {
+  if (chip_enable_nfc_onboarding_payload) {
     sources += [
-      "NFCManagerImpl.cpp",
-      "NFCManagerImpl.h",
+      "NFCOnboardingPayloadManagerImpl.cpp",
+      "NFCOnboardingPayloadManagerImpl.h",
     ]
   }
 
@@ -83,4 +88,12 @@ static_library("Zephyr") {
   }
 
   cflags = [ "-Wconversion" ]
+}
+
+source_set("logging") {
+  deps = [
+    "${chip_root}/src/platform:platform_base",
+    "${chip_root}/src/platform/logging:headers",
+  ]
+  sources = [ "Logging.cpp" ]
 }

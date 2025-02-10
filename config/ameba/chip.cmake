@@ -32,6 +32,7 @@ list(
     -DMBEDTLS_CONFIG_FILE=<mbedtls_config.h>
     -D_POSIX_REALTIME_SIGNALS
     -DCHIP_SHELL_MAX_TOKENS=11
+    -DCONFIG_ENABLE_AMEBA_SNTP=1
 )
 
 list(
@@ -63,7 +64,6 @@ list(
     ${CHIP_ROOT}/src/app
     ${CHIP_ROOT}/third_party/nlassert/repo/include
     ${CHIP_ROOT}/third_party/nlio/repo/include
-    ${CHIP_ROOT}/third_party/nlunit-test/repo/src
 )
 
 execute_process(

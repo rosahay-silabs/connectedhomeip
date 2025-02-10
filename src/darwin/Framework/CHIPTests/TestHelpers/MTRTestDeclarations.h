@@ -18,24 +18,33 @@
 #import <Foundation/Foundation.h>
 #import <Matter/Matter.h>
 
+#import "MTRDefines_Internal.h"
+#import "MTRDeviceClusterData.h"
+#import "MTRDevice_Internal.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Declarations for internal methods
 
-@class MTRDeviceClusterData;
+@class MTRCASESessionResumptionInfo;
+
 // MTRDeviceControllerDataStore.h includes C++ header, and so we need to declare the methods separately
 @protocol MTRDeviceControllerDataStoreAttributeStoreMethods
-- (nullable NSArray<NSDictionary *> *)getStoredAttributesForNodeID:(NSNumber *)nodeID;
+- (nullable MTRCASESessionResumptionInfo *)findResumptionInfoByNodeID:(NSNumber *)nodeID;
 - (nullable NSDictionary<MTRClusterPath *, MTRDeviceClusterData *> *)getStoredClusterDataForNodeID:(NSNumber *)nodeID;
-- (void)storeAttributeValues:(NSArray<NSDictionary *> *)dataValues forNodeID:(NSNumber *)nodeID;
 - (void)storeClusterData:(NSDictionary<MTRClusterPath *, MTRDeviceClusterData *> *)clusterData forNodeID:(NSNumber *)nodeID;
-- (void)clearStoredAttributesForNodeID:(NSNumber *)nodeID;
-- (void)clearAllStoredAttributes;
-- (void)unitTestPruneEmptyStoredAttributesBranches;
+- (void)clearStoredClusterDataForNodeID:(NSNumber *)nodeID;
+- (void)clearAllStoredClusterData;
+- (void)unitTestPruneEmptyStoredClusterDataBranches;
+- (void)unitTestRereadNodeIndex;
 - (NSString *)_endpointIndexKeyForNodeID:(NSNumber *)nodeID;
 - (NSString *)_clusterIndexKeyForNodeID:(NSNumber *)nodeID endpointID:(NSNumber *)endpointID;
-- (NSString *)_attributeIndexKeyForNodeID:(NSNumber *)nodeID endpointID:(NSNumber *)endpointID clusterID:(NSNumber *)clusterID;
-- (NSString *)_attributeValueKeyForNodeID:(NSNumber *)nodeID endpointID:(NSNumber *)endpointID clusterID:(NSNumber *)clusterID attributeID:(NSNumber *)attributeID;
+- (NSString *)_clusterDataKeyForNodeID:(NSNumber *)nodeID endpointID:(NSNumber *)endpointID clusterID:(NSNumber *)clusterID;
+- (nullable NSArray<NSNumber *> *)_fetchEndpointIndexForNodeID:(NSNumber *)nodeID;
+- (nullable NSArray<NSNumber *> *)_fetchClusterIndexForNodeID:(NSNumber *)nodeID endpointID:(NSNumber *)endpointID;
+- (nullable MTRDeviceClusterData *)_fetchClusterDataForNodeID:(NSNumber *)nodeID endpointID:(NSNumber *)endpointID clusterID:(NSNumber *)clusterID;
+- (nullable NSDictionary<NSString *, id> *)getStoredDeviceDataForNodeID:(NSNumber *)nodeID;
+- (NSArray<NSNumber *> *)nodesWithStoredData;
 @end
 
 // Declare internal methods for testing
@@ -46,22 +55,43 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 @interface MTRDevice (Test)
-- (BOOL)_attributeDataValue:(NSDictionary *)one isEqualToDataValue:(NSDictionary *)theOther;
+- (NSMutableArray<NSNumber *> *)arrayOfNumbersFromAttributeValue:(MTRDeviceDataValueDictionary)dataDictionary;
+- (void)setStorageBehaviorConfiguration:(MTRDeviceStorageBehaviorConfiguration *)storageBehaviorConfiguration;
 @end
 
 #pragma mark - Declarations for items compiled only for DEBUG configuration
 
 #ifdef DEBUG
-@interface MTRBaseDevice (TestDebug)
-- (void)failSubscribers:(dispatch_queue_t)queue completion:(void (^)(void))completion;
+@interface MTRDeviceController (TestDebug)
+- (NSDictionary<NSNumber *, NSNumber *> *)unitTestGetDeviceAttributeCounts;
+- (NSUInteger)unitTestDelegateCount;
+@end
 
+@interface MTRBaseDevice (TestDebug)
 // Test function for whitebox testing
 + (id)CHIPEncodeAndDecodeNSObject:(id)object;
 @end
 
 @interface MTRDevice (TestDebug)
 - (void)unitTestInjectEventReport:(NSArray<NSDictionary<NSString *, id> *> *)eventReport;
+- (void)unitTestInjectAttributeReport:(NSArray<NSDictionary<NSString *, id> *> *)attributeReport fromSubscription:(BOOL)isFromSubscription;
 - (NSUInteger)unitTestAttributesReportedSinceLastCheck;
+- (void)unitTestClearClusterData;
+- (MTRInternalDeviceState)_getInternalState;
+- (void)unitTestSetReportToPersistenceDelayTime:(NSTimeInterval)reportToPersistenceDelayTime
+                reportToPersistenceDelayTimeMax:(NSTimeInterval)reportToPersistenceDelayTimeMax
+                      recentReportTimesMaxCount:(NSUInteger)recentReportTimesMaxCount
+            timeBetweenReportsTooShortThreshold:(NSTimeInterval)timeBetweenReportsTooShortThreshold
+         timeBetweenReportsTooShortMinThreshold:(NSTimeInterval)timeBetweenReportsTooShortMinThreshold
+          reportToPersistenceDelayMaxMultiplier:(double)reportToPersistenceDelayMaxMultiplier
+    deviceReportingExcessivelyIntervalThreshold:(NSTimeInterval)deviceReportingExcessivelyIntervalThreshold;
+- (void)unitTestSetMostRecentReportTimes:(NSMutableArray<NSDate *> *)mostRecentReportTimes;
+- (NSUInteger)unitTestNonnullDelegateCount;
+- (void)unitTestResetSubscription;
+- (MTRDeviceClusterData *)unitTestGetClusterDataForPath:(MTRClusterPath *)path;
+- (NSSet<MTRClusterPath *> *)unitTestGetPersistedClusters;
+- (BOOL)unitTestClusterHasBeenPersisted:(MTRClusterPath *)path;
+- (NSUInteger)unitTestAttributeCount;
 @end
 #endif
 

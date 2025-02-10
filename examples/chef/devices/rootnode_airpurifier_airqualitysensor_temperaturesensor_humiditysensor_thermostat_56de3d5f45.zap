@@ -1,6 +1,6 @@
 {
   "fileFormat": 2,
-  "featureLevel": 100,
+  "featureLevel": 106,
   "creator": "zap",
   "keyValuePairs": [
     {
@@ -29,6 +29,7 @@
       "pathRelativity": "relativeToZap",
       "path": "../../../src/app/zap-templates/app-templates.json",
       "type": "gen-templates-json",
+      "category": "matter",
       "version": "chip-v1"
     }
   ],
@@ -40,14 +41,16 @@
         "code": 22,
         "profileId": 259,
         "label": "MA-rootdevice",
-        "name": "MA-rootdevice"
+        "name": "MA-rootdevice",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 22,
           "profileId": 259,
           "label": "MA-rootdevice",
-          "name": "MA-rootdevice"
+          "name": "MA-rootdevice",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -1502,7 +1505,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0",
+              "defaultValue": "0x0001",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -1927,14 +1930,16 @@
         "code": 45,
         "profileId": 259,
         "label": "MA-air-purifier",
-        "name": "MA-air-purifier"
+        "name": "MA-air-purifier",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 45,
           "profileId": 259,
           "label": "MA-air-purifier",
-          "name": "MA-air-purifier"
+          "name": "MA-air-purifier",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -2038,22 +2043,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -2095,7 +2084,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "2",
+              "defaultValue": "4",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -2242,22 +2231,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -2299,7 +2272,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "3",
+              "defaultValue": "4",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -2412,22 +2385,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -2484,6 +2441,16 @@
           "define": "HEPA_FILTER_MONITORING_CLUSTER",
           "side": "server",
           "enabled": 1,
+          "commands": [
+            {
+              "name": "ResetCondition",
+              "code": 0,
+              "mfgCode": null,
+              "source": "client",
+              "isIncoming": 1,
+              "isEnabled": 1
+            }
+          ],
           "attributes": [
             {
               "name": "Condition",
@@ -2550,6 +2517,38 @@
               "reportableChange": 0
             },
             {
+              "name": "LastChangedTime",
+              "code": 4,
+              "mfgCode": null,
+              "side": "server",
+              "type": "epoch_s",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "ReplacementProductList",
+              "code": 5,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "GeneratedCommandList",
               "code": 65528,
               "mfgCode": null,
@@ -2568,22 +2567,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -2654,6 +2637,16 @@
           "define": "ACTIVATED_CARBON_FILTER_MONITORING_CLUSTER",
           "side": "server",
           "enabled": 1,
+          "commands": [
+            {
+              "name": "ResetCondition",
+              "code": 0,
+              "mfgCode": null,
+              "source": "client",
+              "isIncoming": 1,
+              "isEnabled": 1
+            }
+          ],
           "attributes": [
             {
               "name": "Condition",
@@ -2720,6 +2713,38 @@
               "reportableChange": 0
             },
             {
+              "name": "LastChangedTime",
+              "code": 4,
+              "mfgCode": null,
+              "side": "server",
+              "type": "epoch_s",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "ReplacementProductList",
+              "code": 5,
+              "mfgCode": null,
+              "side": "server",
+              "type": "array",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "GeneratedCommandList",
               "code": 65528,
               "mfgCode": null,
@@ -2738,22 +2763,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -2824,6 +2833,16 @@
           "define": "FAN_CONTROL_CLUSTER",
           "side": "server",
           "enabled": 1,
+          "commands": [
+            {
+              "name": "Step",
+              "code": 0,
+              "mfgCode": null,
+              "source": "client",
+              "isIncoming": 1,
+              "isEnabled": 1
+            }
+          ],
           "attributes": [
             {
               "name": "FanMode",
@@ -2832,7 +2851,7 @@
               "side": "server",
               "type": "FanModeEnum",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
               "defaultValue": "0",
@@ -2947,7 +2966,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x01",
+              "defaultValue": "0x07",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -3050,22 +3069,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -3091,7 +3094,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0",
+              "defaultValue": "0x3F",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -3124,14 +3127,16 @@
         "code": 44,
         "profileId": 259,
         "label": "MA-air-quality-sensor",
-        "name": "MA-air-quality-sensor"
+        "name": "MA-air-quality-sensor",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 44,
           "profileId": 259,
           "label": "MA-air-quality-sensor",
-          "name": "MA-air-quality-sensor"
+          "name": "MA-air-quality-sensor",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -3213,22 +3218,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -3397,22 +3386,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -3505,22 +3478,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -3705,6 +3662,22 @@
               "reportableChange": 0
             },
             {
+              "name": "Uncertainty",
+              "code": 7,
+              "mfgCode": null,
+              "side": "server",
+              "type": "single",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "MeasurementUnit",
               "code": 8,
               "mfgCode": null,
@@ -3771,22 +3744,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -3971,6 +3928,22 @@
               "reportableChange": 0
             },
             {
+              "name": "Uncertainty",
+              "code": 7,
+              "mfgCode": null,
+              "side": "server",
+              "type": "single",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "MeasurementUnit",
               "code": 8,
               "mfgCode": null,
@@ -4051,22 +4024,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -4108,7 +4065,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "1",
+              "defaultValue": "3",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -4237,6 +4194,22 @@
               "reportableChange": 0
             },
             {
+              "name": "Uncertainty",
+              "code": 7,
+              "mfgCode": null,
+              "side": "server",
+              "type": "single",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "MeasurementUnit",
               "code": 8,
               "mfgCode": null,
@@ -4303,22 +4276,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -4503,6 +4460,22 @@
               "reportableChange": 0
             },
             {
+              "name": "Uncertainty",
+              "code": 7,
+              "mfgCode": null,
+              "side": "server",
+              "type": "single",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "MeasurementUnit",
               "code": 8,
               "mfgCode": null,
@@ -4569,22 +4542,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -4769,6 +4726,22 @@
               "reportableChange": 0
             },
             {
+              "name": "Uncertainty",
+              "code": 7,
+              "mfgCode": null,
+              "side": "server",
+              "type": "single",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "MeasurementUnit",
               "code": 8,
               "mfgCode": null,
@@ -4835,22 +4808,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -5035,6 +4992,22 @@
               "reportableChange": 0
             },
             {
+              "name": "Uncertainty",
+              "code": 7,
+              "mfgCode": null,
+              "side": "server",
+              "type": "single",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "MeasurementUnit",
               "code": 8,
               "mfgCode": null,
@@ -5101,22 +5074,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -5301,6 +5258,22 @@
               "reportableChange": 0
             },
             {
+              "name": "Uncertainty",
+              "code": 7,
+              "mfgCode": null,
+              "side": "server",
+              "type": "single",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "MeasurementUnit",
               "code": 8,
               "mfgCode": null,
@@ -5367,22 +5340,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -5567,6 +5524,22 @@
               "reportableChange": 0
             },
             {
+              "name": "Uncertainty",
+              "code": 7,
+              "mfgCode": null,
+              "side": "server",
+              "type": "single",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "MeasurementUnit",
               "code": 8,
               "mfgCode": null,
@@ -5633,22 +5606,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -5833,6 +5790,22 @@
               "reportableChange": 0
             },
             {
+              "name": "Uncertainty",
+              "code": 7,
+              "mfgCode": null,
+              "side": "server",
+              "type": "single",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "MeasurementUnit",
               "code": 8,
               "mfgCode": null,
@@ -5899,22 +5872,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -6099,6 +6056,22 @@
               "reportableChange": 0
             },
             {
+              "name": "Uncertainty",
+              "code": 7,
+              "mfgCode": null,
+              "side": "server",
+              "type": "single",
+              "included": 1,
+              "storageOption": "External",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": null,
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
               "name": "MeasurementUnit",
               "code": 8,
               "mfgCode": null,
@@ -6179,22 +6152,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -6253,14 +6210,16 @@
         "code": 770,
         "profileId": 259,
         "label": "MA-tempsensor",
-        "name": "MA-tempsensor"
+        "name": "MA-tempsensor",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 770,
           "profileId": 259,
           "label": "MA-tempsensor",
-          "name": "MA-tempsensor"
+          "name": "MA-tempsensor",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -6364,22 +6323,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -6534,22 +6477,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -6614,10 +6541,10 @@
               "side": "server",
               "type": "temperature",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "",
+              "defaultValue": "0",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -6630,10 +6557,10 @@
               "side": "server",
               "type": "temperature",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x8000",
+              "defaultValue": "-5000",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -6646,10 +6573,26 @@
               "side": "server",
               "type": "temperature",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x8000",
+              "defaultValue": "7500",
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "Tolerance",
+              "code": 3,
+              "mfgCode": null,
+              "side": "server",
+              "type": "int16u",
+              "included": 1,
+              "storageOption": "NVM",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": "10",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -6674,22 +6617,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -6745,7 +6672,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "1",
+              "defaultValue": "4",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -6762,14 +6689,16 @@
         "code": 775,
         "profileId": 259,
         "label": "MA-humiditysensor",
-        "name": "MA-humiditysensor"
+        "name": "MA-humiditysensor",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 775,
           "profileId": 259,
           "label": "MA-humiditysensor",
-          "name": "MA-humiditysensor"
+          "name": "MA-humiditysensor",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -6873,22 +6802,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -7043,22 +6956,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -7126,7 +7023,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "",
+              "defaultValue": "4600",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7142,7 +7039,7 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "",
+              "defaultValue": "0",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7158,7 +7055,23 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "",
+              "defaultValue": "10000",
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "Tolerance",
+              "code": 3,
+              "mfgCode": null,
+              "side": "server",
+              "type": "int16u",
+              "included": 1,
+              "storageOption": "RAM",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": "1",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7183,22 +7096,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",
@@ -7271,14 +7168,16 @@
         "code": 769,
         "profileId": 259,
         "label": "MA-thermostat",
-        "name": "MA-thermostat"
+        "name": "MA-thermostat",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 769,
           "profileId": 259,
           "label": "MA-thermostat",
-          "name": "MA-thermostat"
+          "name": "MA-thermostat",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [
@@ -7382,22 +7281,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -7552,22 +7435,6 @@
               "reportableChange": 0
             },
             {
-              "name": "EventList",
-              "code": 65530,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
               "name": "AttributeList",
               "code": 65531,
               "mfgCode": null,
@@ -7645,7 +7512,55 @@
               "storageOption": "RAM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "",
+              "defaultValue": "2000",
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AbsMinHeatSetpointLimit",
+              "code": 3,
+              "mfgCode": null,
+              "side": "server",
+              "type": "temperature",
+              "included": 1,
+              "storageOption": "RAM",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": "700",
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "AbsMaxHeatSetpointLimit",
+              "code": 4,
+              "mfgCode": null,
+              "side": "server",
+              "type": "temperature",
+              "included": 1,
+              "storageOption": "RAM",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": "3000",
+              "reportable": 1,
+              "minInterval": 1,
+              "maxInterval": 65534,
+              "reportableChange": 0
+            },
+            {
+              "name": "PIHeatingDemand",
+              "code": 8,
+              "mfgCode": null,
+              "side": "server",
+              "type": "int8u",
+              "included": 1,
+              "storageOption": "NVM",
+              "singleton": 0,
+              "bounded": 0,
+              "defaultValue": "0",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7656,9 +7571,9 @@
               "code": 18,
               "mfgCode": null,
               "side": "server",
-              "type": "int16s",
+              "type": "temperature",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
               "defaultValue": "2000",
@@ -7672,12 +7587,12 @@
               "code": 21,
               "mfgCode": null,
               "side": "server",
-              "type": "int16s",
+              "type": "temperature",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "1700",
+              "defaultValue": "700",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7688,9 +7603,9 @@
               "code": 22,
               "mfgCode": null,
               "side": "server",
-              "type": "int16s",
+              "type": "temperature",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
               "defaultValue": "3000",
@@ -7706,10 +7621,10 @@
               "side": "server",
               "type": "ControlSequenceOfOperationEnum",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x02",
+              "defaultValue": "2",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7722,10 +7637,10 @@
               "side": "server",
               "type": "SystemModeEnum",
               "included": 1,
-              "storageOption": "RAM",
+              "storageOption": "NVM",
               "singleton": 0,
               "bounded": 0,
-              "defaultValue": "0x00",
+              "defaultValue": "4",
               "reportable": 1,
               "minInterval": 1,
               "maxInterval": 65534,
@@ -7750,22 +7665,6 @@
             {
               "name": "AcceptedCommandList",
               "code": 65529,
-              "mfgCode": null,
-              "side": "server",
-              "type": "array",
-              "included": 1,
-              "storageOption": "External",
-              "singleton": 0,
-              "bounded": 0,
-              "defaultValue": null,
-              "reportable": 1,
-              "minInterval": 1,
-              "maxInterval": 65534,
-              "reportableChange": 0
-            },
-            {
-              "name": "EventList",
-              "code": 65530,
               "mfgCode": null,
               "side": "server",
               "type": "array",

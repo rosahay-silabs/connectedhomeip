@@ -187,12 +187,8 @@ static constexpr EmberAfAttributeMetadata sDescriptorAttributesMetadata[] = {
 {
     MTRDeviceController * existingController = _deviceController;
     if (existingController != nil) {
-#if MTR_PER_CONTROLLER_STORAGE_ENABLED
         MTR_LOG_ERROR("Cannot associate MTRServerEndpoint with controller %@; already associated with controller %@",
             controller.uniqueIdentifier, existingController.uniqueIdentifier);
-#else
-        MTR_LOG_ERROR("Cannot associate MTRServerEndpoint with controller; already associated with a different controller");
-#endif
         return NO;
     }
 
@@ -305,18 +301,18 @@ static constexpr EmberAfAttributeMetadata sDescriptorAttributesMetadata[] = {
         auto * deviceType = _deviceTypes[index];
         auto & matterType = _matterDeviceTypes[index];
 
-        matterType.deviceId = static_cast<DeviceTypeId>(deviceType.deviceTypeID.unsignedLongLongValue);
-        // TODO: The spec allows 16-bit revisions, but the Ember bits only
-        // support 8-bit....
-        matterType.deviceVersion = static_cast<uint8_t>(deviceType.deviceTypeRevision.unsignedLongLongValue);
+        matterType.deviceTypeId = static_cast<DeviceTypeId>(deviceType.deviceTypeID.unsignedLongLongValue);
+        // TODO: The spec allows 16-bit revisions, but DeviceTypeEntry only
+        // supports 8-bit....
+        matterType.deviceTypeRevision = static_cast<uint8_t>(deviceType.deviceTypeRevision.unsignedLongLongValue);
     }
 
     _matterDataVersions = std::make_unique<DataVersion[]>(clusterCount);
 
     _deviceController = controller;
 
-    MTR_LOG_DEFAULT("Associated %@, cluster count %llu, with controller",
-        self, static_cast<unsigned long long>(clusterCount));
+    MTR_LOG("Associated %@, cluster count %llu, with controller %@",
+        self, static_cast<unsigned long long>(clusterCount), controller);
 
     return YES;
 }

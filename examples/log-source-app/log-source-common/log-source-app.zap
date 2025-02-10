@@ -1,6 +1,6 @@
 {
   "fileFormat": 2,
-  "featureLevel": 100,
+  "featureLevel": 106,
   "creator": "zap",
   "keyValuePairs": [
     {
@@ -29,6 +29,7 @@
       "pathRelativity": "relativeToZap",
       "path": "../../../src/app/zap-templates/app-templates.json",
       "type": "gen-templates-json",
+      "category": "matter",
       "version": "chip-v1"
     }
   ],
@@ -40,14 +41,16 @@
         "code": 4293984259,
         "profileId": 259,
         "label": "MA-all-clusters-app",
-        "name": "MA-all-clusters-app"
+        "name": "MA-all-clusters-app",
+        "deviceTypeOrder": 0
       },
       "deviceTypes": [
         {
           "code": 4293984259,
           "profileId": 259,
           "label": "MA-all-clusters-app",
-          "name": "MA-all-clusters-app"
+          "name": "MA-all-clusters-app",
+          "deviceTypeOrder": 0
         }
       ],
       "deviceVersions": [

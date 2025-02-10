@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <app/AttributeAccessInterface.h>
 #include <app/util/af-types.h>
 #include <app/util/att-storage.h>
 #include <app/util/attribute-metadata.h>
@@ -61,6 +60,12 @@ static constexpr uint16_t kEmberInvalidEndpointIndex = 0xFFFF;
     } /* cluster revision */                                                                                                       \
     }
 
+// The attrMask must contain the relevant ATTRIBUTE_MASK_* bits from
+// attribute-metadata.h.  Specifically:
+//
+// * Writable attributes must have ATTRIBUTE_MASK_WRITABLE
+// * Nullable attributes (have X in the quality column in the spec) must have ATTRIBUTE_MASK_NULLABLE
+// * Attributes that have T in the Access column in the spec must have ATTRIBUTE_MASK_MUST_USE_TIMED_WRITE
 #define DECLARE_DYNAMIC_ATTRIBUTE(attId, attType, attSizeBytes, attrMask)                                                          \
     {                                                                                                                              \
         ZAP_EMPTY_DEFAULT(), attId, attSizeBytes, ZAP_TYPE(attType), attrMask | ZAP_ATTRIBUTE_MASK(EXTERNAL_STORAGE)               \
@@ -184,25 +189,6 @@ chip::DataVersion * emberAfDataVersionStorage(const chip::app::ConcreteClusterPa
 uint16_t emberAfFixedEndpointCount();
 
 /**
- * Register an attribute access override.  It will remain registered until the
- * endpoint it's registered for is disabled (or until shutdown if it's
- * registered for all endpoints) or until it is explicitly unregistered.
- * Registration will fail if there is an already-registered override for the
- * same set of attributes.
- *
- * @return false if there is an existing override that the new one would
- *               conflict with.  In this case the override is not registered.
- * @return true if registration was successful.
- */
-bool registerAttributeAccessOverride(chip::app::AttributeAccessInterface * attrOverride);
-
-/**
- * Unregister an attribute access override (for example if the object
- * implementing AttributeAccessInterface is being destroyed).
- */
-void unregisterAttributeAccessOverride(chip::app::AttributeAccessInterface * attrOverride);
-
-/**
  * Get the semantic tags of the endpoint.
  * Fills in the provided SemanticTagStruct with tag at index `index` if there is one,
  * or returns CHIP_ERROR_NOT_FOUND if the index is out of range for the list of tag,
@@ -287,6 +273,10 @@ void emberAfInitializeAttributes(chip::EndpointId endpoint);
 // otherwise number of client clusters on this endpoint
 uint8_t emberAfClusterCount(chip::EndpointId endpoint, bool server);
 
+// If server == true, returns the number of server clusters,
+// otherwise number of client clusters on the endpoint at the given index.
+uint8_t emberAfClusterCountForEndpointType(const EmberAfEndpointType * endpointType, bool server);
+
 // Returns the cluster of Nth server or client cluster,
 // depending on server toggle.
 const EmberAfCluster * emberAfGetNthCluster(chip::EndpointId endpoint, uint8_t n, bool server);
@@ -295,6 +285,7 @@ const EmberAfCluster * emberAfGetNthCluster(chip::EndpointId endpoint, uint8_t n
 // Retrieve the device type list associated with a specific endpoint.
 //
 chip::Span<const EmberAfDeviceType> emberAfDeviceTypeListFromEndpoint(chip::EndpointId endpoint, CHIP_ERROR & err);
+chip::Span<const EmberAfDeviceType> emberAfDeviceTypeListFromEndpointIndex(unsigned endpointIndex, CHIP_ERROR & err);
 
 //
 // Override the device type list current associated with an endpoint with a user-provided list. The buffers backing
@@ -303,6 +294,35 @@ chip::Span<const EmberAfDeviceType> emberAfDeviceTypeListFromEndpoint(chip::Endp
 // NOTE: It is the application's responsibility to free the existing list that is being replaced if needed.
 //
 CHIP_ERROR emberAfSetDeviceTypeList(chip::EndpointId endpoint, chip::Span<const EmberAfDeviceType> deviceTypeList);
+
+/// Returns a change listener that uses the global InteractionModelEngine
+/// instance to report dirty paths
+chip::app::AttributesChangedListener * emberAfGlobalInteractionModelAttributesChangedListener();
+
+/// Mark the given attribute as having changed:
+///   - increases the cluster data version for the given cluster
+///   - uses `listener` to `MarkDirty` the given path. This is typically done to mark an
+///     attribute as dirty within the matter attribute reporting engine, so that subscriptions
+///     receive updated attribute values for a cluster.
+///
+/// This is a convenience function to make it clear when a `emberAfDataVersionStorage` increase
+/// and a `AttributesChangeListener::MarkDirty` always occur in lock-step.
+void emberAfAttributeChanged(chip::EndpointId endpoint, chip::ClusterId clusterId, chip::AttributeId attributeId,
+                             chip::app::AttributesChangedListener * listener);
+
+/// Mark attributes on the given endpoint as having changed.
+///
+/// Schedules reporting engine to consider the endpoint dirty, however does NOT increase/alter
+/// any cluster data versions.
+void emberAfEndpointChanged(chip::EndpointId endpoint, chip::app::AttributesChangedListener * listener);
+
+/// Maintains a increasing index of structural changes within ember
+/// that determine if existing "indexes" and metadata pointers within ember
+/// are still valid or not.
+///
+/// Changes to metadata structure (e.g. endpoint enable/disable and dynamic endpoint changes)
+/// are reflected in this generation count changing.
+unsigned emberAfMetadataStructureGeneration();
 
 namespace chip {
 namespace app {
@@ -361,6 +381,18 @@ bool IsFlatCompositionForEndpoint(EndpointId endpoint);
  * @brief Returns true is an Endpoint has tree composition
  */
 bool IsTreeCompositionForEndpoint(EndpointId endpoint);
+
+enum class EndpointComposition : uint8_t
+{
+    kFullFamily,
+    kTree,
+    kInvalid,
+};
+
+/**
+ * @brief Returns the composition for a given endpoint index
+ */
+EndpointComposition GetCompositionForEndpointIndex(uint16_t index);
 
 } // namespace app
 } // namespace chip

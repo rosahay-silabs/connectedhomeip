@@ -26,7 +26,7 @@
 // system dependencies
 #import <XCTest/XCTest.h>
 
-static const uint16_t kPairingTimeoutInSeconds = 10;
+static const uint16_t kPairingTimeoutInSeconds = 30;
 static const uint16_t kTimeoutInSeconds = 3;
 static const uint64_t kDeviceId = 0x12341234;
 static const uint64_t kControllerId = 0x56788765;
@@ -163,6 +163,8 @@ static MTRDeviceController * sController = nil;
 
     __auto_type * operationalCertificate = [self issueOperationalCertificateForNode:@(kDeviceId)
                                                                operationalPublicKey:operationalPublicKey];
+    // Release no-longer-needed key before we do anything else.
+    CFRelease(operationalPublicKey);
     XCTAssertNotNil(operationalCertificate);
 
     __auto_type * certChain = [[MTROperationalCertificateChain alloc] initWithOperationalCertificate:operationalCertificate
@@ -257,10 +259,13 @@ static BOOL sNeedsStackShutdown = YES;
 
     __auto_type * controllerOperationalKeys = [[MTRTestKeys alloc] init];
     XCTAssertNotNil(controllerOperationalKeys);
+    __auto_type * controllerPublicKey = controllerOperationalKeys.copyPublicKey;
+    XCTAssert(controllerPublicKey != NULL);
+    CFAutorelease(controllerPublicKey);
 
     __auto_type * controllerOperationalCert =
         [certificateIssuer issueOperationalCertificateForNode:@(kControllerId)
-                                         operationalPublicKey:controllerOperationalKeys.publicKey];
+                                         operationalPublicKey:controllerPublicKey];
     XCTAssertNotNil(controllerOperationalCert);
 
     __auto_type * params = [[MTRDeviceControllerStartupParams alloc] initWithIPK:certificateIssuer.rootKey.ipk

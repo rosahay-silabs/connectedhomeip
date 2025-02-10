@@ -30,8 +30,9 @@
 #include <platform/CHIPDeviceLayer.h>
 
 #include <app/clusters/network-commissioning/network-commissioning.h>
-#include <app/server/OnboardingCodesUtil.h>
 #include <app/server/Server.h>
+#include <data-model-providers/codegen/Instance.h>
+#include <setup_payload/OnboardingCodesUtil.h>
 
 #include <credentials/DeviceAttestationCredsProvider.h>
 #include <credentials/examples/DeviceAttestationCredsExample.h>
@@ -152,11 +153,14 @@ void printQRCode()
 app::Clusters::NetworkCommissioning::Instance
     sWiFiNetworkCommissioningInstance(0 /* Endpoint Id */, &(NetworkCommissioning::ESPWiFiDriver::GetInstance()));
 
+extern void ApplicationInit();
+
 void InitServer(intptr_t)
 {
     // Start IM server
     static chip::CommonCaseDeviceServerInitParams initParams;
     (void) initParams.InitializeStaticResourcesBeforeServerInit();
+    initParams.dataModelProvider = app::CodegenDataModelProviderInstance(initParams.persistentStorageDelegate);
     chip::Server::GetInstance().Init(initParams);
 
     // Device Attestation & Onboarding codes
@@ -172,6 +176,10 @@ void InitServer(intptr_t)
     // Register a function to receive events from the CHIP device layer.  Note that calls to
     // this function will happen on the CHIP event loop thread, not the app_main thread.
     PlatformMgr().AddEventHandler(DeviceEventCallback, reinterpret_cast<intptr_t>(nullptr));
+
+    // Application code should always be initialised after the initialisation of
+    // server.
+    ApplicationInit();
 }
 
 extern "C" void app_main(void)

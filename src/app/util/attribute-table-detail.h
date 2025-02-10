@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include <app/util/attribute-metadata.h>
-#include <lib/core/DataModelTypes.h>
-#include <protocols/interaction_model/StatusCode.h>
+#include <app/ConcreteAttributePath.h>
+#include <app/util/attribute-table.h>
 
 /**
  * Write an attribute for a request arriving from external sources.
@@ -27,40 +26,5 @@
  * This will check attribute writeability and that
  * the provided data type matches the expected data type.
  */
-chip::Protocols::InteractionModel::Status emAfWriteAttributeExternal(chip::EndpointId endpoint, chip::ClusterId cluster,
-                                                                     chip::AttributeId attributeID, uint8_t * dataPtr,
-                                                                     EmberAfAttributeType dataType);
-
-/**
- * @brief write an attribute, performing all the checks.
- *
- * This function will attempt to write the attribute value from
- * the provided pointer. This function will only check that the
- * attribute exists. If it does it will write the value into
- * the attribute table for the given attribute.
- *
- * This function will not check to see if the attribute is
- * writable since the read only / writable characteristic
- * of an attribute only pertains to external devices writing
- * over the air. Because this function is being called locally
- * it assumes that the device knows what it is doing and has permission
- * to perform the given operation.
- *
- * if true is passed in for overrideReadOnlyAndDataType then the data type is
- * not checked and the read-only flag is ignored. This mode is meant for
- * testing or setting the initial value of the attribute on the device.
- *
- * this returns:
- * - Status::UnsupportedEndpoint: if endpoint isn't supported by the device.
- * - Status::UnsupportedCluster: if cluster isn't supported on the endpoint.
- * - Status::UnsupportedAttribute: if attribute isn't supported in the cluster.
- * - Status::InvalidDataType: if the data type passed in doesnt match the type
- *           stored in the attribute table
- * - Status::UnsupportedWrite: if the attribute isnt writable
- * - Status::ConstraintError: if the value is set out of the allowable range for
- *           the attribute
- * - Status::Success: if the attribute was found and successfully written
- */
-chip::Protocols::InteractionModel::Status emAfWriteAttribute(chip::EndpointId endpoint, chip::ClusterId cluster,
-                                                             chip::AttributeId attributeID, uint8_t * data,
-                                                             EmberAfAttributeType dataType, bool overrideReadOnlyAndDataType);
+chip::Protocols::InteractionModel::Status emAfWriteAttributeExternal(const chip::app::ConcreteAttributePath & path,
+                                                                     const EmberAfWriteDataInput & input);

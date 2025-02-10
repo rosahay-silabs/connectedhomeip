@@ -36,10 +36,6 @@ macro(esp32_unit_test)
         idf::main 
         -Wl,--whole-archive ${UNIT_TEST_LIBRARY} -Wl,--no-whole-archive
         ${UNIT_TEST_EXTRA_LIBRARIES}
-        -lVectorTlv
-        -lSupportTesting
-        -lTestUtils
-        nlunit-test
         nlfaultinjection
     )
 

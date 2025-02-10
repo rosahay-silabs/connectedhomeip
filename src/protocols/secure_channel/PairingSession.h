@@ -96,7 +96,7 @@ public:
      * @param session     Reference to the secure session that will be initialized once pairing is complete
      * @return CHIP_ERROR The result of session derivation
      */
-    virtual CHIP_ERROR DeriveSecureSession(CryptoContext & session) const = 0;
+    virtual CHIP_ERROR DeriveSecureSession(CryptoContext & session) = 0;
 
     const ReliableMessageProtocolConfig & GetRemoteMRPConfig() const { return mRemoteSessionParams.GetMRPConfig(); }
     const SessionParameters & GetRemoteSessionParameters() const { return mRemoteSessionParams; }
@@ -129,6 +129,9 @@ protected:
     void DiscardExchange(); // Clear our reference to our exchange context pointer so that it can close itself at some later time.
 
     void SetPeerSessionId(uint16_t id) { mPeerSessionId.SetValue(id); }
+
+    void SetRemoteSessionParameters(const SessionParameters & sessionParams) { mRemoteSessionParams = sessionParams; }
+
     virtual void OnSuccessStatusReport() {}
 
     // Handle a failure StatusReport message from the server.  protocolData will
@@ -207,16 +210,17 @@ protected:
     }
 
     /**
-     * Try to decode the current element (pointed by the TLV reader) as MRP parameters.
-     * If the MRP parameters are found, mRemoteSessionParams is updated with the devoded values.
+     * Try to decode the current element (pointed by the TLV reader) as Session parameters (which include MRP parameters).
+     * If the Session parameters are found, outparam sessionParameters is updated with the decoded values.
      *
-     * MRP parameters are optional. So, if the TLV reader is not pointing to the MRP parameters,
+     * Session parameters are optional. So, if the TLV reader is not pointing to the Session parameters,
      * the function is a noop.
      *
      * If the parameters are present, but TLV reader fails to correctly parse it, the function will
      * return the corresponding error.
      */
-    CHIP_ERROR DecodeMRPParametersIfPresent(TLV::Tag expectedTag, TLV::ContiguousBufferTLVReader & tlvReader);
+    static CHIP_ERROR DecodeSessionParametersIfPresent(TLV::Tag expectedTag, TLV::ContiguousBufferTLVReader & tlvReader,
+                                                       SessionParameters & sessionParameters);
 
     bool IsSessionEstablishmentInProgress();
 
@@ -244,7 +248,8 @@ protected:
 
     // mLocalMRPConfig is our config which is sent to the other end and used by the peer session.
     // mRemoteSessionParams is received from other end and set to our session.
-    ReliableMessageProtocolConfig mLocalMRPConfig = GetLocalMRPConfig().ValueOr(GetDefaultMRPConfig());
+    // It is set the first time that session establishment is initiated.
+    Optional<ReliableMessageProtocolConfig> mLocalMRPConfig;
     SessionParameters mRemoteSessionParams;
 
 private:

@@ -96,6 +96,11 @@ public:
 
     void SetICDManager(ICDManager * manager) { mICDManager = manager; };
 #endif
+
+#if INET_CONFIG_ENABLE_TCP_ENDPOINT
+    void SetTCPServerEnabled(bool serverEnabled) { mTCPServerEnabled = serverEnabled; };
+#endif // INET_CONFIG_ENABLE_TCP_ENDPOINT
+
     /// Start operational advertising
     CHIP_ERROR AdvertiseOperational();
 
@@ -126,11 +131,25 @@ public:
      */
     CHIP_ERROR SetEphemeralDiscriminator(Optional<uint16_t> discriminator);
 
-    // ICDStateObserver
-    // No action is needed by the DnssdServer on active or idle state entries
-    void OnEnterActiveMode() override{};
-    void OnTransitionToIdle() override{};
+    /**
+     * @brief When the ICD changes operating mode, the dnssd server needs to restart its DNS-SD advertising to update the TXT keys.
+     */
     void OnICDModeChange() override;
+
+    /**
+     * @brief dnssd server has no action to do on this ICD event. Do nothing.
+     */
+    void OnEnterActiveMode() override{};
+
+    /**
+     * @brief dnssd server has no action to do on this ICD event. Do nothing.
+     */
+    void OnTransitionToIdle() override{};
+
+    /**
+     * @brief dnssd server has no action to do on this ICD event. Do nothing.
+     */
+    void OnEnterIdleMode() override{};
 
 private:
     /// Overloaded utility method for commissioner and commissionable advertisement
@@ -163,6 +182,10 @@ private:
 #if CHIP_CONFIG_ENABLE_ICD_SERVER
     ICDManager * mICDManager = nullptr;
 #endif // CHIP_CONFIG_ENABLE_ICD_SERVER
+
+#if INET_CONFIG_ENABLE_TCP_ENDPOINT
+    bool mTCPServerEnabled = true;
+#endif // INET_CONFIG_ENABLE_TCP_ENDPOINT
 
     uint16_t mSecuredPort          = CHIP_PORT;
     uint16_t mUnsecuredPort        = CHIP_UDC_PORT;

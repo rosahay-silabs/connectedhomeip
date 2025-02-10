@@ -61,7 +61,7 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* MEMP_NUM_UDP_PCB: the number of UDP protocol control blocks. One
    per active UDP "connection". */
-#define MEMP_NUM_UDP_PCB 8
+#define MEMP_NUM_UDP_PCB 12
 
 /* MEMP_NUM_TCP_PCB: the number of simulatenously active TCP
    connections. */
@@ -264,7 +264,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_IPV6_DHCP6 1
 #define LWIP_AUTOIP 1
 #define LWIP_IPV6_MLD 1
-#define LWIP_ND6_RDNSS_MAX_DNS_SERVERS 1
+#define LWIP_ND6_RDNSS_MAX_DNS_SERVERS 0
 #define LWIP_HOOK_FILENAME "bl_lwip_hooks.h"
 
 #define LWIP_NETIF_EXT_STATUS_CALLBACK 1

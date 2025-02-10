@@ -1,6 +1,6 @@
 /*
  *
- *    Copyright (c) 2021 Project CHIP Authors
+ *    Copyright (c) 2021-2024 Project CHIP Authors
  *    All rights reserved.
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,16 @@
 
 #pragma once
 #include <app-common/zap-generated/cluster-objects.h>
+#include <app/AttributePathParams.h>
+#include <app/ClusterStateCache.h>
 #include <app/OperationalSessionSetup.h>
 #include <controller/CommissioneeDeviceProxy.h>
 #include <credentials/attestation_verifier/DeviceAttestationDelegate.h>
 #include <credentials/attestation_verifier/DeviceAttestationVerifier.h>
 #include <crypto/CHIPCryptoPAL.h>
+#include <lib/support/Span.h>
 #include <lib/support/Variant.h>
+#include <matter/tracing/build_config.h>
 #include <system/SystemClock.h>
 
 namespace chip {
@@ -35,8 +39,7 @@ enum CommissioningStage : uint8_t
 {
     kError,
     kSecurePairing,              ///< Establish a PASE session with the device
-    kReadCommissioningInfo,      ///< Query General Commissioning Attributes, Network Features and Time Synchronization Cluster
-    kReadCommissioningInfo2,     ///< Query SupportsConcurrentConnection, ICD state, check for matching fabric
+    kReadCommissioningInfo,      ///< Query Attributes relevant to commissioning (can perform multiple read interactions)
     kArmFailsafe,                ///< Send ArmFailSafe (0x30:0) command to the device
     kConfigRegulatory,           ///< Send SetRegulatoryConfig (0x30:2) command to the device
     kConfigureUTCTime,           ///< SetUTCTime if the DUT has a time cluster
@@ -47,13 +50,14 @@ enum CommissioningStage : uint8_t
     kSendDACCertificateRequest,  ///< Send DAC CertificateChainRequest (0x3E:2) command to the device
     kSendAttestationRequest,     ///< Send AttestationRequest (0x3E:0) command to the device
     kAttestationVerification,    ///< Verify AttestationResponse (0x3E:1) validity
+    kAttestationRevocationCheck, ///< Verify Revocation Status of device's DAC chain
     kSendOpCertSigningRequest,   ///< Send CSRRequest (0x3E:4) command to the device
     kValidateCSR,                ///< Verify CSRResponse (0x3E:5) validity
     kGenerateNOCChain,           ///< TLV encode Node Operational Credentials (NOC) chain certs
     kSendTrustedRootCert,        ///< Send AddTrustedRootCertificate (0x3E:11) command to the device
     kSendNOC,                    ///< Send AddNOC (0x3E:6) command to the device
     kConfigureTrustedTimeSource, ///< Configure a trusted time source if one is required and available (must be done after SendNOC)
-    kICDGetRegistrationInfo,     ///< Waiting for the higher layer to provide ICD registraion informations.
+    kICDGetRegistrationInfo,     ///< Waiting for the higher layer to provide ICD registration informations.
     kICDRegistration,            ///< Register for ICD management
     kWiFiNetworkSetup,           ///< Send AddOrUpdateWiFiNetwork (0x31:2) command to the device
     kThreadNetworkSetup,         ///< Send AddOrUpdateThreadNetwork (0x31:3) command to the device
@@ -68,15 +72,19 @@ enum CommissioningStage : uint8_t
                                               ///< Commissioning Complete command
     kSendComplete,                            ///< Send CommissioningComplete (0x30:4) command to the device
     kICDSendStayActive,                       ///< Send Keep Alive to ICD
-    kCleanup,                                 ///< Call delegates with status, free memory, clear timers and state
     /// Send ScanNetworks (0x31:0) command to the device.
     /// ScanNetworks can happen anytime after kArmFailsafe.
-    /// However, the cirque tests fail if it is earlier in the list
     kScanNetworks,
     /// Waiting for the higher layer to provide network credentials before continuing the workflow.
     /// Call CHIPDeviceController::NetworkCredentialsReady() when CommissioningParameters is populated with
     /// network credentials to use in kWiFiNetworkSetup or kThreadNetworkSetup steps.
     kNeedsNetworkCreds,
+    kPrimaryOperationalNetworkFailed, ///< Indicate that the primary operational network (on root endpoint) failed, should remove
+                                      ///< the primary network config later.
+    kRemoveWiFiNetworkConfig,         ///< Remove Wi-Fi network config.
+    kRemoveThreadNetworkConfig,       ///< Remove Thread network config.
+    kConfigureTCAcknowledgments,      ///< Send SetTCAcknowledgements (0x30:6) command to the device
+    kCleanup,                         ///< Call delegates with status, free memory, clear timers and state
 };
 
 enum class ICDRegistrationStrategy : uint8_t
@@ -88,11 +96,21 @@ enum class ICDRegistrationStrategy : uint8_t
 
 const char * StageToString(CommissioningStage stage);
 
+#if MATTER_TRACING_ENABLED
+const char * MetricKeyForCommissioningStage(CommissioningStage stage);
+#endif
+
 struct WiFiCredentials
 {
     ByteSpan ssid;
     ByteSpan credentials;
     WiFiCredentials(ByteSpan newSsid, ByteSpan newCreds) : ssid(newSsid), credentials(newCreds) {}
+};
+
+struct TermsAndConditionsAcknowledgement
+{
+    uint16_t acceptedTermsAndConditions;
+    uint16_t acceptedTermsAndConditionsVersion;
 };
 
 struct NOCChainGenerationParameters
@@ -153,11 +171,16 @@ public:
     }
 
     // Value to determine whether the node supports Concurrent Connections as read from the GeneralCommissioning cluster.
-    // In the AutoCommissioner, this is automatically set from from the kReadCommissioningInfo2 stage.
+    // In the AutoCommissioner, this is automatically set from from the kReadCommissioningInfo stage.
     Optional<bool> GetSupportsConcurrentConnection() const { return mSupportsConcurrentConnection; }
 
     // The country code to be used for the node, if set.
     Optional<CharSpan> GetCountryCode() const { return mCountryCode; }
+
+    Optional<TermsAndConditionsAcknowledgement> GetTermsAndConditionsAcknowledgement() const
+    {
+        return mTermsAndConditionsAcknowledgement;
+    }
 
     // Time zone to set for the node
     // If required, this will be truncated to fit the max size allowable on the node
@@ -328,6 +351,13 @@ public:
     CommissioningParameters & SetCountryCode(CharSpan countryCode)
     {
         mCountryCode.SetValue(countryCode);
+        return *this;
+    }
+
+    CommissioningParameters &
+    SetTermsAndConditionsAcknowledgement(TermsAndConditionsAcknowledgement termsAndConditionsAcknowledgement)
+    {
+        mTermsAndConditionsAcknowledgement.SetValue(termsAndConditionsAcknowledgement);
         return *this;
     }
 
@@ -549,6 +579,13 @@ public:
         return *this;
     }
 
+    Optional<app::Clusters::IcdManagement::ClientTypeEnum> GetICDClientType() const { return mICDClientType; }
+    CommissioningParameters & SetICDClientType(app::Clusters::IcdManagement::ClientTypeEnum icdClientType)
+    {
+        mICDClientType = MakeOptional(icdClientType);
+        return *this;
+    }
+
     Optional<uint32_t> GetICDStayActiveDurationMsec() const { return mICDStayActiveDurationMsec; }
     CommissioningParameters & SetICDStayActiveDurationMsec(uint32_t stayActiveDurationMsec)
     {
@@ -556,6 +593,18 @@ public:
         return *this;
     }
     void ClearICDStayActiveDurationMsec() { mICDStayActiveDurationMsec.ClearValue(); }
+
+    Span<const app::AttributePathParams> GetExtraReadPaths() const { return mExtraReadPaths; }
+
+    // Additional attribute paths to read as part of the kReadCommissioningInfo stage.
+    // These values read from the device will be available in ReadCommissioningInfo.attributes.
+    // Clients should avoid requesting paths that are already read internally by the commissioner
+    // as no consolidation of internally read and extra paths provided here will be performed.
+    CommissioningParameters & SetExtraReadPaths(Span<const app::AttributePathParams> paths)
+    {
+        mExtraReadPaths = paths;
+        return *this;
+    }
 
     // Clear all members that depend on some sort of external buffer.  Can be
     // used to make sure that we are not holding any dangling pointers.
@@ -579,6 +628,7 @@ public:
         mDSTOffsets.ClearValue();
         mDefaultNTP.ClearValue();
         mICDSymmetricKey.ClearValue();
+        mExtraReadPaths = decltype(mExtraReadPaths)();
     }
 
 private:
@@ -595,6 +645,7 @@ private:
     Optional<ByteSpan> mAttestationNonce;
     Optional<WiFiCredentials> mWiFiCreds;
     Optional<CharSpan> mCountryCode;
+    Optional<TermsAndConditionsAcknowledgement> mTermsAndConditionsAcknowledgement;
     Optional<ByteSpan> mThreadOperationalDataset;
     Optional<NOCChainGenerationParameters> mNOCChainGenerationParameters;
     Optional<ByteSpan> mRootCert;
@@ -623,9 +674,11 @@ private:
     Optional<NodeId> mICDCheckInNodeId;
     Optional<uint64_t> mICDMonitoredSubject;
     Optional<ByteSpan> mICDSymmetricKey;
+    Optional<app::Clusters::IcdManagement::ClientTypeEnum> mICDClientType;
     Optional<uint32_t> mICDStayActiveDurationMsec;
     ICDRegistrationStrategy mICDRegistrationStrategy = ICDRegistrationStrategy::kIgnore;
     bool mCheckForMatchingFabric                     = false;
+    Span<const app::AttributePathParams> mExtraReadPaths;
 };
 
 struct RequestedCertificate
@@ -673,7 +726,7 @@ struct OperationalNodeFoundData
 struct NetworkClusterInfo
 {
     EndpointId endpoint = kInvalidEndpointId;
-    app::Clusters::NetworkCommissioning::Attributes::ConnectMaxTimeSeconds::TypeInfo::DecodableType minConnectionTime;
+    app::Clusters::NetworkCommissioning::Attributes::ConnectMaxTimeSeconds::TypeInfo::DecodableType minConnectionTime = 0;
 };
 struct NetworkClusters
 {
@@ -726,6 +779,9 @@ struct ICDManagementClusterInfo
 
 struct ReadCommissioningInfo
 {
+#if CHIP_CONFIG_ENABLE_READ_CLIENT
+    app::ClusterStateCache const * attributes = nullptr;
+#endif
     NetworkClusters network;
     BasicClusterInfo basic;
     GeneralCommissioningInfo general;
@@ -770,8 +826,7 @@ class CommissioningDelegate
 public:
     virtual ~CommissioningDelegate(){};
     /* CommissioningReport is returned after each commissioning step is completed. The reports for each step are:
-     * kReadCommissioningInfo: Reported together with ReadCommissioningInfo2
-     * kReadCommissioningInfo2: ReadCommissioningInfo
+     * kReadCommissioningInfo: ReadCommissioningInfo
      * kArmFailsafe: CommissioningErrorInfo if there is an error
      * kConfigRegulatory: CommissioningErrorInfo if there is an error
      * kConfigureUTCTime: None
@@ -782,6 +837,7 @@ public:
      * kSendDACCertificateRequest: RequestedCertificate
      * kSendAttestationRequest: AttestationResponse
      * kAttestationVerification: AttestationErrorInfo if there is an error
+     * kAttestationRevocationCheck: AttestationErrorInfo if there is an error
      * kSendOpCertSigningRequest: CSRResponse
      * kGenerateNOCChain: NocChain
      * kSendTrustedRootCert: None

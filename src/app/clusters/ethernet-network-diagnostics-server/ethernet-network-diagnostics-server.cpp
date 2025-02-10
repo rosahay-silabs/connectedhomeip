@@ -20,6 +20,7 @@
 #include <app-common/zap-generated/ids/Attributes.h>
 #include <app-common/zap-generated/ids/Clusters.h>
 #include <app/AttributeAccessInterface.h>
+#include <app/AttributeAccessInterfaceRegistry.h>
 #include <app/CommandHandler.h>
 #include <app/ConcreteCommandPath.h>
 #include <app/util/attribute-storage.h>
@@ -185,5 +186,5 @@ bool emberAfEthernetNetworkDiagnosticsClusterResetCountsCallback(app::CommandHan
 
 void MatterEthernetNetworkDiagnosticsPluginServerInitCallback()
 {
-    registerAttributeAccessOverride(&gAttrAccess);
+    AttributeAccessInterfaceRegistry::Instance().Register(&gAttrAccess);
 }
