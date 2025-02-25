@@ -99,6 +99,9 @@
 
 #pragma once
 
+#ifndef FREERTOS_CONFIG_H
+#define FREERTOS_CONFIG_H
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -348,3 +351,5 @@ standard names. */
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* FREERTOS_CONFIG_H */
