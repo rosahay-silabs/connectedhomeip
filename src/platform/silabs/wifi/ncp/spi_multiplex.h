@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <sl_status.h>
+
 #ifndef SL_LCDCTRL_MUX
 #define SL_LCDCTRL_MUX (EFR32MG24 && SL_WIFI && DISPLAY_ENABLED)
 #endif // SL_LCDCTRL_MUX
