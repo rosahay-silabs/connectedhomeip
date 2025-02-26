@@ -28,6 +28,7 @@
 #include "em_device.h"
 #include "em_gpio.h"
 #include "em_ldma.h"
+#include "em_usart.h"
 #include "gpiointerrupt.h"
 #include "sl_spidrv_exp_config.h"
 #include "spidrv.h"
