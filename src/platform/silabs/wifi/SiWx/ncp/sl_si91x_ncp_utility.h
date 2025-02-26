@@ -23,14 +23,10 @@
  */
 #pragma once
 
-#include "FreeRTOS.h"
-#include "em_usart.h"
-#include "semphr.h"
-#include "silabs_utils.h"
-#include "sl_spidrv_exp_config.h"
-#include "sl_status.h"
-#include <platform/silabs/wifi/SiWx/ncp/sl_board_configuration.h>
 #include <platform/silabs/wifi/ncp/spi_multiplex.h>
+
+#include "silabs_utils.h"
+#include "sl_status.h"
 
 #define USART_INITSYNC_BAUDRATE 12500000
 
