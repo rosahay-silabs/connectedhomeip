@@ -15,6 +15,12 @@
  *
  ******************************************************************************/
 
+#include <platform/silabs/wifi/SiWx/ncp/sl_board_configuration.h>
+#include <platform/silabs/wifi/ncp/spi_multiplex.h>
+
+#include <stdbool.h>
+#include <string.h>
+
 #include "cmsis_os2.h"
 #include "dmadrv.h"
 #include "em_cmu.h"
@@ -25,17 +31,14 @@
 #include "sl_constants.h"
 #include "sl_rsi_utility.h"
 #include "sl_si91x_host_interface.h"
-#include "sl_si91x_ncp_utility.h"
 #include "sl_si91x_status.h"
 #include "sl_spidrv_exp_config.h"
 #include "sl_spidrv_instances.h"
 #include "sl_status.h"
 #include "sl_wifi_constants.h"
 #include "spidrv.h"
-#include <platform/silabs/wifi/SiWx/ncp/sl_board_configuration.h>
-#include <platform/silabs/wifi/ncp/spi_multiplex.h>
-#include <stdbool.h>
-#include <string.h>
+
+#include "sl_si91x_ncp_utility.h"
 
 #if defined(SL_CATLOG_POWER_MANAGER_PRESENT)
 #include "sl_power_manager.h"
@@ -45,28 +48,28 @@
 #include "sl_board_control.h"
 #endif // SL_BOARD_NAME
 
-#define LDMA_MAX_TRANSFER_LENGTH 4096
-#define LDMA_DESCRIPTOR_ARRAY_LENGTH (LDMA_MAX_TRANSFER_LENGTH / 2048)
-#define SPI_HANDLE sl_spidrv_exp_handle
 #define MAX_DATA_PACKET_SIZE 1800
+
+static const uint8_t ncp_transfer_timeout_ms = 1000;
 
 // use SPI handle for EXP header (configured in project settings)
 extern SPIDRV_Handle_t sl_spidrv_exp_handle;
-static uint8_t dummy_buffer[MAX_DATA_PACKET_SIZE]   = { 0 };
-static sl_si91x_host_init_configuration init_config = { 0 };
-
-uint32_t rx_ldma_channel;
-uint32_t tx_ldma_channel;
-osMutexId_t ncp_transfer_mutex = 0;
+#define SPI_HANDLE sl_spidrv_exp_handle
 
 static osSemaphoreId_t transfer_done_semaphore = NULL;
+static osMutexId_t ncp_transfer_mutex          = NULL;
 
-static void gpio_interrupt([[maybe_unused]] uint8_t interrupt_number)
+static sl_si91x_host_init_configuration init_config = { 0 };
+static uint8_t dummy_buffer[MAX_DATA_PACKET_SIZE]   = { 0 };
+
+static void gpio_interrupt(uint8_t interrupt_number)
 {
+    UNUSED_PARAMETER(interrupt_number);
     if (NULL != init_config.rx_irq)
     {
         init_config.rx_irq();
     }
+    return;
 }
 
 static void spi_dma_callback(struct SPIDRV_HandleData * handle, Ecode_t transferStatus, int itemsTransferred)
@@ -95,47 +98,11 @@ static void efx32_spi_init(void)
     NVIC_SetPriority(GPIO_ODD_IRQn, PACKET_PENDING_INT_PRI);
     GPIOINT_CallbackRegister(INTERRUPT_PIN.pin, gpio_interrupt);
     GPIO_PinModeSet(INTERRUPT_PIN.port, INTERRUPT_PIN.pin, gpioModeInputPullFilter, 0);
+
+    // Configure the GPIO external interrupt for active high configuration
     GPIO_ExtIntConfig(INTERRUPT_PIN.port, INTERRUPT_PIN.pin, INTERRUPT_PIN.pin, true, false, true);
-}
 
-Ecode_t si91x_SPIDRV_MTransfer(SPIDRV_Handle_t handle, const void * txBuffer, void * rxBuffer, int count,
-                               SPIDRV_Callback_t callback)
-{
-    USART_TypeDef * usart = handle->initData.port;
-    uint8_t * tx          = (txBuffer != NULL) ? (uint8_t *) txBuffer : dummy_buffer;
-    uint8_t * rx          = (rxBuffer != NULL) ? (uint8_t *) rxBuffer : dummy_buffer;
-
-    // For transfers less than 16 bytes, directly interacting with USART buffers is faster than using DMA
-    if (count < 16)
-    {
-        while (count > 0)
-        {
-            while (!(usart->STATUS & USART_STATUS_TXBL))
-            {
-            }
-            usart->TXDATA = (uint32_t) *tx;
-            while (!(usart->STATUS & USART_STATUS_TXC))
-            {
-            }
-            *rx = (uint8_t) usart->RXDATA;
-            if (txBuffer != NULL)
-            {
-                tx++;
-            }
-            if (rxBuffer != NULL)
-            {
-                rx++;
-            }
-            count--;
-        }
-        // callback(handle, ECODE_EMDRV_SPIDRV_OK, 0);
-        return ECODE_EMDRV_SPIDRV_OK;
-    }
-    else
-    {
-        SPIDRV_MTransfer(handle, tx, rx, count, callback);
-    }
-    return ECODE_EMDRV_SPIDRV_BUSY;
+    return;
 }
 
 void sl_si91x_host_set_sleep_indicator(void)
@@ -156,13 +123,9 @@ uint32_t sl_si91x_host_get_wake_indicator(void)
 sl_status_t sl_si91x_host_init(const sl_si91x_host_init_configuration * config)
 {
 #if SL_SPICTRL_MUX
-    sl_status_t status = sl_board_disable_display();
-    if (SL_STATUS_OK != status)
-    {
-        SILABS_LOG("sl_board_disable_display failed with error: %x", status);
-        return status;
-    }
+    spi_board_init();
 #endif // SL_SPICTRL_MUX
+
     init_config.rx_irq      = config->rx_irq;
     init_config.rx_done     = config->rx_done;
     init_config.boot_option = config->boot_option;
@@ -170,16 +133,13 @@ sl_status_t sl_si91x_host_init(const sl_si91x_host_init_configuration * config)
     // Enable clock (not needed on xG21)
     CMU_ClockEnable(cmuClock_GPIO, true);
 
-#if SL_SPICTRL_MUX
-    spi_board_init();
-#endif // SL_SPICTRL_MUX
-
     if (transfer_done_semaphore == NULL)
     {
-        transfer_done_semaphore = osSemaphoreNew(1, 0, NULL);
+        // initialize and acquire the semaphore
+        transfer_done_semaphore = osSemaphoreNew(1, 1, NULL);
     }
 
-    if (ncp_transfer_mutex == 0)
+    if (ncp_transfer_mutex == NULL)
     {
         ncp_transfer_mutex = osMutexNew(NULL);
     }
@@ -187,7 +147,7 @@ sl_status_t sl_si91x_host_init(const sl_si91x_host_init_configuration * config)
     efx32_spi_init();
 
     // Start reset line low
-    GPIO_PinModeSet(RESET_PIN.port, RESET_PIN.pin, gpioModePushPull, 0);
+    GPIO_PinModeSet(RESET_PIN.port, RESET_PIN.pin, gpioModeWiredAnd, 0);
 
     // Configure interrupt, sleep and wake confirmation pins
     GPIO_PinModeSet(SLEEP_CONFIRM_PIN.port, SLEEP_CONFIRM_PIN.pin, gpioModeWiredOrPullDown, 1);
@@ -215,26 +175,56 @@ void sl_si91x_host_enable_high_speed_bus() {}
  * @section description
  * This API is used to transfer/receive data to the Wi-Fi module through the SPI interface.
  */
+
+sl_status_t sl_si91x_host_spi_cs_assert()
+{
+#if SL_SPICTRL_MUX
+    sl_wfx_host_spi_cs_assert();
+#endif // SL_SPICTRL_MUX
+    return SL_STATUS_OK;
+}
+
+sl_status_t sl_si91x_host_spi_cs_deassert()
+{
+#if SL_SPICTRL_MUX
+    sl_wfx_host_spi_cs_deassert();
+#endif // SL_SPICTRL_MUX
+    return SL_STATUS_OK;
+}
+
 sl_status_t sl_si91x_host_spi_transfer(const void * tx_buffer, void * rx_buffer, uint16_t buffer_length)
 {
     osMutexAcquire(ncp_transfer_mutex, 0xFFFFFFFFUL);
 
-#if SL_SPICTRL_MUX
-    sl_wfx_host_spi_cs_assert();
-#endif // SL_SPICTRL_MUX
+    uint8_t * tx_buf = (tx_buffer != NULL) ? (uint8_t *) tx_buffer : dummy_buffer;
+    uint8_t * rx_buf = (rx_buffer != NULL) ? (uint8_t *) rx_buffer : dummy_buffer;
+    Ecode_t status   = ECODE_EMDRV_SPIDRV_OK;
 
-    if (ECODE_EMDRV_SPIDRV_BUSY == si91x_SPIDRV_MTransfer(SPI_HANDLE, tx_buffer, rx_buffer, buffer_length, spi_dma_callback))
+    // If the buffer length is greater than the high speed transfer threshold, use DMA transfer
+    status = SPIDRV_MTransfer(SPI_HANDLE, tx_buf, rx_buf, buffer_length, spi_dma_callback);
+
+    if (ECODE_EMDRV_SPIDRV_OK != status)
     {
-        if (osSemaphoreAcquire(transfer_done_semaphore, 1000) != osOK)
-        {
-            BREAKPOINT();
-        }
+        SILABS_LOG("ERR: SPI failed with error:%x (tx%x rx%x)", status, (uint32_t) tx_buf, (uint32_t) rx_buf);
+        osMutexRelease(ncp_transfer_mutex);
+
+        return SL_STATUS_FAIL;
+    }
+
+    if (osSemaphoreAcquire(transfer_done_semaphore, ncp_transfer_timeout_ms) != osOK)
+    {
+        int itemsTransferred = 0;
+        int itemsRemaining   = 0;
+        SPIDRV_GetTransferStatus(SPI_HANDLE, &itemsTransferred, &itemsRemaining);
+        SILABS_LOG("ERR: SPI timed out %d/%d (rx%x rx%x)", itemsTransferred, itemsRemaining, (uint32_t) tx_buf, (uint32_t) rx_buf);
+        SPIDRV_AbortTransfer(SPI_HANDLE);
+        osMutexRelease(ncp_transfer_mutex);
+
+        return SL_STATUS_SPI_BUSY;
     }
 
     osMutexRelease(ncp_transfer_mutex);
-#if SL_SPICTRL_MUX
-    sl_wfx_host_spi_cs_deassert();
-#endif // SL_SPICTRL_MUX
+
     return SL_STATUS_OK;
 }
 
@@ -245,7 +235,7 @@ void sl_si91x_host_hold_in_reset(void)
 
 void sl_si91x_host_release_from_reset(void)
 {
-    GPIO_PinModeSet(RESET_PIN.port, RESET_PIN.pin, gpioModeWiredOrPullDown, 1);
+    GPIO_PinOutSet(RESET_PIN.port, RESET_PIN.pin);
 }
 
 void sl_si91x_host_enable_bus_interrupt(void)
