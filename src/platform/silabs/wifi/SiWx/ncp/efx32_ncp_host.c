@@ -18,6 +18,8 @@
 #include <platform/silabs/wifi/SiWx/ncp/sl_board_configuration.h>
 #include <platform/silabs/wifi/ncp/spi_multiplex.h>
 
+#include <platform/silabs/wifi/SiWx/ncp/sl_si91x_ncp_utility.h>
+
 #include <stdbool.h>
 #include <string.h>
 
@@ -37,8 +39,6 @@
 #include "sl_status.h"
 #include "sl_wifi_constants.h"
 #include "spidrv.h"
-
-#include "sl_si91x_ncp_utility.h"
 
 #if defined(SL_CATLOG_POWER_MANAGER_PRESENT)
 #include "sl_power_manager.h"
