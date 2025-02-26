@@ -116,14 +116,8 @@ void SPIDRV_SetBaudrate(uint32_t baudrate)
         USART_InitSync(SPI_USART, &usartInit);
     }
 }
-/********************************************************
- * @fn   spi_board_init(void)
- * @brief
- *        Deal with the SPI PINS multiplexing related changes for the initialization.
- * @return
- *        None
- **********************************************************/
-sl_status_t spi_board_init()
+
+sl_status_t sl_si91x_host_spi_multiplex_init(void)
 {
 #if SL_SPICTRL_MUX
     if (spi_sem_sync_hdl == NULL)
