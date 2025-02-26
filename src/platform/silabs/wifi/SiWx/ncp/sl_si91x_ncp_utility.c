@@ -65,7 +65,7 @@ osMutexId_t spi_peripheral_mutex = 0;
 sl_status_t sl_wfx_host_pre_lcd_spi_transfer(void)
 {
 #if SL_SPICTRL_MUX
-    osMutexAcquire(spi_peripheral_mutex, 0xFFFFFFFFUL);
+    osMutexAcquire(spi_peripheral_mutex, osWaitForever);
 #endif // SL_SPICTRL_MUX
     sl_status_t status = sl_board_enable_display();
     if (SL_STATUS_OK == status)
@@ -111,7 +111,7 @@ sl_status_t sl_si91x_host_spi_multiplex_init(void)
 sl_status_t sl_wfx_host_spi_cs_assert(void)
 {
 #if SL_SPICTRL_MUX
-    osMutexAcquire(spi_peripheral_mutex, 0xFFFFFFFFUL);
+    osMutexAcquire(spi_peripheral_mutex, osWaitForever);
 #endif /* SL_SPICTRL_MUX */
     SPIDRV_SetBaudrate(USART_INITSYNC_BAUDRATE);
     GPIO_PinOutClear(SL_SPIDRV_EXP_CS_PORT, SL_SPIDRV_EXP_CS_PIN);
@@ -136,7 +136,7 @@ sl_status_t sl_wfx_host_pre_bootloader_spi_transfer(void)
     {
         return SL_STATUS_FAIL;
     }
-    osMutexAcquire(spi_peripheral_mutex, 0xFFFFFFFFUL);
+    osMutexAcquire(spi_peripheral_mutex, osWaitForever);
 #endif // SL_SPICTRL_MUX
     int32_t status = BOOTLOADER_OK;
 #if defined(CHIP_9117)
