@@ -43,6 +43,3 @@
  */
 sl_status_t sl_si91x_host_spi_multiplex_init(void);
 #endif // SL_SPICTRL_MUX
-
-extern uint32_t rx_ldma_channel;
-extern uint32_t tx_ldma_channel;
