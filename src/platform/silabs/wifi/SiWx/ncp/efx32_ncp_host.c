@@ -194,7 +194,7 @@ sl_status_t sl_si91x_host_spi_cs_deassert()
 
 sl_status_t sl_si91x_host_spi_transfer(const void * tx_buffer, void * rx_buffer, uint16_t buffer_length)
 {
-    osMutexAcquire(ncp_transfer_mutex, 0xFFFFFFFFUL);
+    osMutexAcquire(ncp_transfer_mutex, osWaitForever);
 
     uint8_t * tx_buf = (tx_buffer != NULL) ? (uint8_t *) tx_buffer : dummy_buffer;
     uint8_t * rx_buf = (rx_buffer != NULL) ? (uint8_t *) rx_buffer : dummy_buffer;
