@@ -28,17 +28,17 @@
 #include "em_device.h"
 #include "em_gpio.h"
 #include "em_ldma.h"
-#include "event_groups.h"
 #include "gpiointerrupt.h"
+#include "sl_spidrv_exp_config.h"
 #include "spidrv.h"
 
 #ifdef SL_BOARD_NAME
 #include "sl_board_control.h"
 #endif // SL_BOARD_NAME
+#include <platform/silabs/wifi/SiWx/ncp/sl_board_configuration.h>
 
 #include "sl_device_init_clocks.h"
 #include "sl_device_init_hfxo.h"
-#include "sl_status.h"
 
 #include "silabs_utils.h"
 #include "sl_si91x_ncp_utility.h"
@@ -56,7 +56,7 @@
 #endif // SL_MX25CTRL_MUX
 
 #if SL_SPICTRL_MUX
-static osMutexId_t spi_peripheral_mutex = 0;
+osMutexId_t spi_peripheral_mutex = 0;
 #endif // SL_SPICTRL_MUX
 
 #if SL_LCDCTRL_MUX
