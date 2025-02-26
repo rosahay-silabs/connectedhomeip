@@ -52,7 +52,7 @@
 #define SLI_SPI_HANDLE sl_spidrv_exp_handle
 #define SLI_SPI_BIT_RATE 12500000
 
-static const uint8_t ncp_transfer_timeout_ms = 1000;
+static const uint16_t ncp_transfer_timeout_ms = 1000;
 
 // use SPI handle for EXP header (configured in project settings)
 extern SPIDRV_Handle_t sl_spidrv_exp_handle;
