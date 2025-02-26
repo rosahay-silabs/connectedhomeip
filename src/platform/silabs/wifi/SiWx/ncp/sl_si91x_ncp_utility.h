@@ -35,7 +35,13 @@
 #define USART_INITSYNC_BAUDRATE 12500000
 
 #if SL_SPICTRL_MUX
-sl_status_t spi_board_init(void);
+/**
+ * @fn   sl_si91x_host_spi_multiplex_init(void)
+ * @brief Initialize the SPI multiplexing for the WiFi NCP and other devices.
+ *        This function is called during the initialization of the WiFi NCP.
+ * @return None
+ */
+sl_status_t sl_si91x_host_spi_multiplex_init(void);
 #endif // SL_SPICTRL_MUX
 
 extern uint32_t rx_ldma_channel;
