@@ -134,7 +134,7 @@ uint32_t sl_si91x_host_get_wake_indicator(void)
 sl_status_t sl_si91x_host_init(const sl_si91x_host_init_configuration_t * config)
 {
 #if SL_SPICTRL_MUX
-    spi_board_init();
+    sl_si91x_host_spi_multiplex_init();
 #endif // SL_SPICTRL_MUX
 
     init_config.rx_irq      = config->rx_irq;
