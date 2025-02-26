@@ -44,11 +44,6 @@
 #include "silabs_utils.h"
 #include "sl_si91x_ncp_utility.h"
 
-#if SL_MX25CTRL_MUX
-sl_status_t sl_wfx_host_spiflash_cs_assert(void);
-sl_status_t sl_wfx_host_spiflash_cs_deassert(void);
-#endif
-
 #if SL_BTLCTRL_MUX
 #include "btl_interface.h"
 #endif // SL_BTLCTRL_MUX
@@ -68,13 +63,6 @@ SemaphoreHandle_t spi_sem_sync_hdl;
 
 #if SL_LCDCTRL_MUX
 
-/********************************************************
- * @fn   sl_wfx_host_pre_lcd_spi_transfer(void)
- * @brief
- *        Deal with the SPI PINS MUX that are associated with LCD. for setup before data transfer PINS.
- * @return
- *        None
- **********************************************************/
 sl_status_t sl_wfx_host_pre_lcd_spi_transfer(void)
 {
 #if SL_SPICTRL_MUX
@@ -88,13 +76,6 @@ sl_status_t sl_wfx_host_pre_lcd_spi_transfer(void)
     return status;
 }
 
-/********************************************************
- * @fn   sl_wfx_host_post_lcd_spi_transfer(void)
- * @brief
- *        Deal with the SPI PINS MUX that are associated with LCD. for setup after data transfer PINS.
- * @return
- *        None
- **********************************************************/
 sl_status_t sl_wfx_host_post_lcd_spi_transfer(void)
 {
     sl_status_t status = sl_board_disable_display();
@@ -130,13 +111,6 @@ sl_status_t sl_si91x_host_spi_multiplex_init(void)
     return SL_STATUS_OK;
 }
 
-/********************************************************
- * @fn   sl_wfx_host_spi_cs_assert(void)
- * @brief
- *        Deal with the SPI PINS multiplexing related changes for the initialization.
- * @return
- *        None
- **********************************************************/
 sl_status_t sl_wfx_host_spi_cs_assert(void)
 {
 #if SL_SPICTRL_MUX
