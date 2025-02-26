@@ -213,6 +213,11 @@ if (silabs_board == "BRD4338A" || silabs_board == "BRD2605A" ||
       "The board ${silabs_board} is unsupported. A list of supported board can be found here https://t.ly/_b3SK")
 }
 
+# TODO: Add support for external flash with NCP
+if (use_SiWx917 || use_rs9116) {
+  use_external_flash = false
+}
+
 declare_args() {
   # Wifi SoC Board require a .rps file to be flashed to the device to run
   # this rps file is created from the built binary but it requires Silabs Commander tool
@@ -221,7 +226,6 @@ declare_args() {
   use_rps_extension = wifi_soc
 
   # UART log forwarding
-  # Default true for the wifi soc and false for EFR32 boards
   sl_uart_log_output = true
 }
 
