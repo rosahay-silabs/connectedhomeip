@@ -113,21 +113,12 @@ sl_status_t sl_wfx_host_spi_cs_assert(void)
     osMutexAcquire(spi_peripheral_mutex, 0xFFFFFFFFUL);
 #endif /* SL_SPICTRL_MUX */
     SPIDRV_SetBaudrate(USART_INITSYNC_BAUDRATE);
-    SPI_USART->TIMING |= USART_TIMING_TXDELAY_ONE | USART_TIMING_CSSETUP_ONE | USART_TIMING_CSHOLD_ONE;
-    DMADRV_Init();
-    DMADRV_AllocateChannel((unsigned int *) &rx_ldma_channel, NULL);
-    DMADRV_AllocateChannel((unsigned int *) &tx_ldma_channel, NULL);
     GPIO_PinOutClear(SL_SPIDRV_EXP_CS_PORT, SL_SPIDRV_EXP_CS_PIN);
     return SL_STATUS_OK;
 }
 
 sl_status_t sl_wfx_host_spi_cs_deassert(void)
 {
-    DMADRV_DeInit();
-    DMADRV_StopTransfer(rx_ldma_channel);
-    DMADRV_StopTransfer(tx_ldma_channel);
-    DMADRV_FreeChannel(rx_ldma_channel);
-    DMADRV_FreeChannel(tx_ldma_channel);
     GPIO_PinOutSet(SL_SPIDRV_EXP_CS_PORT, SL_SPIDRV_EXP_CS_PIN);
 #if SL_SPICTRL_MUX
     osMutexRelease(spi_peripheral_mutex);
