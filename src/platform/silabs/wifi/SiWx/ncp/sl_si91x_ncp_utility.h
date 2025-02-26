@@ -39,3 +39,7 @@
  */
 sl_status_t sl_si91x_host_spi_multiplex_init(void);
 #endif // SL_SPICTRL_MUX
+
+// TODO: clean-up after SI91X-17602 is fixed
+sl_status_t sl_si91x_host_spi_cs_assert(void);
+sl_status_t sl_si91x_host_spi_cs_deassert(void);

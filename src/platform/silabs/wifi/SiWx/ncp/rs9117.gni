@@ -40,8 +40,10 @@ rs9117_src_sapi = [
   "${wifi_sdk_root}/components/device/silabs/si91x/wireless/sl_net/src/sl_net_si91x_callback_framework.c",
   "${wifi_sdk_root}/components/device/silabs/si91x/wireless/sl_net/src/sl_net_si91x_integration_handler.c",
   "${wifi_sdk_root}/components/device/silabs/si91x/wireless/sl_net/src/sl_si91x_net_credentials.c",
-  "${wifi_sdk_root}/components/device/silabs/si91x/wireless/ncp_interface/spi/sl_si91x_spi.c",
   "${wifi_sdk_root}/components/device/silabs/si91x/wireless/ncp_interface/sl_si91x_ncp_driver.c",
+
+  # TODO: clean-up after SI91X-17602 is fixed
+  "${matter_support_root}/components/device/silabs/si91x/wireless/ncp_interface/spi/sl_si91x_spi.c",
 
   # wifi component
   "${wifi_sdk_root}/components/protocol/wifi/src/sl_wifi_basic_credentials.c",
