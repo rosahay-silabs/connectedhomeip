@@ -22,9 +22,6 @@ rs911x_src_plat = [
   "${chip_root}/src/platform/silabs/wifi/SiWx/ncp/sl_board_configuration.h",
   "${chip_root}/src/platform/silabs/wifi/wiseconnect-interface/WiseconnectWifiInterface.cpp",
   "${chip_root}/src/platform/silabs/wifi/wiseconnect-interface/WiseconnectWifiInterface.h",
-
-  # TODO : We should be using the file from the Wiseconnect SDK and not our copy of it.
-  "${chip_root}/src/platform/silabs/wifi/SiWx/ncp/efx32_ncp_host.c",
 ]
 
 rs9117_inc_plat = [
@@ -46,8 +43,8 @@ rs9117_src_sapi = [
   "${wifi_sdk_root}/components/device/silabs/si91x/wireless/ncp_interface/sl_si91x_ncp_driver.c",
 
   # TODO: clean-up after SI91X-17602 is fixed
-  "${chip_root}/src/platform/silabs/wifi/SiWx/ncp/sl_si91x_ncp_utility.h",
   "${matter_support_root}/components/device/silabs/si91x/wireless/ncp_interface/spi/sl_si91x_spi.c",
+  "${matter_support_root}/components/device/silabs/si91x/wireless/host_mcu/efx32/efx32_ncp_host.c",
 
   # Wi-Fi Config - Using the file sdk support until the wiseconnect file is fixed
   "${matter_support_root}/sdk-copies/components/service/network_manager/src/sl_net_for_lwip.c",
