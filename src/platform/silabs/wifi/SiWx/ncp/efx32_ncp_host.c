@@ -147,7 +147,7 @@ sl_status_t sl_si91x_host_init(const sl_si91x_host_init_configuration_t * config
     if (transfer_done_semaphore == NULL)
     {
         // initialize and acquire the semaphore
-        transfer_done_semaphore = osSemaphoreNew(1, 1, NULL);
+        transfer_done_semaphore = osSemaphoreNew(1, 0, NULL);
     }
 
     if (ncp_transfer_mutex == NULL)
