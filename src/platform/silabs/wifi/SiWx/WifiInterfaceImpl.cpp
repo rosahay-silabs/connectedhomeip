@@ -200,9 +200,9 @@ sl_status_t BackgroundScanCallback(sl_wifi_event_t event, sl_wifi_scan_result_t 
     {
         wfx_wifi_scan_result_t currentScanResult = { 0 };
 
-        // Lenght excludes null-character
-        size_t scannedSsidLenght = strnlen(reinterpret_cast<char *>(result->scan_info[i].ssid), WFX_MAX_SSID_LENGTH);
-        chip::ByteSpan scannedSsidSpan(result->scan_info[i].ssid, scannedSsidLenght);
+        // Length excludes null-character
+        size_t scannedSsidLength = strnlen(reinterpret_cast<char *>(result->scan_info[i].ssid), WFX_MAX_SSID_LENGTH);
+        chip::ByteSpan scannedSsidSpan(result->scan_info[i].ssid, scannedSsidLength);
 
         // Copy the scanned SSID to the current scan ssid buffer that will be forwarded to the callback
         chip::MutableByteSpan currentScanSsid(currentScanResult.ssid, WFX_MAX_SSID_LENGTH);
