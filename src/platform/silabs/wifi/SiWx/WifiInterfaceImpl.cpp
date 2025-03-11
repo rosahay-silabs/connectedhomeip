@@ -68,6 +68,7 @@ extern "C" {
 #endif // CHIP_CONFIG_ENABLE_ICD_SERVER
 
 using namespace chip::DeviceLayer::Silabs;
+using WiFiBandEnum = chip::app::Clusters::NetworkCommissioning::WiFiBandEnum;
 
 // TODO : Temporary work-around for wifi-init failure in 917NCP ACX module boards.
 // Can be removed after Wiseconnect fixes region code for all ACX module boards.
@@ -217,6 +218,8 @@ sl_status_t BackgroundScanCallback(sl_wifi_event_t event, sl_wifi_scan_result_t 
         currentScanResult.security = static_cast<wfx_sec_t>(result->scan_info[i].security_mode);
         currentScanResult.rssi     = (-1) * result->scan_info[i].rssi_val; // The returned value is positive - we need to flip it
         currentScanResult.chan     = result->scan_info[i].rf_channel;
+        // TODO: change this when SDK provides values
+        currentScanResult.wiFiBand = WiFiBandEnum::k2g4;
 
         // if user has provided ssid, check if the current scan result ssid matches the user provided ssid
         if (!requestedSsidSpan.empty())
