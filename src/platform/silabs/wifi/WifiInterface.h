@@ -53,8 +53,6 @@ constexpr size_t kWifiMacAddressLength = 6;
 #define WFX_MAX_SSID_LENGTH (32)
 #define MAX_JOIN_RETRIES_COUNT (5)
 
-using WiFiBandEnum = chip::app::Clusters::NetworkCommissioning::WiFiBandEnum;
-
 /* Note that these are same as RSI_security */
 typedef enum
 {
@@ -75,7 +73,7 @@ typedef struct wfx_wifi_scan_result
     uint8_t bssid[kWifiMacAddressLength];
     uint8_t chan;
     int16_t rssi; /* I suspect this is in dBm - so signed */
-    WiFiBandEnum wiFiBand;
+    chip::app::Clusters::NetworkCommissioning::WiFiBandEnum wiFiBand;
 } wfx_wifi_scan_result_t;
 using ScanCallback = void (*)(wfx_wifi_scan_result_t *);
 
@@ -425,7 +423,7 @@ public:
     virtual uint32_t _GetSupportedWiFiBandsMask() const
     {
         // Default to 2.4G support only
-        return static_cast<uint32_t>(1UL << chip::to_underlying(WiFiBandEnum::k2g4));
+        return static_cast<uint32_t>(1UL << chip::to_underlying(chip::app::Clusters::NetworkCommissioning::WiFiBandEnum::k2g4));
     }
 
 protected:
