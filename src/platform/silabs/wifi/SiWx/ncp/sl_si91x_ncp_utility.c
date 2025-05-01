@@ -36,7 +36,7 @@
 #ifdef SL_BOARD_NAME
 #include "sl_board_control.h"
 #endif // SL_BOARD_NAME
-#include <platform/silabs/wifi/SiWx/ncp/sl_board_configuration.h>
+#include "sl_board_configuration.h"
 
 #include "sl_device_init_clocks.h"
 #include "sl_device_init_hfxo.h"
