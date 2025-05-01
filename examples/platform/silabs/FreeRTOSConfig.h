@@ -97,6 +97,9 @@
     1 tab == 4 spaces!
 */
 
+#ifndef FREERTOS_CONFIG_H
+#define FREERTOS_CONFIG_H
+
 #pragma once
 
 #ifdef __cplusplus
@@ -334,3 +337,4 @@ standard names. */
 #ifdef __cplusplus
 }
 #endif
+#endif /* FREERTOS_CONFIG_H */
