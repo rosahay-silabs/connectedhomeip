@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include <sl_status.h>
+
 #ifndef SL_LCDCTRL_MUX
 #define SL_LCDCTRL_MUX (EFR32MG24 && SL_WIFI && DISPLAY_ENABLED)
 #endif // SL_LCDCTRL_MUX
@@ -80,7 +82,7 @@ sl_status_t sl_wfx_host_spi_cs_deassert(void);
 #endif /* RS911X_WIFI */
 #endif // SL_SPICTRL_MUX
 
-#if SL_MUX25CTRL_MUX
+#if SL_MX25CTRL_MUX
 /****************************************************************************
  * @fn  sl_status_t sl_wfx_host_spiflash_cs_assert()
  * @brief
@@ -98,7 +100,7 @@ sl_status_t sl_wfx_host_spiflash_cs_assert(void);
  * @return returns SL_STATUS_OK
  *****************************************************************************/
 sl_status_t sl_wfx_host_spiflash_cs_deassert(void);
-#endif // SL_MUX25CTRL_MUX
+#endif // SL_MX25CTRL_MUX
 
 #if SL_BTLCTRL_MUX
 /****************************************************************************

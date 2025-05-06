@@ -69,13 +69,6 @@ declare_args() {
   chip_enable_ble_rs911x = use_rs9116 || use_SiWx917
 }
 
-# TODO - This needs to be removed once multiplexing issues resolved
-if (use_SiWx917 || use_rs9116) {
-  disable_lcd = true
-  show_qr_code = false
-  use_external_flash = false
-}
-
 if (silabs_board == "") {
   silabs_board = getenv("SILABS_BOARD")
 }
@@ -213,6 +206,15 @@ if (silabs_board == "BRD4338A" || silabs_board == "BRD2605A" ||
       "The board ${silabs_board} is unsupported. A list of supported board can be found here https://t.ly/_b3SK")
 }
 
+if (use_SiWx917 || use_rs9116) {
+  # TODO: Add support for external flash with NCP
+  use_external_flash = false
+
+  # TODO: This needs to be removed once multiplexing issues resolved on NCP
+  disable_lcd = true
+  show_qr_code = false
+}
+
 declare_args() {
   # Wifi SoC Board require a .rps file to be flashed to the device to run
   # this rps file is created from the built binary but it requires Silabs Commander tool
@@ -221,8 +223,7 @@ declare_args() {
   use_rps_extension = wifi_soc
 
   # UART log forwarding
-  # Default true for the wifi soc and false for EFR32 boards
-  sl_uart_log_output = wifi_soc
+  sl_uart_log_output = true
 }
 
 # Silabs mcu family and mcu model must be specified
