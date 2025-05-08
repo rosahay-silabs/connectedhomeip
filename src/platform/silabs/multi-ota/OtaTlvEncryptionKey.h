@@ -25,7 +25,9 @@ public:
     CHIP_ERROR Decrypt(MutableByteSpan & block, uint32_t & mIVOffset);
 
 protected:
-    uint32_t mId = 0;
+    uint32_t mId     = 0;
+    uint8_t mKey[16] = { 0 };
+    size_t mKeyLen   = 0;
 };
 
 } // namespace OtaTlvEncryptionKey

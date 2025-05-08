@@ -616,7 +616,7 @@ CHIP_ERROR Storage::SignWithDeviceAttestationKey(const ByteSpan & message, Mutab
     // ChipLogByteSpan(DeviceLayer, ByteSpan(signature.data(), signature.size() < kDebugLength ? signature.size() : kDebugLength));
     return err;
 }
-#endif // SLI_SI91X_MCU_INTERFACE
+#endif // SLI_SI91X_MCU_INTERFACE && SL_MBEDTLS_USE_TINYCRYPT
 
 //
 // Other
@@ -665,9 +665,14 @@ CHIP_ERROR Storage::GetProvisionRequest(bool & value)
 #ifdef SL_MATTER_ENABLE_OTA_ENCRYPTION
 CHIP_ERROR Storage::SetOtaTlvEncryptionKey(const ByteSpan & value)
 {
+#if defined(SL_MBEDTLS_USE_TINYCRYPT)
+    // Tinycrypt doesn't support the key ID, so we need to store the key as a binary blob
+    return SilabsConfig::WriteConfigValueBin(SilabsConfig::kOtaTlvEncryption_KeyId, value.data(), value.size());
+#else  // MBEDTLS_USE_PSA_CRYPTO
     chip::DeviceLayer::Silabs::OtaTlvEncryptionKey::OtaTlvEncryptionKey key;
     ReturnErrorOnFailure(key.Import(value.data(), value.size()));
     return SilabsConfig::WriteConfigValue(SilabsConfig::kOtaTlvEncryption_KeyId, key.GetId());
+#endif // SL_MBEDTLS_USE_TINYCRYPT
 }
 #endif // SL_MATTER_ENABLE_OTA_ENCRYPTION
 

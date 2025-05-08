@@ -25,7 +25,7 @@
 #ifdef SL_MATTER_ENABLE_OTA_ENCRYPTION
 #include <platform/silabs/SilabsConfig.h>
 #include <platform/silabs/multi-ota/OtaTlvEncryptionKey.h>
-#endif
+#endif // SL_MATTER_ENABLE_OTA_ENCRYPTION
 
 using namespace ::chip::DeviceLayer::Internal;
 
@@ -135,12 +135,20 @@ CHIP_ERROR OTADataAccumulator::Accumulate(ByteSpan & block)
 #ifdef SL_MATTER_ENABLE_OTA_ENCRYPTION
 CHIP_ERROR OTATlvProcessor::vOtaProcessInternalEncryption(MutableByteSpan & block)
 {
+#if defined(SL_MBEDTLS_USE_TINYCRYPT)
+    uint8_t key[16] = { 0 };
+    size_t keyLen   = 0;
+    SilabsConfig::ReadConfigValueBin(SilabsConfig::kOtaTlvEncryption_KeyId, key, sizeof(key), keyLen);
+    chip::DeviceLayer::Silabs::OtaTlvEncryptionKey::OtaTlvEncryptionKey key;
+    key.Import(key, keyLen);
+    key.Decrypt(block, mIVOffset);
+#else  // MBEDTLS_USE_PSA_CRYPTO
     uint32_t keyId;
     SilabsConfig::ReadConfigValue(SilabsConfig::kOtaTlvEncryption_KeyId, keyId);
     chip::DeviceLayer::Silabs::OtaTlvEncryptionKey::OtaTlvEncryptionKey key(keyId);
     key.Decrypt(block, mIVOffset);
-
+#endif // SL_MBEDTLS_USE_TINYCRYPT
     return CHIP_NO_ERROR;
 }
-#endif
+#endif // SL_MATTER_ENABLE_OTA_ENCRYPTION
 } // namespace chip
