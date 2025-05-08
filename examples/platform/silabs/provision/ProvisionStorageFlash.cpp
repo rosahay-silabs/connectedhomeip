@@ -727,7 +727,8 @@ CHIP_ERROR Storage::GetProvisionRequest(bool & value)
 CHIP_ERROR Storage::SetOtaTlvEncryptionKey(const ByteSpan & value)
 {
 #if defined(SL_MBEDTLS_USE_TINYCRYPT)
-    return CHIP_ERROR_NOT_IMPLEMENTED;
+    // Tinycrypt doesn't support the key ID, so we need to store the key as a binary blob
+    return Flash::Set(Parameters::ID::kOtaTlvEncryptionKey, value.data(), value.size());
 #else  // MBEDTLS_USE_PSA_CRYPTO
     return CHIP_ERROR_NOT_IMPLEMENTED;
 #endif // SL_MBEDTLS_USE_TINYCRYPT
