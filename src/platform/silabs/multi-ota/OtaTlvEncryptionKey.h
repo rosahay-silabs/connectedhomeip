@@ -17,6 +17,7 @@ static constexpr uint32_t kAES_KeyId_Default = (PSA_KEY_ID_USER_MIN + 2);
 class OtaTlvEncryptionKey
 {
 public:
+    OtaTlvEncryptionKey();
     OtaTlvEncryptionKey(uint32_t id = 0) { mId = (id > 0) ? id : kAES_KeyId_Default; }
     ~OtaTlvEncryptionKey() = default;
 
@@ -25,7 +26,9 @@ public:
     CHIP_ERROR Decrypt(MutableByteSpan & block, uint32_t & mIVOffset);
 
 protected:
-    uint32_t mId = 0;
+    uint32_t mId     = 0;
+    uint8_t mKey[16] = { 0 };
+    size_t mKeyLen   = 0;
 };
 
 } // namespace OtaTlvEncryptionKey
