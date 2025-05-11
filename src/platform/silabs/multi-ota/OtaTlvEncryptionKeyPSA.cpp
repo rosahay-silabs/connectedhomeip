@@ -38,7 +38,7 @@ CHIP_ERROR OtaTlvEncryptionKey::Import(const uint8_t * key, size_t key_len)
     psa_key_id_t key_id;
     psa_set_key_id(&attributes, mId);
     psa_set_key_type(&attributes, PSA_KEY_TYPE_AES);
-    psa_set_key_bits(&attributes, 128);
+    psa_set_key_bits(&attributes, (kAES_CTR128_Key_Length * 8u));
     psa_set_key_algorithm(&attributes, PSA_ALG_CTR);
     psa_set_key_usage_flags(&attributes, PSA_KEY_USAGE_DECRYPT);
 

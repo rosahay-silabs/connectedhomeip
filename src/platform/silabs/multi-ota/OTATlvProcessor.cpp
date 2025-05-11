@@ -23,17 +23,12 @@
 #include <platform/silabs/multi-ota/OTAMultiImageProcessorImpl.h>
 #include <platform/silabs/multi-ota/OTATlvProcessor.h>
 #ifdef SL_MATTER_ENABLE_OTA_ENCRYPTION
-#include <platform/silabs/SilabsConfig.h>
 #include <platform/silabs/multi-ota/OtaTlvEncryptionKey.h>
 #endif // SL_MATTER_ENABLE_OTA_ENCRYPTION
 
 using namespace ::chip::DeviceLayer::Internal;
 
 namespace chip {
-
-#ifdef SL_MATTER_ENABLE_OTA_ENCRYPTION
-constexpr uint8_t au8Iv[] = { 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x00, 0x00, 0x00, 0x00 };
-#endif
 
 CHIP_ERROR OTATlvProcessor::Init()
 {
@@ -136,15 +131,16 @@ CHIP_ERROR OTADataAccumulator::Accumulate(ByteSpan & block)
 CHIP_ERROR OTATlvProcessor::vOtaProcessInternalEncryption(MutableByteSpan & block)
 {
 #if defined(SL_MBEDTLS_USE_TINYCRYPT)
-    uint8_t key[16] = { 0 };
-    size_t keyLen   = 0;
-    SilabsConfig::ReadConfigValueBin(SilabsConfig::kOtaTlvEncryption_KeyId, key, sizeof(key), keyLen);
-    chip::DeviceLayer::Silabs::OtaTlvEncryptionKey::OtaTlvEncryptionKey key;
-    key.Import(key, keyLen);
-    key.Decrypt(block, mIVOffset);
+    uint8_t keyBuffer[kAES_CTR128_Key_Length] = { 0 };
+    // Read the key from the provisioning storage
+    MutableByteSpan keySpan = MutableByteSpan(keyBuffer);
+    Provision::Manager::GetInstance().GetStorage().GetOtaTlvEncryptionKey(keySpan);
+    VerifyOrReturnError(keySpan.size() == kAES_CTR128_Key_Length, CHIP_ERROR_INVALID_ARGUMENT);
+    // Decrypt the block
+    chip::DeviceLayer::Silabs::OtaTlvEncryptionKey::OtaTlvEncryptionKey.Decrypt(keySpan, block, mIVOffset);
 #else  // MBEDTLS_USE_PSA_CRYPTO
     uint32_t keyId;
-    SilabsConfig::ReadConfigValue(SilabsConfig::kOtaTlvEncryption_KeyId, keyId);
+    Provision::Manager::GetInstance().GetStorage().GetOtaTlvEncryptionKey(keyId);
     chip::DeviceLayer::Silabs::OtaTlvEncryptionKey::OtaTlvEncryptionKey key(keyId);
     key.Decrypt(block, mIVOffset);
 #endif // SL_MBEDTLS_USE_TINYCRYPT

@@ -12,24 +12,7 @@ namespace DeviceLayer {
 namespace Silabs {
 namespace OtaTlvEncryptionKey {
 
-using SilabsConfig = chip::DeviceLayer::Internal::SilabsConfig;
-
-CHIP_ERROR OtaTlvEncryptionKey::Import(const uint8_t * key, size_t key_len)
-{
-    if (key_len != 16) // Ensure the key length is 128 bits (16 bytes)
-    {
-        ChipLogError(DeviceLayer, "Invalid key length: %zu", key_len);
-        return CHIP_ERROR_INVALID_ARGUMENT;
-    }
-
-    // Store the key in a member variable for later use
-    memcpy(mKey, key, key_len);
-    mKeyLen = key_len;
-
-    return CHIP_NO_ERROR;
-}
-
-CHIP_ERROR OtaTlvEncryptionKey::Decrypt(MutableByteSpan & block, uint32_t & mIVOffset)
+static CHIP_ERROR OtaTlvEncryptionKey::Decrypt(const ByteSpan & key, MutableByteSpan & block, uint32_t & mIVOffset)
 {
     constexpr uint8_t au8Iv[] = { 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x00, 0x00, 0x00, 0x00 };
     uint8_t iv[16];
@@ -50,7 +33,7 @@ CHIP_ERROR OtaTlvEncryptionKey::Decrypt(MutableByteSpan & block, uint32_t & mIVO
     mbedtls_aes_init(&aes_ctx);
 
     // Set the AES decryption key
-    if (mbedtls_aes_setkey_dec(&aes_ctx, mKey, mKeyLen * 8) != 0)
+    if (mbedtls_aes_setkey_dec(&aes_ctx, key.value(), (kAES_CTR128_Key_Length * 8u)) != 0)
     {
         ChipLogError(DeviceLayer, "Failed to set AES decryption key");
         mbedtls_aes_free(&aes_ctx);

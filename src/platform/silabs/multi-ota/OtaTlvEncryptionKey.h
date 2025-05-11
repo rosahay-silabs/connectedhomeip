@@ -1,5 +1,6 @@
 #pragma once
 
+#include <crypto/CHIPCryptoPAL.h>
 #include <lib/core/CHIPError.h>
 #include <lib/support/Span.h>
 #include <platform/silabs/multi-ota/OTATlvProcessor.h>
@@ -12,7 +13,8 @@ namespace DeviceLayer {
 namespace Silabs {
 namespace OtaTlvEncryptionKey {
 
-static constexpr uint32_t kAES_KeyId_Default = (PSA_KEY_ID_USER_MIN + 2);
+static constexpr uint32_t kAES_KeyId_Default   = (PSA_KEY_ID_USER_MIN + 2);
+static constexpr size_t kAES_CTR128_Key_Length = 128u / 8u; // 128 bits
 
 class OtaTlvEncryptionKey
 {
@@ -20,14 +22,16 @@ public:
     OtaTlvEncryptionKey(uint32_t id = 0) { mId = (id > 0) ? id : kAES_KeyId_Default; }
     ~OtaTlvEncryptionKey() = default;
 
+#if defined(SL_MBEDTLS_USE_TINYCRYPT)
+    static CHIP_ERROR Decrypt(const ByteSpan & key, MutableByteSpan & block, uint32_t & mIVOffset);
+#else  // SL_MBEDTLS_USE_PSA_CRYPTO
     uint32_t GetId() { return mId; }
     CHIP_ERROR Import(const uint8_t * key, size_t key_len);
     CHIP_ERROR Decrypt(MutableByteSpan & block, uint32_t & mIVOffset);
+#endif // SL_MBEDTLS_USE_TINYCRYPT
 
 protected:
-    uint32_t mId     = 0;
-    uint8_t mKey[16] = { 0 };
-    size_t mKeyLen   = 0;
+    uint32_t mId = 0;
 };
 
 } // namespace OtaTlvEncryptionKey
