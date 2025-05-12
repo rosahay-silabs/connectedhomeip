@@ -32,7 +32,7 @@ static CHIP_ERROR OtaTlvEncryptionKey::Decrypt(const ByteSpan & key, MutableByte
     mbedtls_aes_init(&aes_ctx);
 
     // Set the AES decryption key
-    if (mbedtls_aes_setkey_dec(&aes_ctx, key.value(), (kAES_CTR128_Key_Length * 8u)) != 0)
+    if (mbedtls_aes_setkey_enc(&aes_ctx, key.value(), (kAES_CTR128_Key_Length * 8u)) != 0)
     {
         ChipLogError(DeviceLayer, "Failed to set AES decryption key");
         mbedtls_aes_free(&aes_ctx);
