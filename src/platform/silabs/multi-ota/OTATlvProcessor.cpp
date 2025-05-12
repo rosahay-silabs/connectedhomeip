@@ -137,7 +137,7 @@ CHIP_ERROR OTATlvProcessor::vOtaProcessInternalEncryption(MutableByteSpan & bloc
     Provision::Manager::GetInstance().GetStorage().GetOtaTlvEncryptionKey(keySpan);
     VerifyOrReturnError(keySpan.size() == kAES_CTR128_Key_Length, CHIP_ERROR_INVALID_ARGUMENT);
     // Decrypt the block
-    chip::DeviceLayer::Silabs::OtaTlvEncryptionKey::OtaTlvEncryptionKey.Decrypt(keySpan, block, mIVOffset);
+    chip::DeviceLayer::Silabs::OtaTlvEncryptionKey::OtaTlvEncryptionKey.Decrypt((const ByteSpan) keySpan, block, mIVOffset);
 #else  // MBEDTLS_USE_PSA_CRYPTO
     uint32_t keyId;
     Provision::Manager::GetInstance().GetStorage().GetOtaTlvEncryptionKey(keyId);

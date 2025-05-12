@@ -1,6 +1,5 @@
 #pragma once
 
-#include <crypto/CHIPCryptoPAL.h>
 #include <lib/core/CHIPError.h>
 #include <lib/support/Span.h>
 #include <platform/silabs/multi-ota/OTATlvProcessor.h>
