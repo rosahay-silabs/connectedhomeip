@@ -14,10 +14,12 @@ namespace OtaTlvEncryptionKey {
 
 static CHIP_ERROR OtaTlvEncryptionKey::Decrypt(const ByteSpan & key, MutableByteSpan & block, uint32_t & mIVOffset)
 {
-    uint8_t iv[16];
     mbedtls_aes_context aes_ctx;
-    uint32_t u32IVCount;
-    uint32_t Offset = 0;
+    size_t nc_off = 0;
+    uint8_t iv[16];
+    uint8_t stream_block[16] = { 0 };
+    uint32_t u32IVCount      = 0;
+    uint32_t Offset          = 0;
 
     memcpy(iv, au8Iv, sizeof(au8Iv));
 
@@ -32,7 +34,7 @@ static CHIP_ERROR OtaTlvEncryptionKey::Decrypt(const ByteSpan & key, MutableByte
     mbedtls_aes_init(&aes_ctx);
 
     // Set the AES decryption key
-    if (mbedtls_aes_setkey_enc(&aes_ctx, key.value(), (kAES_CTR128_Key_Length * 8u)) != 0)
+    if (mbedtls_aes_setkey_enc(&aes_ctx, key.value(), (kOTAEncryptionKeyLength * 8u)) != 0)
     {
         ChipLogError(DeviceLayer, "Failed to set AES decryption key");
         mbedtls_aes_free(&aes_ctx);
@@ -42,7 +44,14 @@ static CHIP_ERROR OtaTlvEncryptionKey::Decrypt(const ByteSpan & key, MutableByte
     while (Offset + 16 <= block.size())
     {
         // Decrypt the block
-        if (mbedtls_aes_crypt_ctr(&aes_ctx, 16, &u32IVCount, iv, iv, &block[Offset], &block[Offset]) != 0)
+        if (mbedtls_aes_crypt_ctr(&aes_ctx,       // context
+                                  16,             // length
+                                  &nc_off,        // nc_off
+                                  iv,             // nonce_counter
+                                  stream_block,   // stream_block
+                                  &block[Offset], // input
+                                  &block[Offset]  // output
+                                  ) != 0)
         {
             ChipLogError(DeviceLayer, "Failed to decrypt block");
             mbedtls_aes_free(&aes_ctx);
@@ -52,10 +61,10 @@ static CHIP_ERROR OtaTlvEncryptionKey::Decrypt(const ByteSpan & key, MutableByte
         /* Increment the IV for the next block */
         u32IVCount++;
 
-        iv[12] = (uint8_t) ((u32IVCount >> 24) & 0xff);
-        iv[13] = (uint8_t) ((u32IVCount >> 16) & 0xff);
-        iv[14] = (uint8_t) ((u32IVCount >> 8) & 0xff);
-        iv[15] = (uint8_t) (u32IVCount & 0xff);
+        // iv[12] = (uint8_t) ((u32IVCount >> 24) & 0xff);
+        // iv[13] = (uint8_t) ((u32IVCount >> 16) & 0xff);
+        // iv[14] = (uint8_t) ((u32IVCount >> 8) & 0xff);
+        // iv[15] = (uint8_t) (u32IVCount & 0xff);
 
         Offset += 16; /* Increment the buffer offset */
         mIVOffset += 16;

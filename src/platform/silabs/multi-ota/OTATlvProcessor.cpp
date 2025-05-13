@@ -131,11 +131,11 @@ CHIP_ERROR OTADataAccumulator::Accumulate(ByteSpan & block)
 CHIP_ERROR OTATlvProcessor::vOtaProcessInternalEncryption(MutableByteSpan & block)
 {
 #if defined(SL_MBEDTLS_USE_TINYCRYPT)
-    uint8_t keyBuffer[kAES_CTR128_Key_Length] = { 0 };
+    uint8_t keyBuffer[kOTAEncryptionKeyLength] = { 0 };
     // Read the key from the provisioning storage
     MutableByteSpan keySpan = MutableByteSpan(keyBuffer);
     Provision::Manager::GetInstance().GetStorage().GetOtaTlvEncryptionKey(keySpan);
-    VerifyOrReturnError(keySpan.size() == kAES_CTR128_Key_Length, CHIP_ERROR_INVALID_ARGUMENT);
+    VerifyOrReturnError(keySpan.size() == kOTAEncryptionKeyLength, CHIP_ERROR_INVALID_ARGUMENT);
     // Decrypt the block
     chip::DeviceLayer::Silabs::OtaTlvEncryptionKey::OtaTlvEncryptionKey.Decrypt((const ByteSpan) keySpan, block, mIVOffset);
 #else  // MBEDTLS_USE_PSA_CRYPTO
