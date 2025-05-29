@@ -223,7 +223,7 @@ declare_args() {
   use_rps_extension = wifi_soc
 
   # UART log forwarding
-  sl_uart_log_output = true
+  sl_uart_log_output = wifi_soc
 }
 
 # Silabs mcu family and mcu model must be specified
