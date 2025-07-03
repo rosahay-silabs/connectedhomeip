@@ -27,7 +27,7 @@ examples_plat_dir = "${chip_root}/examples/platform/silabs/SiWx917"
 
 declare_args() {
   # option to select the crypto library
-  sl_si91x_crypto_flavor = "tinycrypt"
+  sl_si91x_crypto_flavor = "psa"
 }
 
 # Defines an siwx917 SDK build target.
