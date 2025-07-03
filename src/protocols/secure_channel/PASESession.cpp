@@ -686,8 +686,11 @@ CHIP_ERROR PASESession::HandleMsg1_and_SendMsg2(System::PacketBufferHandle && ms
                                                kP256_Point_Length));
 
     SuccessOrExit(err = mSpake2p.ComputeRoundOne(X, X_len, Y, &Y_len));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(Y_len == sizeof(Y), CHIP_ERROR_INTERNAL);
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     SuccessOrExit(err = mSpake2p.ComputeRoundTwo(X, X_len, verifier, &verifier_len));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     msg1 = nullptr;
 
     {
@@ -695,20 +698,27 @@ CHIP_ERROR PASESession::HandleMsg1_and_SendMsg2(System::PacketBufferHandle && ms
 
         System::PacketBufferHandle msg2 = System::PacketBufferHandle::New(max_msg_len);
         VerifyOrExit(!msg2.IsNull(), err = CHIP_ERROR_NO_MEMORY);
+        ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
         System::PacketBufferTLVWriter tlvWriter;
         tlvWriter.Init(std::move(msg2));
 
         TLV::TLVType outerContainerType = TLV::kTLVType_NotSpecified;
         SuccessOrExit(err = tlvWriter.StartContainer(TLV::AnonymousTag(), TLV::kTLVType_Structure, outerContainerType));
+        ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
         SuccessOrExit(err = tlvWriter.Put(AsTlvContextTag(Pake2Tags::kPb), ByteSpan(Y)));
+        ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
         SuccessOrExit(err = tlvWriter.Put(AsTlvContextTag(Pake2Tags::kCb), ByteSpan(verifier, verifier_len)));
+        ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
         SuccessOrExit(err = tlvWriter.EndContainer(outerContainerType));
+        ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
         SuccessOrExit(err = tlvWriter.Finalize(&msg2));
+        ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
         err =
             mExchangeCtxt.Value()->SendMessage(MsgType::PASE_Pake2, std::move(msg2), SendFlags(SendMessageFlags::kExpectResponse));
         SuccessOrExit(err);
+        ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
         mNextExpectedMsg.SetValue(MsgType::PASE_Pake3);
     }

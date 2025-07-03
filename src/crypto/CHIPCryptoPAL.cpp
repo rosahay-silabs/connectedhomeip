@@ -421,36 +421,55 @@ CHIP_ERROR Spake2p::ComputeRoundTwo(const uint8_t * in, size_t in_len, uint8_t *
     VerifyOrExit(XY != nullptr, error = CHIP_ERROR_INTERNAL);
 
     SuccessOrExit(error = PointLoad(in, in_len, XY));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     SuccessOrExit(error = PointIsValid(XY));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     SuccessOrExit(error = FEMul(tempbn, xy, w0));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     SuccessOrExit(error = PointInvert(MN));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     SuccessOrExit(error = PointAddMul(Z, XY, xy, MN, tempbn));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     SuccessOrExit(error = PointCofactorMul(Z));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     if (role == CHIP_SPAKE2P_ROLE::PROVER)
     {
         SuccessOrExit(error = FEMul(tempbn, w1, w0));
+        ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
         SuccessOrExit(error = PointAddMul(V, XY, w1, MN, tempbn));
+        ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     }
     else if (role == CHIP_SPAKE2P_ROLE::VERIFIER)
     {
+        ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
         SuccessOrExit(error = PointMul(V, L, xy));
     }
 
     SuccessOrExit(error = PointCofactorMul(V));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     SuccessOrExit(error = PointWrite(Z, point_buffer, point_size));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     SuccessOrExit(error = InternalHash(point_buffer, point_size));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     SuccessOrExit(error = PointWrite(V, point_buffer, point_size));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     SuccessOrExit(error = InternalHash(point_buffer, point_size));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     SuccessOrExit(error = FEWrite(w0, point_buffer, fe_size));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     SuccessOrExit(error = InternalHash(point_buffer, fe_size));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     SuccessOrExit(error = GenerateKeys());
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     SuccessOrExit(error = Mac(Kcaorb, hash_size / 2, in, in_len, out_span));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrExit(out_span.size() == hash_size, error = CHIP_ERROR_INTERNAL);
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     state = CHIP_SPAKE2P_STATE::R2;
     error = CHIP_NO_ERROR;
@@ -464,9 +483,12 @@ CHIP_ERROR Spake2p::GenerateKeys()
     static const uint8_t info_keyconfirm[16] = { 'C', 'o', 'n', 'f', 'i', 'r', 'm', 'a', 't', 'i', 'o', 'n', 'K', 'e', 'y', 's' };
 
     MutableByteSpan Kae_span{ &Kae[0], sizeof(Kae) };
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     ReturnErrorOnFailure(HashFinalize(Kae_span));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     ReturnErrorOnFailure(KDF(Ka, hash_size / 2, nullptr, 0, info_keyconfirm, sizeof(info_keyconfirm), Kcab, hash_size));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     return CHIP_NO_ERROR;
 }

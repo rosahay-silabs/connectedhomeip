@@ -106,6 +106,7 @@ CHIP_ERROR AES_CCM_encrypt(const uint8_t * plaintext, size_t plaintext_length, c
                            const Aes128KeyHandle & key, const uint8_t * nonce, size_t nonce_length, uint8_t * ciphertext,
                            uint8_t * tag, size_t tag_length)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(IsBufferNonEmpty(nonce, nonce_length), CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(IsValidTag(tag, tag_length), CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError((ciphertext != nullptr && plaintext != nullptr) || plaintext_length == 0, CHIP_ERROR_INVALID_ARGUMENT);
@@ -202,6 +203,7 @@ CHIP_ERROR AES_CCM_decrypt(const uint8_t * ciphertext, size_t ciphertext_length,
                            const uint8_t * tag, size_t tag_length, const Aes128KeyHandle & key, const uint8_t * nonce,
                            size_t nonce_length, uint8_t * plaintext)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(IsBufferNonEmpty(nonce, nonce_length), CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(IsValidTag(tag, tag_length), CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError((ciphertext != nullptr && plaintext != nullptr) || ciphertext_length == 0, CHIP_ERROR_INVALID_ARGUMENT);
@@ -294,6 +296,7 @@ CHIP_ERROR AES_CCM_decrypt(const uint8_t * ciphertext, size_t ciphertext_length,
 
 CHIP_ERROR Hash_SHA256(const uint8_t * data, const size_t data_length, uint8_t * out_buffer)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     size_t outLength = 0;
 
     const psa_status_t status =
@@ -304,6 +307,7 @@ CHIP_ERROR Hash_SHA256(const uint8_t * data, const size_t data_length, uint8_t *
 
 CHIP_ERROR Hash_SHA1(const uint8_t * data, const size_t data_length, uint8_t * out_buffer)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     size_t outLength = 0;
 
     const psa_status_t status =
@@ -324,16 +328,19 @@ static inline psa_hash_operation_t & toHashOperation(HashSHA256OpaqueContext & c
 
 Hash_SHA256_stream::Hash_SHA256_stream()
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     toHashOperation(mContext) = PSA_HASH_OPERATION_INIT;
 }
 
 Hash_SHA256_stream::~Hash_SHA256_stream()
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     Clear();
 }
 
 CHIP_ERROR Hash_SHA256_stream::Begin()
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     toHashOperation(mContext) = PSA_HASH_OPERATION_INIT;
     const psa_status_t status = psa_hash_setup(toHashOperation(&mContext), PSA_ALG_SHA_256);
 
@@ -342,6 +349,7 @@ CHIP_ERROR Hash_SHA256_stream::Begin()
 
 CHIP_ERROR Hash_SHA256_stream::AddData(const ByteSpan data)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     const psa_status_t status = psa_hash_update(toHashOperation(&mContext), data.data(), data.size());
 
     return status == PSA_SUCCESS ? CHIP_NO_ERROR : CHIP_ERROR_INTERNAL;
@@ -349,6 +357,7 @@ CHIP_ERROR Hash_SHA256_stream::AddData(const ByteSpan data)
 
 CHIP_ERROR Hash_SHA256_stream::GetDigest(MutableByteSpan & out_buffer)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(out_buffer.size() >= PSA_HASH_LENGTH(PSA_ALG_SHA_256), CHIP_ERROR_BUFFER_TOO_SMALL);
 
     CHIP_ERROR error               = CHIP_NO_ERROR;
@@ -371,6 +380,7 @@ exit:
 
 CHIP_ERROR Hash_SHA256_stream::Finish(MutableByteSpan & out_buffer)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(out_buffer.size() >= PSA_HASH_LENGTH(PSA_ALG_SHA_256), CHIP_ERROR_BUFFER_TOO_SMALL);
 
     size_t outLength;
@@ -384,6 +394,7 @@ CHIP_ERROR Hash_SHA256_stream::Finish(MutableByteSpan & out_buffer)
 
 void Hash_SHA256_stream::Clear()
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     psa_hash_abort(toHashOperation(&mContext));
 }
 
@@ -411,6 +422,7 @@ CHIP_ERROR FindFreeKeySlotInRange(psa_key_id_t & keyId, psa_key_id_t start, uint
 
 CHIP_ERROR PsaKdf::Init(const ByteSpan & secret, const ByteSpan & salt, const ByteSpan & info)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     psa_status_t status        = PSA_SUCCESS;
     psa_key_attributes_t attrs = PSA_KEY_ATTRIBUTES_INIT;
 
@@ -428,25 +440,33 @@ CHIP_ERROR PsaKdf::Init(const ByteSpan & secret, const ByteSpan & salt, const By
 
 CHIP_ERROR PsaKdf::Init(const HkdfKeyHandle & hkdfKey, const ByteSpan & salt, const ByteSpan & info)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     return InitOperation(hkdfKey.As<psa_key_id_t>(), salt, info);
 }
 
 CHIP_ERROR PsaKdf::InitOperation(psa_key_id_t hkdfKey, const ByteSpan & salt, const ByteSpan & info)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     psa_status_t status = psa_key_derivation_setup(&mOperation, PSA_ALG_HKDF(PSA_ALG_SHA_256));
     VerifyOrReturnError(status == PSA_SUCCESS, CHIP_ERROR_INTERNAL);
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     if (salt.size() > 0)
     {
         status = psa_key_derivation_input_bytes(&mOperation, PSA_KEY_DERIVATION_INPUT_SALT, salt.data(), salt.size());
+        ChipLogDetail(Crypto, "psa_status: %ld", status);
         VerifyOrReturnError(status == PSA_SUCCESS, CHIP_ERROR_INTERNAL);
+        ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     }
 
     status = psa_key_derivation_input_key(&mOperation, PSA_KEY_DERIVATION_INPUT_SECRET, hkdfKey);
+    ChipLogDetail(Crypto, "psa_status: %ld", status);
     VerifyOrReturnError(status == PSA_SUCCESS, CHIP_ERROR_INTERNAL);
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     status = psa_key_derivation_input_bytes(&mOperation, PSA_KEY_DERIVATION_INPUT_INFO, info.data(), info.size());
     VerifyOrReturnError(status == PSA_SUCCESS, CHIP_ERROR_INTERNAL);
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     return CHIP_NO_ERROR;
 }
@@ -461,15 +481,19 @@ void LogPsaError(psa_status_t status)
 
 CHIP_ERROR PsaKdf::DeriveBytes(const MutableByteSpan & output)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     psa_status_t status = psa_key_derivation_output_bytes(&mOperation, output.data(), output.size());
     LogPsaError(status);
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(status == PSA_SUCCESS, CHIP_ERROR_INTERNAL);
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR PsaKdf::DeriveKey(const psa_key_attributes_t & attributes, psa_key_id_t & keyId)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     psa_status_t status = psa_key_derivation_output_key(&attributes, &mOperation, &keyId);
     LogPsaError(status);
     VerifyOrReturnError(status == PSA_SUCCESS, CHIP_ERROR_INTERNAL);
@@ -480,14 +504,19 @@ CHIP_ERROR PsaKdf::DeriveKey(const psa_key_attributes_t & attributes, psa_key_id
 CHIP_ERROR HKDF_sha::HKDF_SHA256(const uint8_t * secret, const size_t secret_length, const uint8_t * salt, const size_t salt_length,
                                  const uint8_t * info, const size_t info_length, uint8_t * out_buffer, size_t out_length)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(IsBufferNonEmpty(secret, secret_length), CHIP_ERROR_INVALID_ARGUMENT);
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(IsBufferNonEmpty(info, info_length), CHIP_ERROR_INVALID_ARGUMENT);
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(IsBufferNonEmpty(out_buffer, out_length), CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(salt != nullptr || salt_length == 0, CHIP_ERROR_INVALID_ARGUMENT);
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     PsaKdf kdf;
 
     ReturnErrorOnFailure(kdf.Init(ByteSpan(secret, secret_length), ByteSpan(salt, salt_length), ByteSpan(info, info_length)));
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
 
     return kdf.DeriveBytes(MutableByteSpan(out_buffer, out_length));
 }
@@ -495,6 +524,7 @@ CHIP_ERROR HKDF_sha::HKDF_SHA256(const uint8_t * secret, const size_t secret_len
 CHIP_ERROR HMAC_sha::HMAC_SHA256(const uint8_t * key, size_t key_length, const uint8_t * message, size_t message_length,
                                  uint8_t * out_buffer, size_t out_length)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(IsBufferNonEmpty(key, key_length), CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(IsBufferNonEmpty(message, message_length), CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(out_buffer != nullptr && out_length == PSA_HASH_LENGTH(PSA_ALG_SHA_256), CHIP_ERROR_INVALID_ARGUMENT);
@@ -526,6 +556,7 @@ exit:
 CHIP_ERROR HMAC_sha::HMAC_SHA256(const Hmac128KeyHandle & key, const uint8_t * message, size_t message_length, uint8_t * out_buffer,
                                  size_t out_length)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(IsBufferNonEmpty(message, message_length), CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(out_buffer != nullptr && out_length == PSA_HASH_LENGTH(PSA_ALG_SHA_256), CHIP_ERROR_INVALID_ARGUMENT);
 
@@ -541,6 +572,7 @@ CHIP_ERROR HMAC_sha::HMAC_SHA256(const Hmac128KeyHandle & key, const uint8_t * m
 CHIP_ERROR PBKDF2_sha256::pbkdf2_sha256(const uint8_t * pass, size_t pass_length, const uint8_t * salt, size_t salt_length,
                                         unsigned int iteration_count, uint32_t key_length, uint8_t * key)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(IsBufferNonEmpty(pass, pass_length), CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(key != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(salt_length >= kSpake2p_Min_PBKDF_Salt_Length && salt_length <= kSpake2p_Max_PBKDF_Salt_Length,
@@ -578,6 +610,7 @@ CHIP_ERROR add_entropy_source(entropy_source /* fn_source */, void * /* p_source
 
 CHIP_ERROR DRBG_get_bytes(uint8_t * out_buffer, const size_t out_length)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(IsBufferNonEmpty(out_buffer, out_length), CHIP_ERROR_INVALID_ARGUMENT);
 
     const psa_status_t status = psa_generate_random(out_buffer, out_length);
@@ -615,6 +648,7 @@ static int CryptoRNG(void * ctxt, uint8_t * out_buffer, size_t out_length)
 
 CHIP_ERROR P256Keypair::ECDSA_sign_msg(const uint8_t * msg, const size_t msg_length, P256ECDSASignature & out_signature) const
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(mInitialized, CHIP_ERROR_UNINITIALIZED);
     VerifyOrReturnError(IsBufferNonEmpty(msg, msg_length), CHIP_ERROR_INVALID_ARGUMENT);
 
@@ -638,6 +672,7 @@ exit:
 CHIP_ERROR P256PublicKey::ECDSA_validate_msg_signature(const uint8_t * msg, const size_t msg_length,
                                                        const P256ECDSASignature & signature) const
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(IsBufferNonEmpty(msg, msg_length), CHIP_ERROR_INVALID_ARGUMENT);
 
     CHIP_ERROR error                = CHIP_NO_ERROR;
@@ -666,6 +701,7 @@ exit:
 CHIP_ERROR P256PublicKey::ECDSA_validate_hash_signature(const uint8_t * hash, const size_t hash_length,
                                                         const P256ECDSASignature & signature) const
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(hash != nullptr && hash_length == kSHA256_Hash_Length, CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(signature.Length() == kP256_ECDSA_Signature_Length_Raw, CHIP_ERROR_INVALID_ARGUMENT);
 
@@ -694,6 +730,7 @@ exit:
 
 CHIP_ERROR P256Keypair::ECDH_derive_secret(const P256PublicKey & remote_public_key, P256ECDHDerivedSecret & out_secret) const
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(mInitialized, CHIP_ERROR_UNINITIALIZED);
 
     CHIP_ERROR error                      = CHIP_NO_ERROR;
@@ -746,6 +783,7 @@ bool IsBufferContentEqualConstantTime(const void * a, const void * b, size_t n)
 
 CHIP_ERROR P256Keypair::Initialize(ECPKeyTarget key_target)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(!mInitialized, CHIP_ERROR_INCORRECT_STATE);
 
     CHIP_ERROR error                = CHIP_NO_ERROR;
@@ -791,6 +829,7 @@ exit:
 
 CHIP_ERROR P256Keypair::Serialize(P256SerializedKeypair & output) const
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     CHIP_ERROR error                      = CHIP_NO_ERROR;
     psa_status_t status                   = PSA_SUCCESS;
     const PsaP256KeypairContext & context = ToConstPsaContext(mKeypair);
@@ -816,6 +855,7 @@ exit:
 
 CHIP_ERROR P256Keypair::Deserialize(P256SerializedKeypair & input)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(input.Length() == mPublicKey.Length() + kP256_PrivateKey_Length, CHIP_ERROR_INVALID_ARGUMENT);
 
     CHIP_ERROR error                = CHIP_NO_ERROR;
@@ -863,6 +903,7 @@ P256Keypair::~P256Keypair()
 
 CHIP_ERROR P256Keypair::NewCertificateSigningRequest(uint8_t * out_csr, size_t & csr_length) const
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturnError(IsBufferNonEmpty(out_csr, csr_length), CHIP_ERROR_INVALID_ARGUMENT);
     VerifyOrReturnError(mInitialized, CHIP_ERROR_UNINITIALIZED);
 
@@ -897,6 +938,7 @@ static inline Spake2p_Context * to_inner_spake2p_context(Spake2pOpaqueContext * 
 
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::InitInternal(void)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     CHIP_ERROR error = CHIP_NO_ERROR;
     int result       = 0;
 
@@ -947,6 +989,7 @@ exit:
 
 void Spake2p_P256_SHA256_HKDF_HMAC::Clear()
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     VerifyOrReturn(state != CHIP_SPAKE2P_STATE::PREINIT);
 
     Spake2p_Context * context = to_inner_spake2p_context(&mSpake2pContext);
@@ -970,6 +1013,7 @@ void Spake2p_P256_SHA256_HKDF_HMAC::Clear()
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::Mac(const uint8_t * key, size_t key_len, const uint8_t * in, size_t in_len,
                                               MutableByteSpan & out_span)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     HMAC_sha hmac;
     VerifyOrReturnError(out_span.size() >= kSHA256_Hash_Length, CHIP_ERROR_BUFFER_TOO_SMALL);
     ReturnErrorOnFailure(hmac.HMAC_SHA256(key, key_len, in, in_len, out_span.data(), kSHA256_Hash_Length));
@@ -980,6 +1024,7 @@ CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::Mac(const uint8_t * key, size_t key_le
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::MacVerify(const uint8_t * key, size_t key_len, const uint8_t * mac, size_t mac_len,
                                                     const uint8_t * in, size_t in_len)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     CHIP_ERROR error = CHIP_NO_ERROR;
     int result       = 0;
 
@@ -999,6 +1044,7 @@ exit:
 
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::FELoad(const uint8_t * in, size_t in_len, void * fe)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     CHIP_ERROR error = CHIP_NO_ERROR;
     int result       = 0;
 
@@ -1015,6 +1061,7 @@ exit:
 
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::FEWrite(const void * fe, uint8_t * out, size_t out_len)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     if (mbedtls_mpi_write_binary((const mbedtls_mpi *) fe, Uint8::to_uchar(out), out_len) != 0)
     {
         return CHIP_ERROR_INTERNAL;
@@ -1024,6 +1071,7 @@ CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::FEWrite(const void * fe, uint8_t * out
 
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::FEGenerate(void * fe)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     CHIP_ERROR error = CHIP_NO_ERROR;
     int result       = 0;
 
@@ -1039,6 +1087,7 @@ exit:
 
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::FEMul(void * fer, const void * fe1, const void * fe2)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     CHIP_ERROR error = CHIP_NO_ERROR;
     int result       = 0;
 
@@ -1055,6 +1104,7 @@ exit:
 
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::PointLoad(const uint8_t * in, size_t in_len, void * R)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     Spake2p_Context * context = to_inner_spake2p_context(&mSpake2pContext);
 
     if (mbedtls_ecp_point_read_binary(&context->curve, (mbedtls_ecp_point *) R, Uint8::to_const_uchar(in), in_len) != 0)
@@ -1067,6 +1117,7 @@ CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::PointLoad(const uint8_t * in, size_t i
 
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::PointWrite(const void * R, uint8_t * out, size_t out_len)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     memset(out, 0, out_len);
 
     size_t mbedtls_out_len = out_len;
@@ -1236,6 +1287,7 @@ CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::PointMul(void * R, const void * P1, co
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::PointAddMul(void * R, const void * P1, const void * fe1, const void * P2,
                                                       const void * fe2)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     Spake2p_Context * context = to_inner_spake2p_context(&mSpake2pContext);
 
 #if defined(SEMAILBOX_PRESENT)
@@ -1280,6 +1332,7 @@ exit:
 
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::PointInvert(void * R)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     mbedtls_ecp_point * Rp    = (mbedtls_ecp_point *) R;
     Spake2p_Context * context = to_inner_spake2p_context(&mSpake2pContext);
 
@@ -1293,11 +1346,13 @@ CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::PointInvert(void * R)
 
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::PointCofactorMul(void * R)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     return CHIP_NO_ERROR;
 }
 
 CHIP_ERROR Spake2p_P256_SHA256_HKDF_HMAC::ComputeL(uint8_t * Lout, size_t * L_len, const uint8_t * w1in, size_t w1in_len)
 {
+    ChipLogDetail(Crypto, "%s: %d", __func__, __LINE__);
     CHIP_ERROR error = CHIP_NO_ERROR;
     int result       = 0;
 
