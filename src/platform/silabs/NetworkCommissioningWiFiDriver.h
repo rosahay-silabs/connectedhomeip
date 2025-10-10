@@ -91,11 +91,10 @@ public:
         bool mExhausted = false;
     };
 
-    struct WiFiNetwork
+    struct WiFiNetwork : public NetworkCommissioning::WiFiScanResponse
     {
-        char ssid[DeviceLayer::Internal::kMaxWiFiSSIDLength];
-        uint8_t ssidLen = 0;
-        char credentials[DeviceLayer::Internal::kMaxWiFiKeyLength];
+        // Extended fields for storing credentials
+        uint8_t credentials[DeviceLayer::Internal::kMaxWiFiKeyLength];
         uint8_t credentialsLen = 0;
     };
 
