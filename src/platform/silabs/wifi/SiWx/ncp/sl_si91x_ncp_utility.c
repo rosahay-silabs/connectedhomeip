@@ -30,6 +30,7 @@
 #include "em_ldma.h"
 #include "em_usart.h"
 #include "gpiointerrupt.h"
+#include "sl_si91x_host_interface.h"
 #include "sl_spidrv_exp_config.h"
 #include "spidrv.h"
 
@@ -42,7 +43,9 @@
 #include "sl_device_init_hfxo.h"
 
 #include "silabs_utils.h"
-#include "sl_si91x_ncp_utility.h"
+
+#include <platform/silabs/wifi/ncp/spi_multiplex.h>
+#include <platform/silabs/wifi/SiWx/ncp/sl_si91x_ncp_utility.h>
 
 #if SL_BTLCTRL_MUX
 #include "btl_interface.h"
@@ -51,6 +54,7 @@
 #if SL_LCDCTRL_MUX
 #include "sl_memlcd.h"
 #include "sl_memlcd_display.h"
+
 #define SL_SPIDRV_LCD_BITRATE SL_MEMLCD_SCLK_FREQ
 #endif // SL_LCDCTRL_MUX
 
@@ -110,23 +114,21 @@ sl_status_t sl_si91x_host_spi_multiplex_init(void)
     return SL_STATUS_OK;
 }
 
-sl_status_t sl_wfx_host_spi_cs_assert(void)
+void sl_si91x_host_spi_cs_assert(void)
 {
 #if SL_SPICTRL_MUX
     osMutexAcquire(spi_peripheral_mutex, osWaitForever);
 #endif /* SL_SPICTRL_MUX */
     SPIDRV_SetBaudrate(USART_INITSYNC_BAUDRATE);
     GPIO_PinOutClear(SL_SPIDRV_EXP_CS_PORT, SL_SPIDRV_EXP_CS_PIN);
-    return SL_STATUS_OK;
 }
 
-sl_status_t sl_wfx_host_spi_cs_deassert(void)
+void sl_si91x_host_spi_cs_deassert(void)
 {
     GPIO_PinOutSet(SL_SPIDRV_EXP_CS_PORT, SL_SPIDRV_EXP_CS_PIN);
 #if SL_SPICTRL_MUX
     osMutexRelease(spi_peripheral_mutex);
 #endif
-    return SL_STATUS_OK;
 }
 #endif // SL_SPICTRL_MUX
 
@@ -134,10 +136,7 @@ sl_status_t sl_wfx_host_spi_cs_deassert(void)
 sl_status_t sl_wfx_host_pre_bootloader_spi_transfer(void)
 {
 #if SL_SPICTRL_MUX
-    if (sl_wfx_host_spi_cs_deassert() != SL_STATUS_OK)
-    {
-        return SL_STATUS_FAIL;
-    }
+    sl_si91x_host_spi_cs_deassert();
     osMutexAcquire(spi_peripheral_mutex, osWaitForever);
 #endif // SL_SPICTRL_MUX
     int32_t status = BOOTLOADER_OK;
