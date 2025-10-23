@@ -25,7 +25,6 @@
 
 #include <platform/silabs/wifi/ncp/spi_multiplex.h>
 
-#include "silabs_utils.h"
 #include "sl_status.h"
 
 #define USART_INITSYNC_BAUDRATE 10000000
