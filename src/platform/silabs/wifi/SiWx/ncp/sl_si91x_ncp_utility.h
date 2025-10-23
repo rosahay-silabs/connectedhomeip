@@ -28,7 +28,7 @@
 #include "silabs_utils.h"
 #include "sl_status.h"
 
-#define USART_INITSYNC_BAUDRATE 12500000
+#define USART_INITSYNC_BAUDRATE 10000000
 
 #if SL_SPICTRL_MUX
 /**
