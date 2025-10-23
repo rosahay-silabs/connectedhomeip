@@ -60,26 +60,6 @@ extern "C" {
  * @return returns void
  *****************************************************************************/
 void SPIDRV_SetBaudrate(uint32_t);
-
-#if defined(SL_MATTER_SIWX_WIFI_ENABLE)
-/****************************************************************************
- * @fn  sl_status_t sl_wfx_host_spi_cs_assert()
- * @brief
- *     Assert chip select.
- * @param[in] None
- * @return returns SL_STATUS_OK
- *****************************************************************************/
-sl_status_t sl_wfx_host_spi_cs_assert(void);
-
-/****************************************************************************
- * @fn  sl_status_t sl_wfx_host_spi_cs_deassert()
- * @brief
- *     De-Assert chip select.
- * @param[in] None
- * @return returns SL_STATUS_OK
- *****************************************************************************/
-sl_status_t sl_wfx_host_spi_cs_deassert(void);
-#endif /* SL_MATTER_SIWX_WIFI_ENABLE */
 #endif // SL_SPICTRL_MUX
 
 #if SL_MX25CTRL_MUX
