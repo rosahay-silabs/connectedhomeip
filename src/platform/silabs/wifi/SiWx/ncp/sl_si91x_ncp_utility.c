@@ -43,7 +43,9 @@
 #include "sl_device_init_hfxo.h"
 
 #include "silabs_utils.h"
-#include "sl_si91x_ncp_utility.h"
+
+#include <platform/silabs/wifi/ncp/spi_multiplex.h>
+#include <platform/silabs/wifi/SiWx/ncp/sl_si91x_ncp_utility.h>
 
 #if SL_BTLCTRL_MUX
 #include "btl_interface.h"
@@ -52,6 +54,7 @@
 #if SL_LCDCTRL_MUX
 #include "sl_memlcd.h"
 #include "sl_memlcd_display.h"
+
 #define SL_SPIDRV_LCD_BITRATE SL_MEMLCD_SCLK_FREQ
 #endif // SL_LCDCTRL_MUX
 
