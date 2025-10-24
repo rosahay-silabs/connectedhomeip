@@ -26,9 +26,12 @@ rs911x_src_plat = [
 rs9117_inc_plat = [ "${wifi_sdk_root}/components/si91x/ble/inc" ]
 
 # TODO: clean-up after SI91X-17602 is fixed
-if (silabs_family == "efr32mg24") {
+if (silabs_board == "BRD4186C") {
   rs9117_inc_plat += [
     "${wifi_sdk_root}/components/board/silabs/config/brd4186c",
+  ]
+} else if (silabs_board == "BRD4187C") {
+  rs9117_inc_plat += [
     "${wifi_sdk_root}/components/board/silabs/config/brd4187c",
   ]
 }
