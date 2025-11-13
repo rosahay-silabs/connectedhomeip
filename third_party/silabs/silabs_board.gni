@@ -243,34 +243,12 @@ if (is_si917_board) {
       "The board ${silabs_board} is unsupported. A list of supported board can be found here https://t.ly/_b3SK")
 }
 
+rev_list = 
 silabs_board_lower = string_replace(silabs_board, "BRD", "brd")
 # REPLACE SUFFIXES
 silabs_board_lower = string_replace(silabs_board_lower, "A", "a")
 silabs_board_lower = string_replace(silabs_board_lower, "B", "b")
 silabs_board_lower = string_replace(silabs_board_lower, "C", "c")
-silabs_board_lower = string_replace(silabs_board_lower, "D", "d")
-silabs_board_lower = string_replace(silabs_board_lower, "E", "e")
-silabs_board_lower = string_replace(silabs_board_lower, "F", "f")
-silabs_board_lower = string_replace(silabs_board_lower, "G", "g")
-silabs_board_lower = string_replace(silabs_board_lower, "H", "h")
-silabs_board_lower = string_replace(silabs_board_lower, "I", "i")
-silabs_board_lower = string_replace(silabs_board_lower, "J", "j")
-silabs_board_lower = string_replace(silabs_board_lower, "K", "k")
-silabs_board_lower = string_replace(silabs_board_lower, "L", "l")
-silabs_board_lower = string_replace(silabs_board_lower, "M", "m")
-silabs_board_lower = string_replace(silabs_board_lower, "N", "n")
-silabs_board_lower = string_replace(silabs_board_lower, "O", "o")
-silabs_board_lower = string_replace(silabs_board_lower, "P", "p")
-silabs_board_lower = string_replace(silabs_board_lower, "Q", "q")
-silabs_board_lower = string_replace(silabs_board_lower, "R", "r")
-silabs_board_lower = string_replace(silabs_board_lower, "S", "s")
-silabs_board_lower = string_replace(silabs_board_lower, "T", "t")
-silabs_board_lower = string_replace(silabs_board_lower, "U", "u")
-silabs_board_lower = string_replace(silabs_board_lower, "V", "v")
-silabs_board_lower = string_replace(silabs_board_lower, "W", "w")
-silabs_board_lower = string_replace(silabs_board_lower, "X", "x")
-silabs_board_lower = string_replace(silabs_board_lower, "Y", "y")
-silabs_board_lower = string_replace(silabs_board_lower, "Z", "z")
 
 declare_args() {
   # Wifi SoC Board require a .rps file to be flashed to the device to run
