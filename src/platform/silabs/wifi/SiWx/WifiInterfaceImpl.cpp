@@ -590,7 +590,6 @@ CHIP_ERROR WifiInterfaceImpl::InitWiFiStack(void)
 #endif // CHIP_CONFIG_ENABLE_ICD_SERVER
 
     status = sl_net_init(SL_NET_WIFI_CLIENT_INTERFACE, &config, &wifi_client_context, nullptr);
-    ChipLogError(DeviceLayer, "sl_net_init failed: %lx", status);
     VerifyOrReturnError(status == SL_STATUS_OK, CHIP_ERROR_INTERNAL, ChipLogError(DeviceLayer, "sl_net_init failed: %lx", status));
 
     // Create Sempaphore for scan completion
