@@ -67,7 +67,6 @@ osMutexId_t spi_peripheral_mutex = 0;
 #endif // SL_SPICTRL_MUX
 
 #if SL_LCDCTRL_MUX
-
 sl_status_t sl_wfx_host_pre_lcd_spi_transfer(void)
 {
 #if SL_SPICTRL_MUX
