@@ -44,8 +44,8 @@
 
 #include "silabs_utils.h"
 
-#include <platform/silabs/wifi/ncp/spi_multiplex.h>
 #include <platform/silabs/wifi/SiWx/ncp/sl_si91x_ncp_utility.h>
+#include <platform/silabs/wifi/ncp/spi_multiplex.h>
 
 #if SL_BTLCTRL_MUX
 #include "btl_interface.h"
