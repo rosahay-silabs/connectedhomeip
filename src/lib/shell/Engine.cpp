@@ -129,6 +129,9 @@ void Engine::RegisterDefaultCommands()
 #if CHIP_SYSTEM_CONFIG_PROVIDE_STATISTICS
     RegisterStatCommands();
 #endif
+#if CHIP_ENABLE_OPENTHREAD
+    RegisterOtcliCommands();
+#endif
 }
 
 } // namespace Shell

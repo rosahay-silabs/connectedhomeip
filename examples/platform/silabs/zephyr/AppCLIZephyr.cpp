@@ -93,9 +93,6 @@ void chip::Zephyr::App::AppCLIZephyr::RegisterDefaultCommands(void)
 #if CHIP_WIFI
     cmd_wifi_init();
 #endif // CHIP_WIFI
-#if CHIP_ENABLE_OPENTHREAD
-    cmd_otcli_init();
-#endif // CHIP_ENABLE_OPENTHREAD
 #if (CHIP_ENABLE_OPENTHREAD)
     otAppCliAddonsInit(chip::DeviceLayer::ThreadStackMgrImpl().OTInstance());
 #endif

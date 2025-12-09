@@ -400,7 +400,6 @@ int AppTask::Init()
 void matterShellTask(void * args)
 {
     cmd_misc_init();
-    cmd_otcli_init();
     chip::Shell::Engine::Root().RunMainLoop();
 }
 

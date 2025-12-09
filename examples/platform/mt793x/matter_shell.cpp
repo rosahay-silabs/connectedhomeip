@@ -74,10 +74,8 @@ void startShellTask(void)
     int status = chip::Shell::Engine::Root().Init();
     assert(status == 0);
 
-    // For now also register commands from shell_common (shell app).
-    // TODO move at least OTCLI to default commands in lib/shell/commands
+    // Register commands from shell_common (shell app).
     cmd_misc_init();
-    cmd_otcli_init();
 
     shellTaskHandle = xTaskCreateStatic(MatterShellTask, "matter_cli", MATTER_ARRAY_SIZE(shellStack), NULL, SHELL_TASK_PRIORITY,
                                         shellStack, &shellTaskStruct);

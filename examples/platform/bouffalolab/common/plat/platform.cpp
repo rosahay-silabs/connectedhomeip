@@ -239,10 +239,6 @@ CHIP_ERROR PlatformManagerImpl::PlatformInit(void)
 
 #if CHIP_DEVICE_CONFIG_ENABLE_THREAD
 
-#if CONFIG_ENABLE_CHIP_SHELL
-    cmd_otcli_init();
-#endif
-
     ChipLogProgress(NotSpecified, "Initializing OpenThread stack");
     ReturnLogErrorOnFailure(ThreadStackMgr().InitThreadStack());
 

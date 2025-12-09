@@ -86,5 +86,11 @@ void RegisterNFCCommands();
  */
 void RegisterDnsCommands();
 
+/**
+ * This function registers the OpenThread CLI commands.
+ *
+ */
+void RegisterOtcliCommands();
+
 } // namespace Shell
 } // namespace chip

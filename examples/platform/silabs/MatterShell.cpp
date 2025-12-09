@@ -116,12 +116,8 @@ void startShellTask()
     int status = chip::Shell::Engine::Root().Init();
     VerifyOrDie(status == 0);
 
-    // For now also register commands from shell_common (shell app).
-    // TODO move at least OTCLI to default commands in lib/shell/commands
+    // Register commands from shell_common (shell app).
     cmd_misc_init();
-#ifndef SL_WIFI
-    cmd_otcli_init();
-#endif
 
 #ifdef SL_CATALOG_CLI_PRESENT
     cmdSilabsInit();

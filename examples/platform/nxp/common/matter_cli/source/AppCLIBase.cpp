@@ -88,7 +88,6 @@ void chip::NXP::App::AppCLIBase::RegisterDefaultCommands(void)
 
     /* Register common shell commands */
     cmd_misc_init();
-    cmd_otcli_init();
 #if (CHIP_DEVICE_CONFIG_ENABLE_WPA && CHIP_ENABLE_OPENTHREAD)
     otAppCliAddonsInit(chip::DeviceLayer::ThreadStackMgrImpl().OTInstance());
 #endif
