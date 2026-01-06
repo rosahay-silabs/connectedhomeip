@@ -101,7 +101,7 @@ public:
     chip::BitFlags<app::Clusters::NetworkCommissioning::WiFiSecurityBitmap> security;
     uint8_t ssid[DeviceLayer::Internal::kMaxWiFiSSIDLength];
     uint8_t ssidLen;
-    uint8_t bssid[6];
+    uint8_t bssid[DeviceLayer::Internal::kWiFiBSSIDLength];
     uint16_t channel;
     app::Clusters::NetworkCommissioning::WiFiBandEnum wiFiBand;
     int8_t rssi;
