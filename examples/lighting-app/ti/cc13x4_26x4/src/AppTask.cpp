@@ -16,9 +16,16 @@
  *    limitations under the License.
  */
 
-#include "AppTask.h"
-#include "AppConfig.h"
+extern "C" {
+#include "ti_drivers_config.h"
+#ifdef ti_log_Log_ENABLE
+#include "ti_log_config.h"
+#endif
+}
+
 #include "AppEvent.h"
+#include "AppTask.h"
+#include <AppConfig.h>
 
 #include "FreeRTOS.h"
 
@@ -28,6 +35,7 @@
 
 #include <DeviceInfoProviderImpl.h>
 #include <platform/CHIPDeviceLayer.h>
+#include <platform/DiagnosticDataProvider.h>
 
 #if CHIP_DEVICE_CONFIG_ENABLE_OTA_REQUESTOR
 #include <app/clusters/ota-requestor/BDXDownloader.h>
@@ -41,6 +49,11 @@
 #include <lib/support/CHIPMem.h>
 #include <lib/support/CHIPPlatformMemory.h>
 
+#ifdef ENABLE_CHIP_SHELL
+#include <ChipShellCollection.h>
+#include <lib/shell/Engine.h>
+#endif
+
 #include <app-common/zap-generated/attributes/Accessors.h>
 
 #include <app/clusters/identify-server/identify-server.h>
@@ -51,6 +64,9 @@
 #include <setup_payload/OnboardingCodesUtil.h>
 
 #include <app/TestEventTriggerDelegate.h>
+#include <app/clusters/network-commissioning/network-commissioning.h>
+#include <platform/OpenThread/GenericNetworkCommissioningThreadDriver.h>
+
 #include <src/platform/ti/cc13xx_26xx/DefaultTestEventTriggerDelegate.h>
 
 #include <ti/drivers/apps/Button.h>
@@ -100,6 +116,8 @@ static Button_Handle sAppLeftHandle;
 static Button_Handle sAppRightHandle;
 static DeviceInfoProviderImpl sExampleDeviceInfoProvider;
 
+Clusters::NetworkCommissioning::InstanceAndDriver<NetworkCommissioning::GenericThreadDriver> sThreadNetworkDriver(0 /*endpointId*/);
+
 AppTask AppTask::sAppTask;
 
 void uiTurnOn(void);
@@ -128,7 +146,7 @@ void InitializeOTARequestor(void)
     SetRequestorInstance(&sRequestorCore);
 
     sRequestorStorage.Init(Server::GetInstance().GetPersistentStorage());
-    sRequestorCore.Init(Server::GetInstance(), sRequestorStorage, sRequestorUser, sDownloader);
+    TEMPORARY_RETURN_IGNORED sRequestorCore.Init(Server::GetInstance(), sRequestorStorage, sRequestorUser, sDownloader);
     sImageProcessor.SetOTADownloader(&sDownloader);
     sDownloader.SetImageProcessorDelegate(&sImageProcessor);
     sRequestorUser.Init(&sRequestorCore, &sImageProcessor);
@@ -238,7 +256,7 @@ int AppTask::Init()
     cc13xx_26xxLogInit();
 
     // Init Chip memory management before the stack
-    Platform::MemoryInit();
+    TEMPORARY_RETURN_IGNORED Platform::MemoryInit();
 
     PLAT_LOG("Software Version: %d", CHIP_DEVICE_CONFIG_DEVICE_SOFTWARE_VERSION);
     PLAT_LOG("Software Version String: %s", CHIP_DEVICE_CONFIG_DEVICE_SOFTWARE_VERSION_STRING);
@@ -294,6 +312,7 @@ int AppTask::Init()
             ;
     }
 
+    TEMPORARY_RETURN_IGNORED sThreadNetworkDriver.Init();
     ret = ThreadStackMgrImpl().StartThreadTask();
     if (ret != CHIP_NO_ERROR)
     {
@@ -334,7 +353,7 @@ int AppTask::Init()
     sExampleDeviceInfoProvider.SetStorageDelegate(initParams.persistentStorageDelegate);
     SetDeviceInfoProvider(&sExampleDeviceInfoProvider);
 
-    Server::GetInstance().Init(initParams);
+    TEMPORARY_RETURN_IGNORED Server::GetInstance().Init(initParams);
 
     ret = PlatformMgr().StartEventLoopTask();
     if (ret != CHIP_NO_ERROR)
@@ -344,7 +363,7 @@ int AppTask::Init()
             ;
     }
 
-    PlatformMgr().AddEventHandler(DeviceEventCallback, reinterpret_cast<intptr_t>(nullptr));
+    TEMPORARY_RETURN_IGNORED PlatformMgr().AddEventHandler(DeviceEventCallback, reinterpret_cast<intptr_t>(nullptr));
 
     uiInit();
 
@@ -377,11 +396,34 @@ int AppTask::Init()
     return 0;
 }
 
+#ifdef ENABLE_CHIP_SHELL
+void matterShellTask(void * args)
+{
+    cmd_misc_init();
+    cmd_otcli_init();
+    chip::Shell::Engine::Root().RunMainLoop();
+}
+
+void startShellTask()
+{
+    if (chip::Shell::Engine::Root().Init() < 0)
+    {
+        ChipLogError(DeviceLayer, "Failed to initialize shell engine!");
+        return;
+    }
+    xTaskCreate(matterShellTask, "matter_shell", 2048, NULL, tskIDLE_PRIORITY + 1, NULL);
+}
+#endif
+
 void AppTask::AppTaskMain(void * pvParameter)
 {
     AppEvent event;
 
     sAppTask.Init();
+
+#ifdef ENABLE_CHIP_SHELL
+    startShellTask();
+#endif
 
     while (1)
     {
@@ -423,6 +465,7 @@ void CancelTimer(void)
 
 void AppTask::ActionInitiated(LightingManager::Action_t aAction, int32_t aActor)
 {
+    PLAT_LOG("Lighting ActionInitiated Callback");
     if (aAction == LightingManager::ON_ACTION)
     {
         uiTurnOn();
@@ -435,6 +478,7 @@ void AppTask::ActionInitiated(LightingManager::Action_t aAction, int32_t aActor)
 
 void AppTask::ActionCompleted(LightingManager::Action_t aAction)
 {
+    PLAT_LOG("Lighting ActionCompleted Callback");
     if (aAction == LightingManager::ON_ACTION)
     {
         uiTurnedOn();
@@ -482,6 +526,7 @@ void AppTask::PostEvent(const AppEvent * aEvent)
 void AppTask::DispatchEvent(AppEvent * aEvent)
 {
     int32_t actor;
+    PLAT_LOG("DispatchEvent Entry");
 
     switch (aEvent->Type)
     {
@@ -498,6 +543,8 @@ void AppTask::DispatchEvent(AppEvent * aEvent)
             PlatformMgr().ScheduleWork([](intptr_t) { app::ICDNotifier::GetInstance().NotifyNetworkActivityNotification(); });
 #else
             actor = AppEvent::kEventType_ButtonLeft;
+            PLAT_LOG("DispatchEvent Entry on action");
+
             LightMgr().InitiateAction(actor, LightingManager::ON_ACTION);
 #endif
         }
@@ -554,7 +601,7 @@ void AppTask::DispatchEvent(AppEvent * aEvent)
             else
             {
                 // Disable BLE advertisements
-                ConnectivityMgr().SetBLEAdvertisingEnabled(false);
+                TEMPORARY_RETURN_IGNORED ConnectivityMgr().SetBLEAdvertisingEnabled(false);
                 PLAT_LOG("Disabled BLE Advertisements");
             }
         }

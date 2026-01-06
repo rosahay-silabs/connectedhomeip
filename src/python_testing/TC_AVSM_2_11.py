@@ -37,14 +37,15 @@
 
 import logging
 
-import chip.clusters as Clusters
-from chip.clusters import Globals
-from chip.interaction_model import InteractionModelError, Status
-from chip.testing.matter_testing import MatterBaseTest, TestStep, default_matter_test_main, has_feature, run_if_endpoint_matches
 from mobly import asserts
 from TC_AVSMTestBase import AVSMTestBase
 
-logger = logging.getLogger(__name__)
+import matter.clusters as Clusters
+from matter.clusters import Globals
+from matter.interaction_model import InteractionModelError, Status
+from matter.testing.matter_testing import MatterBaseTest, TestStep, default_matter_test_main, has_feature, run_if_endpoint_matches
+
+log = logging.getLogger(__name__)
 
 
 class TC_AVSM_2_11(MatterBaseTest, AVSMTestBase):
@@ -59,41 +60,51 @@ class TC_AVSM_2_11(MatterBaseTest, AVSMTestBase):
             TestStep("precondition", "DUT commissioned and preconditions", is_commissioning=True),
             TestStep(
                 1,
-                "TH reads AllocatedSnapshotStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                "TH reads AllocatedSnapshotStreams attribute from CameraAVStreamManagement Cluster on DUT",
                 "Verify the number of allocated snapshot streams in the list is 1. Store StreamID as aStreamID.",
             ),
             TestStep(
                 2,
-                "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                "TH reads AllocatedVideoStreams attribute from CameraAVStreamManagement Cluster on DUT.",
                 "Verify the number of allocated video streams in the list is 0.",
             ),
             TestStep(
                 3,
-                "TH reads AllocatedAudioStreams attribute from CameraAVStreamManagement Cluster on TH_SERVER",
+                "TH reads AllocatedAudioStreams attribute from CameraAVStreamManagement Cluster on DUT",
                 "Verify the number of allocated audio streams in the list is 0.",
             ),
             TestStep(
                 4,
-                "TH reads SupportedStreamUsages attribute from CameraAVStreamManagement Cluster on TH_SERVER.",
+                "TH reads SupportedStreamUsages attribute from CameraAVStreamManagement Cluster on DUT.",
                 "Store this value in aSupportedStreamUsages.",
             ),
             TestStep(
                 5,
+                "TH sends the SetStreamPriorities command with StreamPriorities set as a subset of aSupportedStreamUsages.",
+                "DUT responds with a INVALID_IN_STATE status code.",
+            ),
+            TestStep(
+                6,
                 "TH sends the SnapshotStreamDeallocate command with SnapshotStreamID set to aStreamID.",
                 "DUT responds with a SUCCESS status code.",
             ),
             TestStep(
-                6,
+                7,
                 "TH sends the SetStreamPriorities command with StreamPriorities set as a subset of aSupportedStreamUsages.",
                 "DUT responds with a SUCCESS status code.",
             ),
             TestStep(
-                7,
+                8,
+                "TH reads StreamUsagePriorities attribute from CameraAVStreamManagement Cluster on DUT.",
+                "Verify the list is the same as set in StreamPriorities in step 7.",
+            ),
+            TestStep(
+                9,
                 "TH sends the SetStreamPriorities command with StreamPriorities containing a StreamUsage not in aSupportedStreamUsages.",
                 "DUT responds with a DYNAMIC_CONSTRAINT_ERROR status code.",
             ),
             TestStep(
-                8,
+                10,
                 "TH sends the SetStreamPriorities command with StreamPriorities containing duplicate StreamUsage values from aSupportedStreamUsages.",
                 "DUT responds with a ALREADY_EXISTS status code.",
             ),
@@ -105,7 +116,7 @@ class TC_AVSM_2_11(MatterBaseTest, AVSMTestBase):
         and has_feature(Clusters.CameraAvStreamManagement, Clusters.CameraAvStreamManagement.Bitmaps.Feature.kVideo)
     )
     async def test_TC_AVSM_2_11(self):
-        endpoint = self.get_endpoint(default=1)
+        endpoint = self.get_endpoint()
         cluster = Clusters.CameraAvStreamManagement
         attr = Clusters.CameraAvStreamManagement.Attributes
         commands = Clusters.CameraAvStreamManagement.Commands
@@ -118,7 +129,7 @@ class TC_AVSM_2_11(MatterBaseTest, AVSMTestBase):
         aAllocatedSnapshotStreams = await self.read_single_attribute_check_success(
             endpoint=endpoint, cluster=cluster, attribute=attr.AllocatedSnapshotStreams
         )
-        logger.info(f"Rx'd AllocatedSnapshotStreams: {aAllocatedSnapshotStreams}")
+        log.info(f"Rx'd AllocatedSnapshotStreams: {aAllocatedSnapshotStreams}")
         asserts.assert_equal(len(aAllocatedSnapshotStreams), 1, "The number of allocated snapshot streams in the list is not 1.")
         aStreamID = aAllocatedSnapshotStreams[0].snapshotStreamID
 
@@ -126,71 +137,91 @@ class TC_AVSM_2_11(MatterBaseTest, AVSMTestBase):
         aAllocatedVideoStreams = await self.read_single_attribute_check_success(
             endpoint=endpoint, cluster=cluster, attribute=attr.AllocatedVideoStreams
         )
-        logger.info(f"Rx'd AllocatedVideoStreams: {aAllocatedVideoStreams}")
+        log.info(f"Rx'd AllocatedVideoStreams: {aAllocatedVideoStreams}")
         asserts.assert_equal(len(aAllocatedVideoStreams), 0, "The number of allocated video streams in the list is not 0")
 
         self.step(3)
         aAllocatedAudioStreams = await self.read_single_attribute_check_success(
             endpoint=endpoint, cluster=cluster, attribute=attr.AllocatedAudioStreams
         )
-        logger.info(f"Rx'd AllocatedAudioStreams: {aAllocatedAudioStreams}")
+        log.info(f"Rx'd AllocatedAudioStreams: {aAllocatedAudioStreams}")
         asserts.assert_equal(len(aAllocatedAudioStreams), 0, "The number of allocated audio streams in the list is not 0.")
 
         self.step(4)
         aSupportedStreamUsages = await self.read_single_attribute_check_success(
             endpoint=endpoint, cluster=cluster, attribute=attr.SupportedStreamUsages
         )
-        logger.info(f"Rx'd SupportedStreamUsages: {aSupportedStreamUsages}")
+        log.info(f"Rx'd SupportedStreamUsages: {aSupportedStreamUsages}")
 
         self.step(5)
+        try:
+            await self.send_single_cmd(endpoint=endpoint, cmd=commands.SetStreamPriorities(streamPriorities=aSupportedStreamUsages))
+            asserts.fail("Unexpected success when expecting INVALID_IN_STATE due to allocated SnapshotStream")
+        except InteractionModelError as e:
+            asserts.assert_equal(
+                e.status,
+                Status.InvalidInState,
+                "Unexpected error returned expecting INVALID_IN_STATE due to allocated SnapshotStream",
+            )
+            pass
+
+        self.step(6)
         try:
             await self.send_single_cmd(endpoint=endpoint, cmd=commands.SnapshotStreamDeallocate(snapshotStreamID=aStreamID))
         except InteractionModelError as e:
             asserts.assert_equal(e.status, Status.Success, "Unexpected error returned")
             pass
 
-        self.step(6)
+        self.step(7)
         try:
+            aStreamUsagePriorities = aSupportedStreamUsages[0:1]
             await self.send_single_cmd(
-                endpoint=endpoint, cmd=commands.SetStreamPriorities(streamPriorities=(aSupportedStreamUsages))
+                endpoint=endpoint, cmd=commands.SetStreamPriorities(streamPriorities=(aStreamUsagePriorities))
             )
         except InteractionModelError as e:
             asserts.assert_equal(e.status, Status.Success, "Unexpected error returned")
             pass
 
-        self.step(7)
+        self.step(8)
+        readStreamUsagePriorities = await self.read_single_attribute_check_success(
+            endpoint=endpoint, cluster=cluster, attribute=attr.StreamUsagePriorities
+        )
+        log.info(f"Rx'd StreamUsagePriorities: {readStreamUsagePriorities}")
+        asserts.assert_equal(readStreamUsagePriorities, aStreamUsagePriorities,
+                             "The read StreamUsagePriorities is different from the one set in SetStreamPriorities")
+
+        self.step(9)
         try:
-            notSupportedStreamUsage = next((e for e in Globals.Enums.StreamUsageEnum if e not in aSupportedStreamUsages), None)
+            notSupportedStreamUsage = next(
+                (e for e in Globals.Enums.StreamUsageEnum if e not in aSupportedStreamUsages and e != Globals.Enums.StreamUsageEnum.kInternal), None)
             await self.send_single_cmd(
                 endpoint=endpoint, cmd=commands.SetStreamPriorities(streamPriorities=([notSupportedStreamUsage]))
             )
-            asserts.assert_true(
-                False,
-                "Unexpected success when expecting INVALID_DATA_TYPE due to StreamPriorities containing a StreamUsage not in aSupportedStreamUsages",
+            asserts.fail(
+                "Unexpected success when expecting DYNAMIC_CONSTRAINT_ERROR due to StreamPriorities containing a StreamUsage not in aSupportedStreamUsages"
             )
         except InteractionModelError as e:
             asserts.assert_equal(
                 e.status,
                 Status.DynamicConstraintError,
-                "Unexpected error returned expecting INVALID_DATA_TYPE due to StreamPriorities containing a StreamUsage not in aSupportedStreamUsages",
+                "Unexpected error returned expecting DYNAMIC_CONSTRAINT_ERROR due to StreamPriorities containing a StreamUsage not in aSupportedStreamUsages",
             )
             pass
 
-        self.step(8)
+        self.step(10)
         try:
             await self.send_single_cmd(
                 endpoint=endpoint,
                 cmd=commands.SetStreamPriorities(streamPriorities=(aSupportedStreamUsages + aSupportedStreamUsages)),
             )
-            asserts.assert_true(
-                False,
-                "Unexpected success when expecting CONSTRAINT_ERROR due to StreamPriorities containing duplicate StreamUsage values from aSupportedStreamUsages",
+            asserts.fail(
+                "Unexpected success when expecting ALREADY_EXISTS due to StreamPriorities containing duplicate StreamUsage values from aSupportedStreamUsages",
             )
         except InteractionModelError as e:
             asserts.assert_equal(
                 e.status,
                 Status.AlreadyExists,
-                "Unexpected error returned when expecting CONSTRAINT_ERROR due to StreamPriorities containing duplicate StreamUsage values from aSupportedStreamUsages",
+                "Unexpected error returned when expecting ALREADY_EXISTS due to StreamPriorities containing duplicate StreamUsage values from aSupportedStreamUsages",
             )
             pass
 
