@@ -78,6 +78,7 @@ declare_args() {
 if (use_SiWx917) {
   disable_lcd = true
   show_qr_code = false
+  # TODO: Add support for external flash with NCP
   use_external_flash = false
 }
 
