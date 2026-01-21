@@ -39,9 +39,7 @@ config("siwx-ncp-config") {
 
 source_set("siwx-ncp") {
   sources = [
-    # TODO: Prefer using Wiseconnect SDK provided host file instead of this copy
     "${chip_root}/src/platform/silabs/wifi/SiWx/ncp/sl_si91x_ncp_utility.c",
-    "${chip_root}/src/platform/silabs/wifi/ncp/spi_multiplex.h",
 
     # si91x_support component
     # sl_si91x_wireless component
