@@ -270,18 +270,13 @@ uint32_t SlWiFiDriver::GetSupportedWiFiBandsMask() const
     return WifiInterface::GetInstance().GetSupportedWiFiBandsMask();
 }
 
-bool SlWiFiDriver::StartScanWiFiNetworks(ByteSpan ssid)
+CHIP_ERROR SlWiFiDriver::StartScanWiFiNetworks(ByteSpan ssid)
 {
     ChipLogProgress(DeviceLayer, "Start Scan WiFi Networks");
     CHIP_ERROR err = WifiInterface::GetInstance().StartNetworkScan(ssid, OnScanWiFiNetworkDone);
-
-    if (err != CHIP_NO_ERROR)
-    {
-        ChipLogError(DeviceLayer, "StartNetworkScan failed: %" CHIP_ERROR_FORMAT, err.Format());
-        return false;
-    }
-
-    return true;
+    VerifyOrReturnError(CHIP_NO_ERROR == err, err,
+                        ChipLogError(DeviceLayer, "StartNetworkScan failed: %" CHIP_ERROR_FORMAT, err.Format()));
+    return err;
 }
 
 void SlWiFiDriver::OnScanWiFiNetworkDone(wfx_wifi_scan_result_t * aScanResult)
@@ -333,7 +328,7 @@ void SlWiFiDriver::ScanNetworks(ByteSpan ssid, WiFiDriver::ScanCallback * callba
     if (callback != nullptr)
     {
         mpScanCallback = callback;
-        if (!StartScanWiFiNetworks(ssid))
+        if (CHIP_NO_ERROR != StartScanWiFiNetworks(ssid))
         {
             ChipLogError(DeviceLayer, "ScanWiFiNetworks failed to start");
             mpScanCallback = nullptr;

@@ -131,7 +131,7 @@ public:
 
 private:
     bool NetworkMatch(const WiFiNetwork & network, ByteSpan networkId);
-    bool StartScanWiFiNetworks(ByteSpan ssid);
+    CHIP_ERROR StartScanWiFiNetworks(ByteSpan ssid);
     static void OnScanWiFiNetworkDone(wfx_wifi_scan_result_t * aScanResult);
 
     static SlWiFiDriver * mDriver;
