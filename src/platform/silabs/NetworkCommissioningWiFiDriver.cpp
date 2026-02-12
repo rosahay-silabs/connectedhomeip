@@ -330,7 +330,6 @@ void SlWiFiDriver::ScanNetworks(ByteSpan ssid, WiFiDriver::ScanCallback * callba
         mpScanCallback = callback;
         if (CHIP_NO_ERROR != StartScanWiFiNetworks(ssid))
         {
-            ChipLogError(DeviceLayer, "ScanWiFiNetworks failed to start");
             mpScanCallback = nullptr;
             callback->OnFinished(Status::kUnknownError, CharSpan(), nullptr);
         }
