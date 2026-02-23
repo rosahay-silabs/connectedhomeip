@@ -106,7 +106,7 @@ uint8_t softap_channel                 = SOFTAP_CHANNEL_DEFAULT;
 
 /* station network interface structures */
 struct netif * sta_netif;
-WifiInterface::WifiCredentials wifi_provision;
+WifiInterface::WiFiNetwork wifi_provision;
 #define PUT_COUNTER(name) ChipLogDetail(DeviceLayer, "%-24s %lu", #name, (unsigned long) counters->body.count_##name);
 
 bool hasNotifiedWifiConnectivity = false;
@@ -767,7 +767,7 @@ void WifiInterfaceImpl::ClearWifiCredentials()
     wifi_provision.Clear();
 }
 
-CHIP_ERROR WifiInterfaceImpl::GetWifiCredentials(WifiCredentials & credentials)
+CHIP_ERROR WifiInterfaceImpl::GetWifiCredentials(WiFiNetwork & credentials)
 {
     VerifyOrReturnError(IsWifiProvisioned(), CHIP_ERROR_INCORRECT_STATE);
     credentials = wifi_provision;
@@ -781,7 +781,7 @@ bool WifiInterfaceImpl::IsWifiProvisioned()
     return wifi_provision.ssid[0] != 0;
 }
 
-void WifiInterfaceImpl::SetWifiCredentials(const WifiCredentials & credentials)
+void WifiInterfaceImpl::SetWifiCredentials(const WiFiNetwork & credentials)
 {
     wifi_provision = credentials;
 }
@@ -798,29 +798,12 @@ CHIP_ERROR WifiInterfaceImpl::ConnectToAccessPoint(void)
                   "Time: %d, Number of prob: %d",
                   ACTIVE_CHANNEL_TIME, PASSIVE_CHANNEL_TIME, NUM_PROBE_REQUEST);
     (void) sl_wfx_set_scan_parameters(ACTIVE_CHANNEL_TIME, PASSIVE_CHANNEL_TIME, NUM_PROBE_REQUEST);
-    switch (wifi_provision.security)
-    {
-    case WFX_SEC_WEP:
-        connect_security_mode = sl_wfx_security_mode_e::WFM_SECURITY_MODE_WEP;
-        break;
-    case WFX_SEC_WPA:
-    case WFX_SEC_WPA2:
-        connect_security_mode = sl_wfx_security_mode_e::WFM_SECURITY_MODE_WPA2_WPA1_PSK;
-        break;
-    case WFX_SEC_WPA3:
-        connect_security_mode = sl_wfx_security_mode_e::WFM_SECURITY_MODE_WPA3_SAE;
-        break;
-    case WFX_SEC_NONE:
-        connect_security_mode = sl_wfx_security_mode_e::WFM_SECURITY_MODE_OPEN;
-        break;
-    default:
-        ChipLogError(DeviceLayer, "error: unknown security type.");
-        return CHIP_ERROR_INVALID_ARGUMENT;
-    }
+    // WiFiNetwork does not carry security; default to WPA2 for Matter commissioning.
+    connect_security_mode = sl_wfx_security_mode_e::WFM_SECURITY_MODE_WPA2_WPA1_PSK;
 
-    sl_status_t status = sl_wfx_send_join_command(wifi_provision.ssid, wifi_provision.ssidLength, NULL, CHANNEL_0,
-                                                  connect_security_mode, PREVENT_ROAMING, DISABLE_PMF_MODE, wifi_provision.passkey,
-                                                  wifi_provision.passkeyLength, NULL, IE_DATA_LENGTH);
+    sl_status_t status = sl_wfx_send_join_command(wifi_provision.ssid, wifi_provision.ssidLen, NULL, CHANNEL_0,
+                                                  connect_security_mode, PREVENT_ROAMING, DISABLE_PMF_MODE,
+                                                  wifi_provision.credentials, wifi_provision.credentialsLen, NULL, IE_DATA_LENGTH);
     VerifyOrReturnError(status == SL_STATUS_OK, MATTER_PLATFORM_ERROR(status));
 
     return CHIP_NO_ERROR;
@@ -880,10 +863,10 @@ void WifiInterfaceImpl::ConnectionEventCallback(sl_wfx_connect_ind_body_t connec
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(securitySpan, apSecurityMutableSpan);
 
         // Store SSID
-        chip::ByteSpan apSsidSpan(wifi_provision.ssid, wifi_provision.ssidLength);
+        chip::ByteSpan apSsidSpan(wifi_provision.ssid, wifi_provision.ssidLen);
         chip::MutableByteSpan apSsidMutableSpan(ap_info.ssid, WFX_MAX_SSID_LENGTH);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(apSsidSpan, apSsidMutableSpan);
-        ap_info.ssid_length = wifi_provision.ssidLength;
+        ap_info.ssid_length = wifi_provision.ssidLen;
 
         // Store BSSID
         chip::ByteSpan macSpan(connect_indication_body.mac, kWifiMacAddressLength);

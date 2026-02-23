@@ -156,17 +156,15 @@ CHIP_ERROR SlWiFiDriver::ConnectWiFiNetwork(const char * ssid, uint8_t ssidLen, 
     ReturnErrorOnFailure(ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Disabled));
 
     // Set the wifi configuration
-    WifiInterface::WifiCredentials wifiConfig;
+    WifiInterface::WiFiNetwork wifiConfig;
 
     VerifyOrReturnError(ssidLen <= WFX_MAX_SSID_LENGTH, CHIP_ERROR_BUFFER_TOO_SMALL);
     memcpy(wifiConfig.ssid, ssid, ssidLen);
-    wifiConfig.ssidLength = ssidLen;
+    wifiConfig.ssidLen = static_cast<uint8_t>(ssidLen);
 
     VerifyOrReturnError(keyLen < WFX_MAX_PASSKEY_LENGTH, CHIP_ERROR_BUFFER_TOO_SMALL);
-    memcpy(wifiConfig.passkey, key, keyLen);
-    wifiConfig.passkeyLength = keyLen;
-
-    wifiConfig.security = WFX_SEC_WPA2;
+    memcpy(wifiConfig.credentials, key, keyLen);
+    wifiConfig.credentialsLen = keyLen;
 
     ChipLogProgress(NetworkProvisioning, "Setting up connection for WiFi SSID: %s", NullTerminated(ssid, ssidLen).c_str());
     // Resetting the retry connection state machine for a new access point connection
@@ -357,22 +355,22 @@ void SlWiFiDriver::ScanNetworks(ByteSpan ssid, WiFiDriver::ScanCallback * callba
 CHIP_ERROR GetConnectedNetwork(Network & network)
 {
     ChipLogProgress(DeviceLayer, "[SL] %s: start", __func__);
-    WifiInterface::WifiCredentials wifiConfig;
+    WifiInterface::WiFiNetwork wifiConfig;
     network.networkIDLen = 0;
     network.connected    = false;
 
     // we are able to fetch the wifi provision data and STA should be connected
     VerifyOrReturnError(WifiInterface::GetInstance().IsStationConnected(), CHIP_ERROR_NOT_CONNECTED);
     ReturnErrorOnFailure(WifiInterface::GetInstance().GetWifiCredentials(wifiConfig));
-    VerifyOrReturnError(wifiConfig.ssidLength <= NetworkCommissioning::kMaxNetworkIDLen, CHIP_ERROR_BUFFER_TOO_SMALL);
+    VerifyOrReturnError(wifiConfig.ssidLen <= NetworkCommissioning::kMaxNetworkIDLen, CHIP_ERROR_BUFFER_TOO_SMALL);
 
     network.connected = true;
 
-    ByteSpan ssidSpan(wifiConfig.ssid, wifiConfig.ssidLength);
+    ByteSpan ssidSpan(reinterpret_cast<const uint8_t *>(wifiConfig.ssid), wifiConfig.ssidLen);
     MutableByteSpan networkIdSpan(network.networkID, NetworkCommissioning::kMaxNetworkIDLen);
 
     ReturnErrorOnFailure(CopySpanToMutableSpan(ssidSpan, networkIdSpan));
-    network.networkIDLen = networkIdSpan.size();
+    network.networkIDLen = wifiConfig.ssidLen;
 
     return CHIP_NO_ERROR;
 }

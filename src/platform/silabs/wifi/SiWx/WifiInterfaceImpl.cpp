@@ -402,9 +402,9 @@ sl_status_t InitiateScan()
     sl_wifi_ssid_t ssid                                  = { 0 };
     sl_wifi_scan_configuration_t wifi_scan_configuration = default_wifi_scan_configuration;
 
-    ssid.length = wfx_rsi.credentials.ssidLength;
+    ssid.length = wfx_rsi.credentials.ssidLen;
 
-    chip::ByteSpan requestedSsidSpan(wfx_rsi.credentials.ssid, wfx_rsi.credentials.ssidLength);
+    chip::ByteSpan requestedSsidSpan(reinterpret_cast<const uint8_t *>(wfx_rsi.credentials.ssid), wfx_rsi.credentials.ssidLen);
     chip::MutableByteSpan ssidSpan(ssid.value, ssid.length);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(requestedSsidSpan, ssidSpan);
 
@@ -449,10 +449,10 @@ sl_status_t SetWifiConfigurations()
     join_feature_bitmap |= SL_SI91X_JOIN_FEAT_PS_CMD_LISTEN_INTERVAL_VALID;
 #endif // CHIP_CONFIG_ENABLE_ICD_SERVER
 
-    if (wfx_rsi.credentials.passkeyLength != 0)
+    if (wfx_rsi.credentials.credentialsLen != 0)
     {
-        status = sl_net_set_credential(SL_NET_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID, SL_NET_WIFI_PSK, &wfx_rsi.credentials.passkey[0],
-                                       wfx_rsi.credentials.passkeyLength);
+        status = sl_net_set_credential(SL_NET_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID, SL_NET_WIFI_PSK,
+                                       &wfx_rsi.credentials.credentials[0], wfx_rsi.credentials.credentialsLen);
         VerifyOrReturnError(status == SL_STATUS_OK, status,
                             ChipLogError(DeviceLayer, "sl_net_set_credential failed: 0x%lx", status));
     }
@@ -462,7 +462,7 @@ sl_status_t SetWifiConfigurations()
             .ssid = {
                 .value  = { 0 },
                 //static cast because the types dont match
-                .length = static_cast<uint8_t>(wfx_rsi.credentials.ssidLength),
+                .length = wfx_rsi.credentials.ssidLen,
             },
             .channel = {
                 .channel = SL_WIFI_AUTO_CHANNEL,
@@ -485,7 +485,7 @@ sl_status_t SetWifiConfigurations()
     };
 
     chip::MutableByteSpan output(profile.config.ssid.value, WFX_MAX_SSID_LENGTH);
-    chip::ByteSpan input(wfx_rsi.credentials.ssid, wfx_rsi.credentials.ssidLength);
+    chip::ByteSpan input(reinterpret_cast<const uint8_t *>(wfx_rsi.credentials.ssid), wfx_rsi.credentials.ssidLen);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(input, output);
 
     if (wfx_rsi.ap_chan != SL_WIFI_AUTO_CHANNEL)
@@ -778,7 +778,7 @@ CHIP_ERROR WifiInterfaceImpl::GetAccessPointInfo(wfx_wifi_scan_result_t & info)
     info.chan     = wfx_rsi.ap_chan;
 
     chip::MutableByteSpan output(info.ssid, WFX_MAX_SSID_LENGTH);
-    chip::ByteSpan ssid(wfx_rsi.credentials.ssid, wfx_rsi.credentials.ssidLength);
+    chip::ByteSpan ssid(reinterpret_cast<const uint8_t *>(wfx_rsi.credentials.ssid), wfx_rsi.credentials.ssidLen);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(ssid, output);
     info.ssid_length = output.size();
 
@@ -1063,7 +1063,7 @@ void WifiInterfaceImpl::ClearWifiCredentials()
     wfx_rsi.dev_state.Clear(WifiState::kStationProvisioned);
 }
 
-CHIP_ERROR WifiInterfaceImpl::GetWifiCredentials(WifiCredentials & credentials)
+CHIP_ERROR WifiInterfaceImpl::GetWifiCredentials(WiFiNetwork & credentials)
 {
     VerifyOrReturnError(wfx_rsi.dev_state.Has(WifiState::kStationProvisioned), CHIP_ERROR_INCORRECT_STATE);
     credentials = wfx_rsi.credentials;
@@ -1076,7 +1076,7 @@ bool WifiInterfaceImpl::IsWifiProvisioned()
     return wfx_rsi.dev_state.Has(WifiState::kStationProvisioned);
 }
 
-void WifiInterfaceImpl::SetWifiCredentials(const WifiCredentials & credentials)
+void WifiInterfaceImpl::SetWifiCredentials(const WiFiNetwork & credentials)
 {
     wfx_rsi.credentials = credentials;
     wfx_rsi.dev_state.Set(WifiState::kStationProvisioned);
@@ -1085,10 +1085,10 @@ void WifiInterfaceImpl::SetWifiCredentials(const WifiCredentials & credentials)
 CHIP_ERROR WifiInterfaceImpl::ConnectToAccessPoint()
 {
     VerifyOrReturnError(IsWifiProvisioned(), CHIP_ERROR_INCORRECT_STATE);
-    VerifyOrReturnError(wfx_rsi.credentials.ssidLength, CHIP_ERROR_INCORRECT_STATE);
+    VerifyOrReturnError(wfx_rsi.credentials.ssidLen, CHIP_ERROR_INCORRECT_STATE);
 
     // TODO: We should move this validation to where we set the credentials. It is too late here.
-    VerifyOrReturnError(wfx_rsi.credentials.ssidLength <= WFX_MAX_SSID_LENGTH, CHIP_ERROR_INVALID_ARGUMENT);
+    VerifyOrReturnError(wfx_rsi.credentials.ssidLen <= WFX_MAX_SSID_LENGTH, CHIP_ERROR_INVALID_ARGUMENT);
 
     ChipLogProgress(DeviceLayer, "connect to access point: %s", wfx_rsi.credentials.ssid);
 

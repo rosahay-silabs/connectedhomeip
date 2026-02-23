@@ -50,8 +50,8 @@ public:
     CHIP_ERROR GetAccessPointExtendedInfo(wfx_wifi_scan_ext_t & info) override;
     CHIP_ERROR ResetCounters() override;
     void ClearWifiCredentials() override;
-    void SetWifiCredentials(const WifiCredentials & credentials) override;
-    CHIP_ERROR GetWifiCredentials(WifiCredentials & credentials) override;
+    void SetWifiCredentials(const WiFiNetwork & credentials) override;
+    CHIP_ERROR GetWifiCredentials(WiFiNetwork & credentials) override;
     bool IsWifiProvisioned() override;
     CHIP_ERROR ConnectToAccessPoint(void) override;
 #if CHIP_CONFIG_ENABLE_ICD_SERVER

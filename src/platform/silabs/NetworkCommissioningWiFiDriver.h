@@ -91,13 +91,7 @@ public:
         bool mExhausted = false;
     };
 
-    struct WiFiNetwork
-    {
-        char ssid[DeviceLayer::Internal::kMaxWiFiSSIDLength];
-        uint8_t ssidLen = 0;
-        char credentials[DeviceLayer::Internal::kMaxWiFiKeyLength];
-        uint8_t credentialsLen = 0;
-    };
+    using WiFiNetwork = Silabs::WifiInterface::WiFiNetwork;
 
     // BaseDriver
     NetworkIterator * GetNetworks() override { return new WiFiNetworkIterator(this); }

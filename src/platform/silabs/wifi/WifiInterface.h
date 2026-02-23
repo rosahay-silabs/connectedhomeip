@@ -150,26 +150,26 @@ public:
         kWPACouterMeasures = 5, // WPA contermeasures triggered a disconnection
     };
 
-    // TODO: Figure out if we need this structure. We have different strcutures for the same use
-    struct WifiCredentials
+    /** WiFi network credentials; matches NetworkCommissioning::SlWiFiDriver::WiFiNetwork layout. */
+    struct WiFiNetwork
     {
-        WifiCredentials() { Clear(); }
+        WiFiNetwork() { Clear(); }
 
-        uint8_t ssid[WFX_MAX_SSID_LENGTH]       = { 0 };
-        size_t ssidLength                       = 0;
-        uint8_t passkey[WFX_MAX_PASSKEY_LENGTH] = { 0 };
-        size_t passkeyLength                    = 0;
-        wfx_sec_t security                      = WFX_SEC_UNSPECIFIED;
+        char ssid[WFX_MAX_SSID_LENGTH]           = { 0 };
+        uint8_t ssidLen                          = 0;
+        char credentials[WFX_MAX_PASSKEY_LENGTH] = { 0 };
+        uint8_t credentialsLen                   = 0;
+        wfx_sec_t security                       = WFX_SEC_UNSPECIFIED;
 
-        WifiCredentials & operator=(const WifiCredentials & other)
+        WiFiNetwork & operator=(const WiFiNetwork & other)
         {
             if (this != &other)
             {
                 memcpy(ssid, other.ssid, WFX_MAX_SSID_LENGTH);
-                ssidLength = other.ssidLength;
-                memcpy(passkey, other.passkey, WFX_MAX_PASSKEY_LENGTH);
-                passkeyLength = other.passkeyLength;
-                security      = other.security;
+                ssidLen = other.ssidLen;
+                memcpy(credentials, other.credentials, WFX_MAX_PASSKEY_LENGTH);
+                credentialsLen = other.credentialsLen;
+                security       = other.security;
             }
             return *this;
         }
@@ -177,10 +177,10 @@ public:
         void Clear()
         {
             memset(ssid, 0, WFX_MAX_SSID_LENGTH);
-            ssidLength = 0;
-            memset(passkey, 0, WFX_MAX_PASSKEY_LENGTH);
-            passkeyLength = 0;
-            security      = WFX_SEC_UNSPECIFIED;
+            ssidLen = 0;
+            memset(credentials, 0, WFX_MAX_PASSKEY_LENGTH);
+            credentialsLen = 0;
+            security       = WFX_SEC_UNSPECIFIED;
         }
     };
 
@@ -308,7 +308,7 @@ public:
      *
      * @param[in] credentials
      */
-    virtual void SetWifiCredentials(const WifiCredentials & credentials) = 0;
+    virtual void SetWifiCredentials(const WiFiNetwork & credentials) = 0;
 
     /**
      * @brief Returns the configured Wi-Fi credentials
@@ -318,7 +318,7 @@ public:
      * @return CHIP_ERROR CHIP_ERROR_INCORRECT_STATE, if the device does not have any set credentials
      *                    CHIP_NO_ERROR, otherwise
      */
-    virtual CHIP_ERROR GetWifiCredentials(WifiCredentials & credentials) = 0;
+    virtual CHIP_ERROR GetWifiCredentials(WiFiNetwork & credentials) = 0;
 
     /**
      * @brief Triggers a connection attempt the Access Point who's crendetials match the ones store with the SetWifiCredentials API.
@@ -436,7 +436,7 @@ typedef struct wfx_rsi_s
 {
     chip::BitFlags<chip::DeviceLayer::Silabs::WifiInterface::WifiState> dev_state;
     uint16_t ap_chan; /* The chan our STA is using	*/
-    chip::DeviceLayer::Silabs::WifiInterface::WifiCredentials credentials;
+    chip::DeviceLayer::Silabs::WifiInterface::WiFiNetwork credentials;
     ScanCallback scan_cb;
 #ifdef SL_WFX_CONFIG_SOFTAP
     chip::DeviceLayer::Silabs::WifiInterface::MacAddress softap_mac;
