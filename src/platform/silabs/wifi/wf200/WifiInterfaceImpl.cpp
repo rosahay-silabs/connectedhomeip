@@ -802,8 +802,8 @@ CHIP_ERROR WifiInterfaceImpl::ConnectToAccessPoint(void)
     connect_security_mode = sl_wfx_security_mode_e::WFM_SECURITY_MODE_WPA2_WPA1_PSK;
 
     sl_status_t status = sl_wfx_send_join_command(wifi_provision.ssid, wifi_provision.ssidLen, NULL, CHANNEL_0,
-                                                  connect_security_mode, PREVENT_ROAMING, DISABLE_PMF_MODE,
-                                                  wifi_provision.credentials, wifi_provision.credentialsLen, NULL, IE_DATA_LENGTH);
+                                                  connect_security_mode, PREVENT_ROAMING, DISABLE_PMF_MODE, wifi_provision.key,
+                                                  wifi_provision.keyLen, NULL, IE_DATA_LENGTH);
     VerifyOrReturnError(status == SL_STATUS_OK, MATTER_PLATFORM_ERROR(status));
 
     return CHIP_NO_ERROR;

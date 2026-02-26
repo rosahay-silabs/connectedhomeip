@@ -449,10 +449,10 @@ sl_status_t SetWifiConfigurations()
     join_feature_bitmap |= SL_SI91X_JOIN_FEAT_PS_CMD_LISTEN_INTERVAL_VALID;
 #endif // CHIP_CONFIG_ENABLE_ICD_SERVER
 
-    if (wfx_rsi.credentials.credentialsLen != 0)
+    if (wfx_rsi.credentials.keyLen != 0)
     {
-        status = sl_net_set_credential(SL_NET_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID, SL_NET_WIFI_PSK,
-                                       &wfx_rsi.credentials.credentials[0], wfx_rsi.credentials.credentialsLen);
+        status = sl_net_set_credential(SL_NET_DEFAULT_WIFI_CLIENT_CREDENTIAL_ID, SL_NET_WIFI_PSK, &wfx_rsi.credentials.key[0],
+                                       wfx_rsi.credentials.keyLen);
         VerifyOrReturnError(status == SL_STATUS_OK, status,
                             ChipLogError(DeviceLayer, "sl_net_set_credential failed: 0x%lx", status));
     }

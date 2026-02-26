@@ -155,11 +155,13 @@ public:
     {
         WiFiNetwork() { Clear(); }
 
-        char ssid[WFX_MAX_SSID_LENGTH]           = { 0 };
-        uint8_t ssidLen                          = 0;
-        char credentials[WFX_MAX_PASSKEY_LENGTH] = { 0 };
-        uint8_t credentialsLen                   = 0;
-        wfx_sec_t security                       = WFX_SEC_UNSPECIFIED;
+        char ssid[WFX_MAX_SSID_LENGTH] = { 0 };
+        uint8_t ssidLen                = 0;
+
+        char key[WFX_MAX_PASSKEY_LENGTH] = { 0 };
+        uint8_t keyLen                   = 0;
+
+        wfx_sec_t security = WFX_SEC_UNSPECIFIED;
 
         WiFiNetwork & operator=(const WiFiNetwork & other)
         {
@@ -167,9 +169,11 @@ public:
             {
                 memcpy(ssid, other.ssid, WFX_MAX_SSID_LENGTH);
                 ssidLen = other.ssidLen;
-                memcpy(credentials, other.credentials, WFX_MAX_PASSKEY_LENGTH);
-                credentialsLen = other.credentialsLen;
-                security       = other.security;
+
+                memcpy(key, other.key, WFX_MAX_PASSKEY_LENGTH);
+                keyLen = other.keyLen;
+
+                security = other.security;
             }
             return *this;
         }
@@ -178,9 +182,11 @@ public:
         {
             memset(ssid, 0, WFX_MAX_SSID_LENGTH);
             ssidLen = 0;
-            memset(credentials, 0, WFX_MAX_PASSKEY_LENGTH);
-            credentialsLen = 0;
-            security       = WFX_SEC_UNSPECIFIED;
+
+            memset(key, 0, WFX_MAX_PASSKEY_LENGTH);
+            keyLen = 0;
+
+            security = WFX_SEC_UNSPECIFIED;
         }
     };
 
