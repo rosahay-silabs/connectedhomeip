@@ -42,6 +42,7 @@
 
 using namespace ::chip;
 using namespace ::chip::DeviceLayer;
+using namespace ::chip::DeviceLayer::Internal;
 using namespace ::chip::DeviceLayer::Silabs;
 using WiFiBandEnum = chip::app::Clusters::NetworkCommissioning::WiFiBandEnum;
 
@@ -436,7 +437,7 @@ static void sl_wfx_scan_result_callback(sl_wfx_scan_result_ind_body_t * scan_res
     scan_save = ap;
 
     // Copy scanned SSID to the output buffer
-    chip::MutableByteSpan outputSsid(ap->scan.ssid, WFX_MAX_SSID_LENGTH);
+    chip::MutableByteSpan outputSsid(ap->scan.ssid, kMaxWiFiSSIDLength);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(scannedSsid, outputSsid);
     ap->scan.ssid_length = outputSsid.size();
 
@@ -613,7 +614,7 @@ CHIP_ERROR WifiInterfaceImpl::StartNetworkScan(chip::ByteSpan ssid, ScanCallback
     VerifyOrReturnError(callback != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
 
     // SSID Max Length that is supported by the Wi-Fi SDK is 32
-    VerifyOrReturnError(ssid.size() <= WFX_MAX_SSID_LENGTH, CHIP_ERROR_INVALID_STRING_LENGTH);
+    VerifyOrReturnError(ssid.size() <= kMaxWiFiSSIDLength, CHIP_ERROR_INVALID_STRING_LENGTH);
 
     // Make sure memory is cleared before starting a new scan
     if (scan_ssid)
@@ -633,7 +634,7 @@ CHIP_ERROR WifiInterfaceImpl::StartNetworkScan(chip::ByteSpan ssid, ScanCallback
         scan_ssid        = reinterpret_cast<uint8_t *>(chip::Platform::MemoryAlloc(scan_ssid_length));
         VerifyOrReturnError(scan_ssid != nullptr, CHIP_ERROR_NO_MEMORY);
 
-        chip::MutableByteSpan scannedSsidSpan(scan_ssid, WFX_MAX_SSID_LENGTH);
+        chip::MutableByteSpan scannedSsidSpan(scan_ssid, kMaxWiFiSSIDLength);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(ssid, scannedSsidSpan);
     }
     scan_cb = callback;
@@ -699,12 +700,12 @@ CHIP_ERROR WifiInterfaceImpl::GetAccessPointInfo(wfx_wifi_scan_result_t & info)
     uint32_t signal_strength = 0;
 
     chip::ByteSpan apSsidSpan(ap_info.ssid, ap_info.ssid_length);
-    chip::MutableByteSpan apSsidMutableSpan(info.ssid, WFX_MAX_SSID_LENGTH);
+    chip::MutableByteSpan apSsidMutableSpan(info.ssid, kMaxWiFiSSIDLength);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(apSsidSpan, apSsidMutableSpan);
     info.ssid_length = apSsidMutableSpan.size();
 
-    chip::ByteSpan apBssidSpan(ap_info.bssid, kWifiMacAddressLength);
-    chip::MutableByteSpan apBssidMutableSpan(info.bssid, kWifiMacAddressLength);
+    chip::ByteSpan apBssidSpan(ap_info.bssid, kWiFiBSSIDLength);
+    chip::MutableByteSpan apBssidMutableSpan(info.bssid, kWiFiBSSIDLength);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(apBssidSpan, apBssidMutableSpan);
 
     info.security = ap_info.security;
@@ -864,17 +865,17 @@ void WifiInterfaceImpl::ConnectionEventCallback(sl_wfx_connect_ind_body_t connec
 
         // Store SSID
         chip::ByteSpan apSsidSpan(wifi_provision.ssid, wifi_provision.ssidLen);
-        chip::MutableByteSpan apSsidMutableSpan(ap_info.ssid, WFX_MAX_SSID_LENGTH);
+        chip::MutableByteSpan apSsidMutableSpan(ap_info.ssid, kMaxWiFiSSIDLength);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(apSsidSpan, apSsidMutableSpan);
         ap_info.ssid_length = wifi_provision.ssidLen;
 
         // Store BSSID
-        chip::ByteSpan macSpan(connect_indication_body.mac, kWifiMacAddressLength);
-        chip::MutableByteSpan apBssidMutableSpan(ap_info.bssid, kWifiMacAddressLength);
+        chip::ByteSpan macSpan(connect_indication_body.mac, kWiFiBSSIDLength);
+        chip::MutableByteSpan apBssidMutableSpan(ap_info.bssid, kWiFiBSSIDLength);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(macSpan, apBssidMutableSpan);
 
         // TODO: Refactor WifiInterface to use single representation of MAC address
-        chip::MutableByteSpan apMacMutableSpan(ap_mac.data(), kWifiMacAddressLength);
+        chip::MutableByteSpan apMacMutableSpan(ap_mac.data(), kWiFiBSSIDLength);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(macSpan, apMacMutableSpan);
 
         wifi_extra.Set(WifiInterface::WifiState::kStationConnected);
@@ -1025,7 +1026,7 @@ void WifiInterfaceImpl::ProcessEvents(void * arg)
             {
 
                 chip::ByteSpan requestedSsid(scan_ssid, scan_ssid_length);
-                chip::MutableByteSpan outputSsid(ssid.ssid, WFX_MAX_SSID_LENGTH);
+                chip::MutableByteSpan outputSsid(ssid.ssid, kMaxWiFiSSIDLength);
 
                 TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(requestedSsid, outputSsid);
                 ssid.ssid_length = outputSsid.size();

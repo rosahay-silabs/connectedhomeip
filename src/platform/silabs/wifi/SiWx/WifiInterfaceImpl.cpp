@@ -73,6 +73,7 @@ extern "C" {
 #endif // SLI_SI91X_MCU_INTERFACE
 #endif // CHIP_CONFIG_ENABLE_ICD_SERVER
 
+using namespace chip::DeviceLayer::Internal;
 using namespace chip::DeviceLayer::Silabs;
 using WiFiBandEnum = chip::app::Clusters::NetworkCommissioning::WiFiBandEnum;
 
@@ -258,17 +259,17 @@ sl_status_t BackgroundScanCallback(sl_wifi_event_t event, sl_wifi_scan_result_t 
         wfx_wifi_scan_result_t currentScanResult = { 0 };
 
         // Length excludes null-character
-        size_t scannedSsidLength = strnlen(reinterpret_cast<char *>(result->scan_info[i].ssid), WFX_MAX_SSID_LENGTH);
+        size_t scannedSsidLength = strnlen(reinterpret_cast<char *>(result->scan_info[i].ssid), kMaxWiFiSSIDLength);
         chip::ByteSpan scannedSsidSpan(result->scan_info[i].ssid, scannedSsidLength);
 
         // Copy the scanned SSID to the current scan ssid buffer that will be forwarded to the callback
-        chip::MutableByteSpan currentScanSsid(currentScanResult.ssid, WFX_MAX_SSID_LENGTH);
+        chip::MutableByteSpan currentScanSsid(currentScanResult.ssid, kMaxWiFiSSIDLength);
         ReturnValueOnFailure(chip::CopySpanToMutableSpan(scannedSsidSpan, currentScanSsid),
                              SL_STATUS_SI91X_MEMORY_IS_NOT_SUFFICIENT);
         currentScanResult.ssid_length = currentScanSsid.size();
 
-        chip::ByteSpan inBssid(result->scan_info[i].bssid, kWifiMacAddressLength);
-        chip::MutableByteSpan outBssid(currentScanResult.bssid, kWifiMacAddressLength);
+        chip::ByteSpan inBssid(result->scan_info[i].bssid, kWiFiBSSIDLength);
+        chip::MutableByteSpan outBssid(currentScanResult.bssid, kWiFiBSSIDLength);
         ReturnValueOnFailure(chip::CopySpanToMutableSpan(inBssid, outBssid), SL_STATUS_SI91X_MEMORY_IS_NOT_SUFFICIENT);
 
         // Convert sl_wifi_security_t to wfx_sec_t
@@ -387,8 +388,8 @@ sl_status_t ScanCallback(sl_wifi_event_t event, sl_wifi_scan_result_t * scan_res
         security        = static_cast<sl_wifi_security_t>(scan_result->scan_info[0].security_mode);
         wfx_rsi.ap_chan = scan_result->scan_info[0].rf_channel;
 
-        chip::MutableByteSpan bssidSpan(wfx_rsi.ap_bssid.data(), kWifiMacAddressLength);
-        chip::ByteSpan inBssid(scan_result->scan_info[0].bssid, kWifiMacAddressLength);
+        chip::MutableByteSpan bssidSpan(wfx_rsi.ap_bssid.data(), kWiFiBSSIDLength);
+        chip::ByteSpan inBssid(scan_result->scan_info[0].bssid, kWiFiBSSIDLength);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(inBssid, bssidSpan);
     }
 
@@ -484,7 +485,7 @@ sl_status_t SetWifiConfigurations()
         }
     };
 
-    chip::MutableByteSpan output(profile.config.ssid.value, WFX_MAX_SSID_LENGTH);
+    chip::MutableByteSpan output(profile.config.ssid.value, kMaxWiFiSSIDLength);
     chip::ByteSpan input(reinterpret_cast<const uint8_t *>(wfx_rsi.credentials.ssid), wfx_rsi.credentials.ssidLen);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(input, output);
 
@@ -494,8 +495,8 @@ sl_status_t SetWifiConfigurations()
         // Providing the channel and BSSID in the profile avoids scanning all channels again.
         profile.config.channel.channel = wfx_rsi.ap_chan;
 
-        chip::MutableByteSpan bssidSpan(profile.config.bssid.octet, kWifiMacAddressLength);
-        chip::ByteSpan inBssid(wfx_rsi.ap_bssid.data(), kWifiMacAddressLength);
+        chip::MutableByteSpan bssidSpan(profile.config.bssid.octet, kWiFiBSSIDLength);
+        chip::ByteSpan inBssid(wfx_rsi.ap_bssid.data(), kWiFiBSSIDLength);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(inBssid, bssidSpan);
         // Enabling quick-join since we have the channel and BSSID
         join_feature_bitmap |= SL_SI91X_JOIN_FEAT_QUICK_JOIN;
@@ -777,13 +778,13 @@ CHIP_ERROR WifiInterfaceImpl::GetAccessPointInfo(wfx_wifi_scan_result_t & info)
     info.security = wfx_rsi.credentials.security;
     info.chan     = wfx_rsi.ap_chan;
 
-    chip::MutableByteSpan output(info.ssid, WFX_MAX_SSID_LENGTH);
+    chip::MutableByteSpan output(info.ssid, kMaxWiFiSSIDLength);
     chip::ByteSpan ssid(reinterpret_cast<const uint8_t *>(wfx_rsi.credentials.ssid), wfx_rsi.credentials.ssidLen);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(ssid, output);
     info.ssid_length = output.size();
 
     chip::ByteSpan apBssidSpan(wfx_rsi.ap_bssid.data(), wfx_rsi.ap_bssid.size());
-    chip::MutableByteSpan bssidSpan(info.bssid, kWifiMacAddressLength);
+    chip::MutableByteSpan bssidSpan(info.bssid, kWiFiBSSIDLength);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(apBssidSpan, bssidSpan);
 
     // TODO: add error processing
@@ -881,7 +882,7 @@ CHIP_ERROR WifiInterfaceImpl::ConfigureBroadcastFilter(bool enableBroadcastFilte
 
 CHIP_ERROR WifiInterfaceImpl::GetMacAddress(sl_wfx_interface_t interface, chip::MutableByteSpan & address)
 {
-    VerifyOrReturnError(address.size() >= kWifiMacAddressLength, CHIP_ERROR_BUFFER_TOO_SMALL);
+    VerifyOrReturnError(address.size() >= kWiFiBSSIDLength, CHIP_ERROR_BUFFER_TOO_SMALL);
 
 #ifdef SL_WFX_CONFIG_SOFTAP
     chip::ByteSpan byteSpan((interface == SL_WFX_SOFTAP_INTERFACE) ? wfx_rsi.softap_mac : wfx_rsi.sta_mac);
@@ -898,7 +899,7 @@ CHIP_ERROR WifiInterfaceImpl::StartNetworkScan(chip::ByteSpan ssid, ::ScanCallba
     VerifyOrReturnError(!wfx_rsi.dev_state.Has(WifiState::kScanStarted), CHIP_ERROR_IN_PROGRESS);
 
     // SSID Max Length that is supported by the Wi-Fi SDK is 32
-    VerifyOrReturnError(ssid.size() <= WFX_MAX_SSID_LENGTH, CHIP_ERROR_INVALID_STRING_LENGTH);
+    VerifyOrReturnError(ssid.size() <= kMaxWiFiSSIDLength, CHIP_ERROR_INVALID_STRING_LENGTH);
 
     wfx_rsi.dev_state.Set(WifiInterface::WifiState::kScanStarted);
     wfx_rsi.scan_cb = callback;
@@ -1088,7 +1089,7 @@ CHIP_ERROR WifiInterfaceImpl::ConnectToAccessPoint()
     VerifyOrReturnError(wfx_rsi.credentials.ssidLen, CHIP_ERROR_INCORRECT_STATE);
 
     // TODO: We should move this validation to where we set the credentials. It is too late here.
-    VerifyOrReturnError(wfx_rsi.credentials.ssidLen <= WFX_MAX_SSID_LENGTH, CHIP_ERROR_INVALID_ARGUMENT);
+    VerifyOrReturnError(wfx_rsi.credentials.ssidLen <= kMaxWiFiSSIDLength, CHIP_ERROR_INVALID_ARGUMENT);
 
     ChipLogProgress(DeviceLayer, "connect to access point: %s", wfx_rsi.credentials.ssid);
 

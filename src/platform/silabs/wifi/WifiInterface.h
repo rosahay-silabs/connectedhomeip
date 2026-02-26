@@ -18,6 +18,7 @@
 
 #include <app-common/zap-generated/cluster-enums.h>
 #include <app/icd/server/ICDServerConfig.h>
+#include <platform/NetworkCommissioning.h>
 
 #include <array>
 #include <cmsis_os2.h>
@@ -36,23 +37,7 @@
 #include "sl_wifi_device.h"
 #endif // (SLI_SI91X_MCU_INTERFACE | EXP_BOARD)
 
-/* Updated constants */
-
-constexpr size_t kWifiMacAddressLength = 6;
-
 /* Defines to update */
-
-// TODO: Not sure why the pass key max length differs for the 917 SoC & NCP
-#if (SLI_SI91X_MCU_INTERFACE | EXP_BOARD)
-// MAX PASSKEY LENGTH including NULL character
-#define WFX_MAX_PASSKEY_LENGTH (SL_WIFI_MAX_PSK_LENGTH)
-#else
-// MAX PASSKEY LENGTH including NULL character
-#define WFX_MAX_PASSKEY_LENGTH (64)
-#endif // (SLI_SI91X_MCU_INTERFACE  | EXP_BOARD)
-
-// MAX SSID LENGTH excluding NULL character
-#define WFX_MAX_SSID_LENGTH (32)
 #define MAX_JOIN_RETRIES_COUNT (5)
 
 /* Note that these are same as RSI_security */
@@ -69,10 +54,10 @@ typedef enum
 
 typedef struct wfx_wifi_scan_result
 {
-    uint8_t ssid[WFX_MAX_SSID_LENGTH]; // excludes null-character
+    uint8_t ssid[chip::DeviceLayer::Internal::kMaxWiFiSSIDLength]; // excludes null-character
     size_t ssid_length;
     wfx_sec_t security;
-    uint8_t bssid[kWifiMacAddressLength];
+    uint8_t bssid[chip::DeviceLayer::Internal::kWiFiBSSIDLength];
     uint8_t chan;
     int16_t rssi; /* I suspect this is in dBm - so signed */
     chip::app::Clusters::NetworkCommissioning::WiFiBandEnum wiFiBand;
@@ -103,6 +88,8 @@ typedef enum
 #endif
 
 /* Updated section */
+
+using namespace chip::DeviceLayer::Internal;
 
 namespace chip {
 namespace DeviceLayer {
@@ -155,11 +142,11 @@ public:
     {
         WiFiNetwork() { Clear(); }
 
-        char ssid[WFX_MAX_SSID_LENGTH] = { 0 };
-        uint8_t ssidLen                = 0;
+        char ssid[kMaxWiFiSSIDLength] = { 0 };
+        uint8_t ssidLen               = 0;
 
-        char key[WFX_MAX_PASSKEY_LENGTH] = { 0 };
-        uint8_t keyLen                   = 0;
+        char key[kMaxWiFiKeyLength] = { 0 };
+        uint8_t keyLen              = 0;
 
         wfx_sec_t security = WFX_SEC_UNSPECIFIED;
 
@@ -167,10 +154,10 @@ public:
         {
             if (this != &other)
             {
-                memcpy(ssid, other.ssid, WFX_MAX_SSID_LENGTH);
+                memcpy(ssid, other.ssid, kMaxWiFiSSIDLength);
                 ssidLen = other.ssidLen;
 
-                memcpy(key, other.key, WFX_MAX_PASSKEY_LENGTH);
+                memcpy(key, other.key, kMaxWiFiKeyLength);
                 keyLen = other.keyLen;
 
                 security = other.security;
@@ -180,17 +167,17 @@ public:
 
         void Clear()
         {
-            memset(ssid, 0, WFX_MAX_SSID_LENGTH);
+            memset(ssid, 0, kMaxWiFiSSIDLength);
             ssidLen = 0;
 
-            memset(key, 0, WFX_MAX_PASSKEY_LENGTH);
+            memset(key, 0, kMaxWiFiKeyLength);
             keyLen = 0;
 
             security = WFX_SEC_UNSPECIFIED;
         }
     };
 
-    using MacAddress = std::array<uint8_t, kWifiMacAddressLength>;
+    using MacAddress = std::array<uint8_t, kWiFiBSSIDLength>;
 
     virtual ~WifiInterface() = default;
 
