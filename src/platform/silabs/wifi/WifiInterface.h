@@ -40,23 +40,11 @@
 /* Defines to update */
 #define MAX_JOIN_RETRIES_COUNT (5)
 
-/* Note that these are same as RSI_security */
-typedef enum
-{
-    WFX_SEC_UNSPECIFIED    = 0,
-    WFX_SEC_NONE           = 1,
-    WFX_SEC_WEP            = 2,
-    WFX_SEC_WPA            = 3,
-    WFX_SEC_WPA2           = 4,
-    WFX_SEC_WPA3           = 5,
-    WFX_SEC_WPA_WPA2_MIXED = 6,
-} wfx_sec_t;
-
 typedef struct wfx_wifi_scan_result
 {
     uint8_t ssid[chip::DeviceLayer::Internal::kMaxWiFiSSIDLength]; // excludes null-character
     size_t ssid_length;
-    wfx_sec_t security;
+    chip::BitFlags<chip::app::Clusters::NetworkCommissioning::WiFiSecurityBitmap> security;
     uint8_t bssid[chip::DeviceLayer::Internal::kWiFiBSSIDLength];
     uint8_t chan;
     int16_t rssi; /* I suspect this is in dBm - so signed */
@@ -148,7 +136,7 @@ public:
         char key[kMaxWiFiKeyLength] = { 0 };
         uint8_t keyLen              = 0;
 
-        wfx_sec_t security = WFX_SEC_UNSPECIFIED;
+        chip::BitFlags<chip::app::Clusters::NetworkCommissioning::WiFiSecurityBitmap> security;
 
         WiFiNetwork & operator=(const WiFiNetwork & other)
         {
@@ -173,7 +161,7 @@ public:
             memset(key, 0, kMaxWiFiKeyLength);
             keyLen = 0;
 
-            security = WFX_SEC_UNSPECIFIED;
+            security.ClearAll();
         }
     };
 
