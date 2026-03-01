@@ -42,6 +42,7 @@
 
 using namespace ::chip;
 using namespace ::chip::DeviceLayer;
+using namespace ::chip::DeviceLayer::Internal;
 using namespace ::chip::DeviceLayer::Silabs;
 using namespace ::chip::app::Clusters::NetworkCommissioning;
 
@@ -106,7 +107,7 @@ uint8_t softap_channel                 = SOFTAP_CHANNEL_DEFAULT;
 
 /* station network interface structures */
 struct netif * sta_netif;
-WifiInterface::WifiCredentials wifi_provision;
+WifiInterface::WiFiNetwork wifi_provision;
 #define PUT_COUNTER(name) ChipLogDetail(DeviceLayer, "%-24s %lu", #name, (unsigned long) counters->body.count_##name);
 
 bool hasNotifiedWifiConnectivity = false;
@@ -436,7 +437,7 @@ static void sl_wfx_scan_result_callback(sl_wfx_scan_result_ind_body_t * scan_res
     scan_save = ap;
 
     // Copy scanned SSID to the output buffer
-    chip::MutableByteSpan outputSsid(ap->scan.ssid, WFX_MAX_SSID_LENGTH);
+    chip::MutableByteSpan outputSsid(ap->scan.ssid, kMaxWiFiSSIDLength);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(scannedSsid, outputSsid);
     ap->scan.ssid_length = outputSsid.size();
 
@@ -468,8 +469,8 @@ static void sl_wfx_scan_result_callback(sl_wfx_scan_result_ind_body_t * scan_res
     // WF200 only supports 2.4GHz band
     ap->scan.wiFiBand = WiFiBandEnum::k2g4;
 
-    chip::ByteSpan scannedBssid(scan_result->mac, kWifiMacAddressLength);
-    chip::MutableByteSpan outputBssid(ap->scan.bssid, kWifiMacAddressLength);
+    chip::ByteSpan scannedBssid(scan_result->mac, kWiFiBSSIDLength);
+    chip::MutableByteSpan outputBssid(ap->scan.bssid, kWiFiBSSIDLength);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(scannedBssid, outputBssid);
 
     scan_count++;
@@ -597,7 +598,7 @@ void WifiInterface::GotIPv4Address(uint32_t ip)
 
 CHIP_ERROR WifiInterfaceImpl::GetMacAddress(sl_wfx_interface_t interface, MutableByteSpan & address)
 {
-    VerifyOrReturnError(address.size() >= kWifiMacAddressLength, CHIP_ERROR_BUFFER_TOO_SMALL);
+    VerifyOrReturnError(address.size() >= kWiFiBSSIDLength, CHIP_ERROR_BUFFER_TOO_SMALL);
 
 #ifdef SL_WFX_CONFIG_SOFTAP
     chip::ByteSpan byteSpan((interface == SL_WFX_SOFTAP_INTERFACE) ? wifiContext.mac_addr_1.octet : wifiContext.mac_addr_0.octet);
@@ -613,7 +614,7 @@ CHIP_ERROR WifiInterfaceImpl::StartNetworkScan(chip::ByteSpan ssid, ScanCallback
     VerifyOrReturnError(callback != nullptr, CHIP_ERROR_INVALID_ARGUMENT);
 
     // SSID Max Length that is supported by the Wi-Fi SDK is 32
-    VerifyOrReturnError(ssid.size() <= WFX_MAX_SSID_LENGTH, CHIP_ERROR_INVALID_STRING_LENGTH);
+    VerifyOrReturnError(ssid.size() <= kMaxWiFiSSIDLength, CHIP_ERROR_INVALID_STRING_LENGTH);
 
     // Make sure memory is cleared before starting a new scan
     if (scan_ssid)
@@ -633,7 +634,7 @@ CHIP_ERROR WifiInterfaceImpl::StartNetworkScan(chip::ByteSpan ssid, ScanCallback
         scan_ssid        = reinterpret_cast<uint8_t *>(chip::Platform::MemoryAlloc(scan_ssid_length));
         VerifyOrReturnError(scan_ssid != nullptr, CHIP_ERROR_NO_MEMORY);
 
-        chip::MutableByteSpan scannedSsidSpan(scan_ssid, WFX_MAX_SSID_LENGTH);
+        chip::MutableByteSpan scannedSsidSpan(scan_ssid, kMaxWiFiSSIDLength);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(ssid, scannedSsidSpan);
     }
     scan_cb = callback;
@@ -698,13 +699,13 @@ CHIP_ERROR WifiInterfaceImpl::GetAccessPointInfo(wfx_wifi_scan_result_t & info)
 {
     uint32_t signal_strength = 0;
 
-    chip::ByteSpan apSsidSpan(ap_info.ssid, ap_info.ssid_length);
-    chip::MutableByteSpan apSsidMutableSpan(info.ssid, WFX_MAX_SSID_LENGTH);
+    chip::ByteSpan apSsidSpan(reinterpret_cast<const uint8_t *>(ap_info.ssid), ap_info.ssid_length);
+    chip::MutableByteSpan apSsidMutableSpan(info.ssid, kMaxWiFiSSIDLength);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(apSsidSpan, apSsidMutableSpan);
     info.ssid_length = apSsidMutableSpan.size();
 
-    chip::ByteSpan apBssidSpan(ap_info.bssid, kWifiMacAddressLength);
-    chip::MutableByteSpan apBssidMutableSpan(info.bssid, kWifiMacAddressLength);
+    chip::ByteSpan apBssidSpan(ap_info.bssid, kWiFiBSSIDLength);
+    chip::MutableByteSpan apBssidMutableSpan(info.bssid, kWiFiBSSIDLength);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(apBssidSpan, apBssidMutableSpan);
 
     info.security = ap_info.security;
@@ -767,7 +768,7 @@ void WifiInterfaceImpl::ClearWifiCredentials()
     wifi_provision.Clear();
 }
 
-CHIP_ERROR WifiInterfaceImpl::GetWifiCredentials(WifiCredentials & credentials)
+CHIP_ERROR WifiInterfaceImpl::GetWifiCredentials(WiFiNetwork & credentials)
 {
     VerifyOrReturnError(IsWifiProvisioned(), CHIP_ERROR_INCORRECT_STATE);
     credentials = wifi_provision;
@@ -781,7 +782,7 @@ bool WifiInterfaceImpl::IsWifiProvisioned()
     return wifi_provision.ssid[0] != 0;
 }
 
-void WifiInterfaceImpl::SetWifiCredentials(const WifiCredentials & credentials)
+void WifiInterfaceImpl::SetWifiCredentials(const WiFiNetwork & credentials)
 {
     wifi_provision = credentials;
 }
@@ -821,9 +822,10 @@ CHIP_ERROR WifiInterfaceImpl::ConnectToAccessPoint(void)
         return CHIP_ERROR_INVALID_ARGUMENT;
     }
 
-    sl_status_t status = sl_wfx_send_join_command(wifi_provision.ssid, wifi_provision.ssidLength, NULL, CHANNEL_0,
-                                                  connect_security_mode, PREVENT_ROAMING, DISABLE_PMF_MODE, wifi_provision.passkey,
-                                                  wifi_provision.passkeyLength, NULL, IE_DATA_LENGTH);
+    sl_status_t status = sl_wfx_send_join_command(reinterpret_cast<const uint8_t *>(wifi_provision.ssid), wifi_provision.ssidLen,
+                                                  NULL, CHANNEL_0, connect_security_mode, PREVENT_ROAMING, DISABLE_PMF_MODE,
+                                                  reinterpret_cast<const uint8_t *>(wifi_provision.key), wifi_provision.keyLen,
+                                                  NULL, IE_DATA_LENGTH);
     VerifyOrReturnError(status == SL_STATUS_OK, MATTER_PLATFORM_ERROR(status));
 
     return CHIP_NO_ERROR;
@@ -881,18 +883,18 @@ void WifiInterfaceImpl::ConnectionEventCallback(sl_wfx_connect_ind_body_t connec
         ap_info.security = wifi_provision.security;
 
         // Store SSID
-        chip::ByteSpan apSsidSpan(wifi_provision.ssid, wifi_provision.ssidLength);
-        chip::MutableByteSpan apSsidMutableSpan(ap_info.ssid, WFX_MAX_SSID_LENGTH);
+        chip::ByteSpan apSsidSpan(reinterpret_cast<const uint8_t *>(wifi_provision.ssid), wifi_provision.ssidLen);
+        chip::MutableByteSpan apSsidMutableSpan(ap_info.ssid, kMaxWiFiSSIDLength);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(apSsidSpan, apSsidMutableSpan);
-        ap_info.ssid_length = wifi_provision.ssidLength;
+        ap_info.ssid_length = wifi_provision.ssidLen;
 
         // Store BSSID
-        chip::ByteSpan macSpan(connect_indication_body.mac, kWifiMacAddressLength);
-        chip::MutableByteSpan apBssidMutableSpan(ap_info.bssid, kWifiMacAddressLength);
+        chip::ByteSpan macSpan(connect_indication_body.mac, kWiFiBSSIDLength);
+        chip::MutableByteSpan apBssidMutableSpan(ap_info.bssid, kWiFiBSSIDLength);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(macSpan, apBssidMutableSpan);
 
         // TODO: Refactor WifiInterface to use single representation of MAC address
-        chip::MutableByteSpan apMacMutableSpan(ap_mac.data(), kWifiMacAddressLength);
+        chip::MutableByteSpan apMacMutableSpan(ap_mac.data(), kWiFiBSSIDLength);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(macSpan, apMacMutableSpan);
 
         wifi_extra.Set(WifiInterface::WifiState::kStationConnected);
@@ -1043,7 +1045,7 @@ void WifiInterfaceImpl::ProcessEvents(void * arg)
             {
 
                 chip::ByteSpan requestedSsid(scan_ssid, scan_ssid_length);
-                chip::MutableByteSpan outputSsid(ssid.ssid, WFX_MAX_SSID_LENGTH);
+                chip::MutableByteSpan outputSsid(ssid.ssid, kMaxWiFiSSIDLength);
 
                 TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(requestedSsid, outputSsid);
                 ssid.ssid_length = outputSsid.size();

@@ -37,31 +37,15 @@
 #include "sl_wifi_device.h"
 #endif // (SLI_SI91X_MCU_INTERFACE | EXP_BOARD)
 
-/* Updated constants */
-
-constexpr size_t kWifiMacAddressLength = 6;
-
 /* Defines to update */
-
-// TODO: Not sure why the pass key max length differs for the 917 SoC & NCP
-#if (SLI_SI91X_MCU_INTERFACE | EXP_BOARD)
-// MAX PASSKEY LENGTH including NULL character
-#define WFX_MAX_PASSKEY_LENGTH (SL_WIFI_MAX_PSK_LENGTH)
-#else
-// MAX PASSKEY LENGTH including NULL character
-#define WFX_MAX_PASSKEY_LENGTH (64)
-#endif // (SLI_SI91X_MCU_INTERFACE  | EXP_BOARD)
-
-// MAX SSID LENGTH excluding NULL character
-#define WFX_MAX_SSID_LENGTH (32)
 #define MAX_JOIN_RETRIES_COUNT (5)
 
 typedef struct wfx_wifi_scan_result
 {
-    uint8_t ssid[WFX_MAX_SSID_LENGTH]; // excludes null-character
+    uint8_t ssid[chip::DeviceLayer::Internal::kMaxWiFiSSIDLength]; // excludes null-character
     size_t ssid_length;
     chip::BitFlags<chip::app::Clusters::NetworkCommissioning::WiFiSecurityBitmap> security;
-    uint8_t bssid[kWifiMacAddressLength];
+    uint8_t bssid[chip::DeviceLayer::Internal::kWiFiBSSIDLength];
     uint8_t chan;
     int16_t rssi; /* I suspect this is in dBm - so signed */
     chip::app::Clusters::NetworkCommissioning::WiFiBandEnum wiFiBand;
@@ -92,6 +76,8 @@ typedef enum
 #endif
 
 /* Updated section */
+
+using namespace chip::DeviceLayer::Internal;
 
 namespace chip {
 namespace DeviceLayer {
@@ -139,41 +125,47 @@ public:
         kWPACouterMeasures = 5, // WPA contermeasures triggered a disconnection
     };
 
-    // TODO: Figure out if we need this structure. We have different strcutures for the same use
-    struct WifiCredentials
+    /** WiFi network credentials; matches NetworkCommissioning::SlWiFiDriver::WiFiNetwork layout. */
+    struct WiFiNetwork
     {
-        WifiCredentials() { Clear(); }
+        WiFiNetwork() { Clear(); }
 
-        uint8_t ssid[WFX_MAX_SSID_LENGTH]       = { 0 };
-        size_t ssidLength                       = 0;
-        uint8_t passkey[WFX_MAX_PASSKEY_LENGTH] = { 0 };
-        size_t passkeyLength                    = 0;
+        char ssid[kMaxWiFiSSIDLength] = { 0 };
+        uint8_t ssidLen               = 0;
+
+        char key[kMaxWiFiKeyLength] = { 0 };
+        uint8_t keyLen              = 0;
+
         chip::BitFlags<chip::app::Clusters::NetworkCommissioning::WiFiSecurityBitmap> security;
 
-        WifiCredentials & operator=(const WifiCredentials & other)
+        WiFiNetwork & operator=(const WiFiNetwork & other)
         {
             if (this != &other)
             {
-                memcpy(ssid, other.ssid, WFX_MAX_SSID_LENGTH);
-                ssidLength = other.ssidLength;
-                memcpy(passkey, other.passkey, WFX_MAX_PASSKEY_LENGTH);
-                passkeyLength = other.passkeyLength;
-                security      = other.security;
+                memcpy(ssid, other.ssid, kMaxWiFiSSIDLength);
+                ssidLen = other.ssidLen;
+
+                memcpy(key, other.key, kMaxWiFiKeyLength);
+                keyLen = other.keyLen;
+
+                security = other.security;
             }
             return *this;
         }
 
         void Clear()
         {
-            memset(ssid, 0, WFX_MAX_SSID_LENGTH);
-            ssidLength = 0;
-            memset(passkey, 0, WFX_MAX_PASSKEY_LENGTH);
-            passkeyLength = 0;
+            memset(ssid, 0, kMaxWiFiSSIDLength);
+            ssidLen = 0;
+
+            memset(key, 0, kMaxWiFiKeyLength);
+            keyLen = 0;
+
             security.ClearAll();
         }
     };
 
-    using MacAddress = std::array<uint8_t, kWifiMacAddressLength>;
+    using MacAddress = std::array<uint8_t, kWiFiBSSIDLength>;
 
     virtual ~WifiInterface() = default;
 
@@ -297,7 +289,7 @@ public:
      *
      * @param[in] credentials
      */
-    virtual void SetWifiCredentials(const WifiCredentials & credentials) = 0;
+    virtual void SetWifiCredentials(const WiFiNetwork & credentials) = 0;
 
     /**
      * @brief Returns the configured Wi-Fi credentials
@@ -307,7 +299,7 @@ public:
      * @return CHIP_ERROR CHIP_ERROR_INCORRECT_STATE, if the device does not have any set credentials
      *                    CHIP_NO_ERROR, otherwise
      */
-    virtual CHIP_ERROR GetWifiCredentials(WifiCredentials & credentials) = 0;
+    virtual CHIP_ERROR GetWifiCredentials(WiFiNetwork & credentials) = 0;
 
     /**
      * @brief Triggers a connection attempt the Access Point who's crendetials match the ones store with the SetWifiCredentials API.
@@ -425,7 +417,7 @@ typedef struct wfx_rsi_s
 {
     chip::BitFlags<chip::DeviceLayer::Silabs::WifiInterface::WifiState> dev_state;
     uint16_t ap_chan; /* The chan our STA is using	*/
-    chip::DeviceLayer::Silabs::WifiInterface::WifiCredentials credentials;
+    chip::DeviceLayer::Silabs::WifiInterface::WiFiNetwork credentials;
     ScanCallback scan_cb;
 #ifdef SL_WFX_CONFIG_SOFTAP
     chip::DeviceLayer::Silabs::WifiInterface::MacAddress softap_mac;
