@@ -46,7 +46,7 @@ public:
     bool IsStationModeEnabled() override;
     bool IsStationReady() override;
     CHIP_ERROR TriggerDisconnection() override;
-    CHIP_ERROR GetAccessPointInfo(wfx_wifi_scan_result_t & info) override;
+    CHIP_ERROR GetAccessPointInfo(chip::DeviceLayer::NetworkCommissioning::WiFiScanResponse & info) override;
     CHIP_ERROR GetAccessPointExtendedInfo(wfx_wifi_scan_ext_t & info) override;
     CHIP_ERROR ResetCounters() override;
     void ClearWifiCredentials() override;

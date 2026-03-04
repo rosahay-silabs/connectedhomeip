@@ -125,7 +125,7 @@ public:
 private:
     bool NetworkMatch(const WiFiNetwork & network, ByteSpan networkId);
     bool StartScanWiFiNetworks(ByteSpan ssid);
-    static void OnScanWiFiNetworkDone(wfx_wifi_scan_result_t * aScanResult);
+    static void OnScanWiFiNetworkDone(NetworkCommissioning::WiFiScanResponse * aScanResult);
 
     static SlWiFiDriver * mDriver;
     WiFiNetwork mSavedNetwork   = {};
