@@ -65,7 +65,7 @@ static WifiInterface::MacAddress ap_mac;
 #if CHIP_DEVICE_CONFIG_ENABLE_IPV4
 static uint32_t sta_ip;
 #endif /* CHIP_DEVICE_CONFIG_ENABLE_IPV4 */
-static wfx_wifi_scan_result_t ap_info;
+static chip::DeviceLayer::NetworkCommissioning::WiFiScanResponse ap_info;
 
 // Set Scan Parameters
 #define ACTIVE_CHANNEL_TIME 110
@@ -112,13 +112,6 @@ WifiInterface::WiFiNetwork wifi_provision;
 
 bool hasNotifiedWifiConnectivity = false;
 
-static struct scan_result_holder
-{
-    struct scan_result_holder * next;
-    wfx_wifi_scan_result scan;
-} * scan_save;
-
-static uint8_t scan_count = 0;
 static ScanCallback scan_cb;              /* user-callback - when scan is done */
 static uint8_t * scan_ssid     = nullptr; /* Which one are we scanning for */
 static size_t scan_ssid_length = 0;
@@ -418,62 +411,58 @@ extern "C" sl_status_t sl_wfx_host_process_event(sl_wfx_generic_message_t * even
  *****************************************************************************/
 static void sl_wfx_scan_result_callback(sl_wfx_scan_result_ind_body_t * scan_result)
 {
+    VerifyOrReturn(scan_result != nullptr && scan_cb != nullptr);
 
-    ChipLogDetail(DeviceLayer, "# %2d %2d  %03d %02X:%02X:%02X:%02X:%02X:%02X  %s", scan_count, scan_result->channel,
-                  (ConvertRcpiToRssi(scan_result->rcpi)), scan_result->mac[0], scan_result->mac[1], scan_result->mac[2],
-                  scan_result->mac[3], scan_result->mac[4], scan_result->mac[5], scan_result->ssid_def.ssid);
-
-    chip::ByteSpan requestedSsid(scan_ssid, scan_ssid_length);
-    chip::ByteSpan scannedSsid(scan_result->ssid_def.ssid, scan_result->ssid_def.ssid_length);
+    chip::ByteSpan requestedSsidSpan(scan_ssid, scan_ssid_length);
+    chip::ByteSpan ssidSpan(scan_result->ssid_def.ssid, scan_result->ssid_def.ssid_length);
 
     // Verify that there was no requested SSID or that the SSID matches the requested SSID
-    VerifyOrReturn(requestedSsid.empty() || requestedSsid.data_equal(scannedSsid));
+    VerifyOrReturn(requestedSsidSpan.empty() || requestedSsidSpan.data_equal(ssidSpan));
 
-    struct scan_result_holder * ap = reinterpret_cast<struct scan_result_holder *>(chip::Platform::MemoryAlloc(sizeof(*ap)));
-    VerifyOrReturn(ap != nullptr, ChipLogError(DeviceLayer, "Scan Callback: No Memory for scanned network."));
+    chip::DeviceLayer::NetworkCommissioning::WiFiScanResponse scanResponse;
 
-    // Add Scan to the linked list
-    ap->next  = scan_save;
-    scan_save = ap;
+    // Copy the scan result to the scan response
+    chip::MutableByteSpan responseSsidSpan(scanResponse.ssid, kMaxWiFiSSIDLength);
+    VerifyOrReturn(chip::CopySpanToMutableSpan(ssidSpan, responseSsidSpan) == CHIP_NO_ERROR);
+    scanResponse.ssidLen = static_cast<uint8_t>(responseSsidSpan.size());
 
-    // Copy scanned SSID to the output buffer
-    chip::MutableByteSpan outputSsid(ap->scan.ssid, kMaxWiFiSSIDLength);
-    TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(scannedSsid, outputSsid);
-    ap->scan.ssid_length = outputSsid.size();
+    // Copy the BSSID to the scan response
+    chip::ByteSpan bssidSpan(scan_result->mac, kWiFiBSSIDLength);
+    chip::MutableByteSpan responseBssidSpan(scanResponse.bssid, kWiFiBSSIDLength);
+    VerifyOrReturn(chip::CopySpanToMutableSpan(bssidSpan, responseBssidSpan) == CHIP_NO_ERROR);
 
-    // Set Network Security using Matter WiFiSecurityBitmap
-    ap->scan.security.ClearAll();
+    scanResponse.channel  = scan_result->channel;
+    scanResponse.wiFiBand = WiFiBandEnum::k2g4;
+
+    scanResponse.signal.strength = ConvertRcpiToRssi(scan_result->rcpi);
+    scanResponse.signal.type     = NetworkCommissioning::WirelessSignalType::kdBm;
+
+    scanResponse.security.ClearAll();
     if (scan_result->security_mode.wpa3)
     {
-        ap->scan.security.Set(WiFiSecurityBitmap::kWpa3Personal);
+        scanResponse.security.Set(WiFiSecurityBitmap::kWpa3Personal);
     }
     if (scan_result->security_mode.wpa2)
     {
-        ap->scan.security.Set(WiFiSecurityBitmap::kWpa2Personal);
+        scanResponse.security.Set(WiFiSecurityBitmap::kWpa2Personal);
     }
     if (scan_result->security_mode.wpa)
     {
-        ap->scan.security.Set(WiFiSecurityBitmap::kWpaPersonal);
+        scanResponse.security.Set(WiFiSecurityBitmap::kWpaPersonal);
     }
     if (scan_result->security_mode.wep)
     {
-        ap->scan.security.Set(WiFiSecurityBitmap::kWep);
+        scanResponse.security.Set(WiFiSecurityBitmap::kWep);
     }
-    if (!ap->scan.security.HasAny())
+
+    // If no security mode is set, set the security to unencrypted as default
+    if (!scanResponse.security.HasAny())
     {
-        ap->scan.security.Set(WiFiSecurityBitmap::kUnencrypted);
+        scanResponse.security.Set(WiFiSecurityBitmap::kUnencrypted);
     }
 
-    ap->scan.chan = scan_result->channel;
-    ap->scan.rssi = ConvertRcpiToRssi(scan_result->rcpi);
-    // WF200 only supports 2.4GHz band
-    ap->scan.wiFiBand = WiFiBandEnum::k2g4;
-
-    chip::ByteSpan scannedBssid(scan_result->mac, kWiFiBSSIDLength);
-    chip::MutableByteSpan outputBssid(ap->scan.bssid, kWiFiBSSIDLength);
-    TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(scannedBssid, outputBssid);
-
-    scan_count++;
+    // invoke the scan callback
+    scan_cb(&scanResponse);
 }
 
 /****************************************************************************
@@ -695,33 +684,28 @@ CHIP_ERROR WifiInterfaceImpl::TriggerDisconnection(void)
     return CHIP_NO_ERROR;
 }
 
-CHIP_ERROR WifiInterfaceImpl::GetAccessPointInfo(wfx_wifi_scan_result_t & info)
+CHIP_ERROR WifiInterfaceImpl::GetAccessPointInfo(chip::DeviceLayer::NetworkCommissioning::WiFiScanResponse & info)
 {
     uint32_t signal_strength = 0;
 
-    chip::ByteSpan apSsidSpan(reinterpret_cast<const uint8_t *>(ap_info.ssid), ap_info.ssid_length);
+    chip::ByteSpan apSsidSpan(ap_info.ssid, ap_info.ssidLen);
     chip::MutableByteSpan apSsidMutableSpan(info.ssid, kMaxWiFiSSIDLength);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(apSsidSpan, apSsidMutableSpan);
-    info.ssid_length = apSsidMutableSpan.size();
+    info.ssidLen = static_cast<uint8_t>(apSsidMutableSpan.size());
 
     chip::ByteSpan apBssidSpan(ap_info.bssid, kWiFiBSSIDLength);
     chip::MutableByteSpan apBssidMutableSpan(info.bssid, kWiFiBSSIDLength);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(apBssidSpan, apBssidMutableSpan);
 
     info.security = ap_info.security;
-    info.chan     = ap_info.chan;
+    info.channel  = ap_info.channel;
 
     sl_status_t status = sl_wfx_get_signal_strength(&signal_strength);
     VerifyOrReturnError(status == SL_STATUS_OK, MATTER_PLATFORM_ERROR(status));
 
-    info.rssi = ConvertRcpiToRssi(signal_strength);
-
-    ChipLogDetail(DeviceLayer, "WIFI:SSID     : %s", ap_info.ssid);
-    ChipLogDetail(DeviceLayer, "WIFI:BSSID    : %02x:%02x:%02x:%02x:%02x:%02x", ap_info.bssid[0], ap_info.bssid[1],
-                  ap_info.bssid[2], ap_info.bssid[3], ap_info.bssid[4], ap_info.bssid[5]);
-    ChipLogDetail(DeviceLayer, "WIFI:security : 0x%x", static_cast<unsigned>(info.security.Raw()));
-    ChipLogDetail(DeviceLayer, "WIFI:channel  :  %d", info.chan);
-    ChipLogDetail(DeviceLayer, "signal_strength: %ld", signal_strength);
+    info.signal.strength = static_cast<int8_t>(ConvertRcpiToRssi(signal_strength));
+    info.signal.type     = chip::DeviceLayer::NetworkCommissioning::WirelessSignalType::kdBm;
+    info.wiFiBand        = ap_info.wiFiBand;
 
     return CHIP_NO_ERROR;
 }
@@ -852,17 +836,9 @@ bool WifiInterfaceImpl::HasAnIPv6Address()
 
 void WifiInterfaceImpl::CancelScanNetworks()
 {
-    struct scan_result_holder *hp, *next;
     /* Not possible */
     VerifyOrReturn(scan_cb != nullptr);
     sl_wfx_send_stop_scan_command();
-    for (hp = scan_save; hp; hp = next)
-    {
-        next = hp->next;
-        chip::Platform::MemoryFree(hp);
-    }
-    scan_save  = (struct scan_result_holder *) 0;
-    scan_count = 0;
     if (scan_ssid)
     {
         chip::Platform::MemoryFree(scan_ssid);
@@ -879,14 +855,15 @@ void WifiInterfaceImpl::ConnectionEventCallback(sl_wfx_connect_ind_body_t connec
     case WFM_STATUS_SUCCESS: {
         ChipLogProgress(DeviceLayer, "STA-Connected");
 
-        ap_info.chan     = connect_indication_body.channel;
+        ap_info.channel  = connect_indication_body.channel;
         ap_info.security = wifi_provision.security;
+        ap_info.wiFiBand = WiFiBandEnum::k2g4;
 
         // Store SSID
         chip::ByteSpan apSsidSpan(reinterpret_cast<const uint8_t *>(wifi_provision.ssid), wifi_provision.ssidLen);
         chip::MutableByteSpan apSsidMutableSpan(ap_info.ssid, kMaxWiFiSSIDLength);
         TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(apSsidSpan, apSsidMutableSpan);
-        ap_info.ssid_length = wifi_provision.ssidLen;
+        ap_info.ssidLen = wifi_provision.ssidLen;
 
         // Store BSSID
         chip::ByteSpan macSpan(connect_indication_body.mac, kWiFiBSSIDLength);
@@ -1053,38 +1030,26 @@ void WifiInterfaceImpl::ProcessEvents(void * arg)
                 nbreScannedNetworks = 1;
                 ssidPtr             = &ssid;
             }
-            else
-            {
-                nbreScannedNetworks = 0;
-                ssidPtr             = nullptr;
-            }
 
-            ChipLogDetail(DeviceLayer,
-                          "WIFI Scan Paramter set to Active channel time %d, Passive "
-                          "Channel Time: %d, Number of prob: %d",
-                          ACTIVE_CHANNEL_TIME, PASSIVE_CHANNEL_TIME, NUM_PROBE_REQUEST);
             (void) sl_wfx_set_scan_parameters(ACTIVE_CHANNEL_TIME, PASSIVE_CHANNEL_TIME, NUM_PROBE_REQUEST);
-            (void) sl_wfx_send_scan_command(WFM_SCAN_MODE_ACTIVE, CHANNEL_LIST,    /* Channel list */
-                                            CHANNEL_COUNT,                         /* Scan all chans */
-                                            ssidPtr, nbreScannedNetworks, IE_DATA, /* IE we're looking for */
-                                            IE_DATA_LENGTH, BSSID_SCAN);
+            (void) sl_wfx_send_scan_command(
+                // Scan mode
+                sl_wfx_scan_mode_t::WFM_SCAN_MODE_ACTIVE,
+                // Channel
+                CHANNEL_LIST, CHANNEL_COUNT,
+                // SSID list
+                ssidPtr, nbreScannedNetworks,
+                // IE data
+                IE_DATA, IE_DATA_LENGTH,
+                // BSSID
+                BSSID_SCAN);
         }
         if (flags & SL_WFX_SCAN_COMPLETE)
         {
-            struct scan_result_holder *hp, *next;
-
-            ChipLogDetail(DeviceLayer, "WIFI: Return %d scan results", scan_count);
-            for (hp = scan_save; hp; hp = next)
-            {
-                next = hp->next;
-                scan_cb(&hp->scan);
-                chip::Platform::MemoryFree(hp);
-            }
+            // invoke the scan callback with nullptr to indicate the scan is complete
             scan_cb(nullptr);
 
             // Clean up
-            scan_save  = nullptr;
-            scan_count = 0;
 
             if (scan_ssid)
             {
