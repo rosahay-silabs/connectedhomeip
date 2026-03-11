@@ -112,6 +112,9 @@ Status SlWiFiDriver::AddOrUpdateNetwork(ByteSpan ssid, ByteSpan credentials, Mut
     VerifyOrReturnError(ssid.size() <= sizeof(mStagingNetwork.ssid), Status::kOutOfRange);
 
     memset(mStagingNetwork.key, 0, sizeof(mStagingNetwork.key));
+    // Verify that the credentials are not nullpointer,
+    // when connecting to open network this should be a string with null character.
+    VerifyOrReturnError(credentials.data() != nullptr, Status::kOutOfRange);
     memcpy(mStagingNetwork.key, credentials.data(), credentials.size());
     mStagingNetwork.keyLen = static_cast<decltype(mStagingNetwork.keyLen)>(credentials.size());
 
