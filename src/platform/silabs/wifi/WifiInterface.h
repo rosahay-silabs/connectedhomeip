@@ -37,6 +37,9 @@
 #include "sl_wifi_device.h"
 #endif // (SLI_SI91X_MCU_INTERFACE | EXP_BOARD)
 
+/* Updated constants */
+constexpr size_t kWifiMacAddressLength = 6;
+
 /* Defines to update */
 #define MAX_JOIN_RETRIES_COUNT (5)
 
@@ -76,8 +79,6 @@ typedef enum
 #endif
 
 /* Updated section */
-
-using namespace chip::DeviceLayer::Internal;
 
 namespace chip {
 namespace DeviceLayer {
@@ -125,16 +126,15 @@ public:
         kWPACouterMeasures = 5, // WPA contermeasures triggered a disconnection
     };
 
-    /** WiFi network credentials; matches NetworkCommissioning::SlWiFiDriver::WiFiNetwork layout. */
     struct WiFiNetwork
     {
         WiFiNetwork() { Clear(); }
 
-        char ssid[kMaxWiFiSSIDLength] = { 0 };
-        uint8_t ssidLen               = 0;
+        uint8_t ssid[chip::DeviceLayer::Internal::kMaxWiFiSSIDLength] = { 0 };
+        uint8_t ssidLen                                               = 0;
 
-        char key[kMaxWiFiKeyLength] = { 0 };
-        uint8_t keyLen              = 0;
+        uint8_t key[chip::DeviceLayer::Internal::kMaxWiFiKeyLength] = { 0 };
+        uint8_t keyLen                                              = 0;
 
         chip::BitFlags<chip::app::Clusters::NetworkCommissioning::WiFiSecurityBitmap> security;
 
@@ -142,10 +142,10 @@ public:
         {
             if (this != &other)
             {
-                memcpy(ssid, other.ssid, kMaxWiFiSSIDLength);
+                memcpy(ssid, other.ssid, chip::DeviceLayer::Internal::kMaxWiFiSSIDLength);
                 ssidLen = other.ssidLen;
 
-                memcpy(key, other.key, kMaxWiFiKeyLength);
+                memcpy(key, other.key, chip::DeviceLayer::Internal::kMaxWiFiKeyLength);
                 keyLen = other.keyLen;
 
                 security = other.security;
@@ -155,17 +155,17 @@ public:
 
         void Clear()
         {
-            memset(ssid, 0, kMaxWiFiSSIDLength);
+            memset(ssid, 0, chip::DeviceLayer::Internal::kMaxWiFiSSIDLength);
             ssidLen = 0;
 
-            memset(key, 0, kMaxWiFiKeyLength);
+            memset(key, 0, chip::DeviceLayer::Internal::kMaxWiFiKeyLength);
             keyLen = 0;
 
             security.ClearAll();
         }
     };
 
-    using MacAddress = std::array<uint8_t, kWiFiBSSIDLength>;
+    using MacAddress = std::array<uint8_t, kWifiMacAddressLength>;
 
     virtual ~WifiInterface() = default;
 

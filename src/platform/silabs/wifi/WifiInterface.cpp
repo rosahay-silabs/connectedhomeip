@@ -138,9 +138,9 @@ void WifiInterface::NotifyWifiTaskInitialized(void)
     // TODO : Remove workwound when sl_wfx_startup_ind_t is unified
     //        Issue is same structure name but different contents
 #if WF200_WIFI
-    MutableByteSpan macSpan(evt.body.mac_addr[SL_WFX_STA_INTERFACE], kWiFiBSSIDLength);
+    MutableByteSpan macSpan(evt.body.mac_addr[SL_WFX_STA_INTERFACE], kWifiMacAddressLength);
 #else
-    MutableByteSpan macSpan(evt.body.mac_addr, kWiFiBSSIDLength);
+    MutableByteSpan macSpan(evt.body.mac_addr, kWifiMacAddressLength);
 #endif // WF200_WIFI
 
     TEMPORARY_RETURN_IGNORED GetMacAddress(SL_WFX_STA_INTERFACE, macSpan);
