@@ -1097,7 +1097,7 @@ void WifiInterfaceImpl::ClearWifiCredentials()
     wfx_rsi.dev_state.Clear(WifiState::kStationProvisioned);
 }
 
-CHIP_ERROR WifiInterfaceImpl::GetWifiCredentials(WiFiNetwork & credentials)
+CHIP_ERROR WifiInterfaceImpl::GetWifiCredentials(WiFiCredentials & credentials)
 {
     VerifyOrReturnError(wfx_rsi.dev_state.Has(WifiState::kStationProvisioned), CHIP_ERROR_INCORRECT_STATE);
     credentials = wfx_rsi.credentials;
@@ -1110,7 +1110,7 @@ bool WifiInterfaceImpl::IsWifiProvisioned()
     return wfx_rsi.dev_state.Has(WifiState::kStationProvisioned);
 }
 
-void WifiInterfaceImpl::SetWifiCredentials(const WiFiNetwork & credentials)
+void WifiInterfaceImpl::SetWifiCredentials(const WiFiCredentials & credentials)
 {
     wfx_rsi.credentials = credentials;
     wfx_rsi.dev_state.Set(WifiState::kStationProvisioned);

@@ -126,9 +126,9 @@ public:
         kWPACouterMeasures = 5, // WPA contermeasures triggered a disconnection
     };
 
-    struct WiFiNetwork
+    struct WiFiCredentials
     {
-        WiFiNetwork() { Clear(); }
+        WiFiCredentials() { Clear(); }
 
         uint8_t ssid[chip::DeviceLayer::Internal::kMaxWiFiSSIDLength] = { 0 };
         uint8_t ssidLen                                               = 0;
@@ -138,7 +138,7 @@ public:
 
         chip::BitFlags<chip::app::Clusters::NetworkCommissioning::WiFiSecurityBitmap> security;
 
-        WiFiNetwork & operator=(const WiFiNetwork & other)
+        WiFiCredentials & operator=(const WiFiCredentials & other)
         {
             if (this != &other)
             {
@@ -289,7 +289,7 @@ public:
      *
      * @param[in] credentials
      */
-    virtual void SetWifiCredentials(const WiFiNetwork & credentials) = 0;
+    virtual void SetWifiCredentials(const WiFiCredentials & credentials) = 0;
 
     /**
      * @brief Returns the configured Wi-Fi credentials
@@ -299,7 +299,7 @@ public:
      * @return CHIP_ERROR CHIP_ERROR_INCORRECT_STATE, if the device does not have any set credentials
      *                    CHIP_NO_ERROR, otherwise
      */
-    virtual CHIP_ERROR GetWifiCredentials(WiFiNetwork & credentials) = 0;
+    virtual CHIP_ERROR GetWifiCredentials(WiFiCredentials & credentials) = 0;
 
     /**
      * @brief Triggers a connection attempt the Access Point who's credentials match the ones store with the SetWifiCredentials API.
@@ -417,7 +417,7 @@ typedef struct wfx_rsi_s
 {
     chip::BitFlags<chip::DeviceLayer::Silabs::WifiInterface::WifiState> dev_state;
     uint16_t ap_chan; /* The chan our STA is using	*/
-    chip::DeviceLayer::Silabs::WifiInterface::WiFiNetwork credentials;
+    chip::DeviceLayer::Silabs::WifiInterface::WiFiCredentials credentials;
     ScanCallback scan_cb;
 #ifdef SL_WFX_CONFIG_SOFTAP
     chip::DeviceLayer::Silabs::WifiInterface::MacAddress softap_mac;

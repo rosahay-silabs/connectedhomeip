@@ -97,7 +97,7 @@ CHIP_ERROR SlWiFiDriver::RevertConfiguration()
     return CHIP_NO_ERROR;
 }
 
-bool SlWiFiDriver::NetworkMatch(const WiFiNetwork & network, ByteSpan networkId)
+bool SlWiFiDriver::NetworkMatch(const WiFiCredentials & network, ByteSpan networkId)
 {
     return networkId.size() == network.ssidLen && memcmp(networkId.data(), network.ssid, network.ssidLen) == 0;
 }
@@ -152,7 +152,7 @@ CHIP_ERROR SlWiFiDriver::ConnectWiFiNetwork(const char * ssid, uint8_t ssidLen, 
     ReturnErrorOnFailure(ConnectivityMgr().SetWiFiStationMode(ConnectivityManager::kWiFiStationMode_Disabled));
 
     // Set the wifi configuration
-    WifiInterface::WiFiNetwork wifiConfig;
+    WifiInterface::WiFiCredentials wifiConfig;
 
     VerifyOrReturnError(ssidLen <= kMaxWiFiSSIDLength, CHIP_ERROR_BUFFER_TOO_SMALL);
     memcpy(wifiConfig.ssid, ssid, ssidLen);
@@ -313,7 +313,7 @@ void SlWiFiDriver::ScanNetworks(ByteSpan ssid, WiFiDriver::ScanCallback * callba
 
 CHIP_ERROR GetConnectedNetwork(Network & network)
 {
-    WifiInterface::WiFiNetwork wifiConfig;
+    WifiInterface::WiFiCredentials wifiConfig;
     network.networkIDLen = 0;
     network.connected    = false;
 
