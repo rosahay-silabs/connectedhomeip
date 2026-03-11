@@ -135,7 +135,7 @@ void WifiInterface::NotifyWifiTaskInitialized(void)
     evt.header.length = sizeof evt;
     evt.body.status   = 0;
 
-    // TODO : Remove workwound when sl_wfx_startup_ind_t is unified
+    // TODO : Remove workaround when sl_wfx_startup_ind_t is unified
     //        Issue is same structure name but different contents
 #if WF200_WIFI
     MutableByteSpan macSpan(evt.body.mac_addr[SL_WFX_STA_INTERFACE], kWifiMacAddressLength);

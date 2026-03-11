@@ -302,7 +302,7 @@ public:
     virtual CHIP_ERROR GetWifiCredentials(WiFiNetwork & credentials) = 0;
 
     /**
-     * @brief Triggers a connection attempt the Access Point who's crendetials match the ones store with the SetWifiCredentials API.
+     * @brief Triggers a connection attempt the Access Point who's credentials match the ones store with the SetWifiCredentials API.
      *        The function triggers an async connection attempt. The upper layers are notified trought a platform event if the
      *        connection attempt was successful or not.
      *
