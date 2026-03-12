@@ -131,10 +131,10 @@ public:
         WiFiCredentials() { Clear(); }
 
         uint8_t ssid[chip::DeviceLayer::Internal::kMaxWiFiSSIDLength] = { 0 };
-        uint8_t ssidLen                                               = 0;
+        size_t ssidLen                                                = 0;
 
         uint8_t key[chip::DeviceLayer::Internal::kMaxWiFiKeyLength] = { 0 };
-        uint8_t keyLen                                              = 0;
+        size_t keyLen                                               = 0;
 
         chip::BitFlags<chip::app::Clusters::NetworkCommissioning::WiFiSecurityBitmap> security;
 

@@ -473,8 +473,8 @@ sl_status_t SetWifiConfigurations()
         .config = {
             .ssid = {
                 .value  = { 0 },
-                //static cast because the types dont match
-                .length = wfx_rsi.credentials.ssidLen,
+                // static cast because the types dont match
+                .length = static_cast<uint8_t>(wfx_rsi.credentials.ssidLen),
             },
             .channel = {
                 .channel = SL_WIFI_AUTO_CHANNEL,

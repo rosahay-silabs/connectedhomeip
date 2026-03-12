@@ -41,8 +41,6 @@ SlWiFiDriver * SlWiFiDriver::mDriver = nullptr;
 CHIP_ERROR SlWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeCallback)
 {
     CHIP_ERROR err;
-    size_t ssidLen         = 0;
-    size_t credentialsLen  = 0;
     mpScanCallback         = nullptr;
     mpConnectCallback      = nullptr;
     mpStatusChangeCallback = networkStatusChangeCallback;
@@ -51,27 +49,24 @@ CHIP_ERROR SlWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeC
 #ifdef SL_ONNETWORK_PAIRING
     memcpy(&mSavedNetwork.ssid[0], SL_WIFI_SSID, sizeof(SL_WIFI_SSID));
     memcpy(&mSavedNetwork.key[0], SL_WIFI_PSK, sizeof(SL_WIFI_PSK));
-    credentialsLen        = sizeof(SL_WIFI_PSK);
-    ssidLen               = sizeof(SL_WIFI_SSID);
-    mSavedNetwork.keyLen  = credentialsLen;
-    mSavedNetwork.ssidLen = ssidLen;
+    mSavedNetwork.keyLen  = sizeof(SL_WIFI_PSK);
+    mSavedNetwork.ssidLen = sizeof(SL_WIFI_SSID);
     mStagingNetwork       = mSavedNetwork;
     err                   = CHIP_NO_ERROR;
 #else
     // If reading fails, wifi is not provisioned, no need to go further.
-    err = SilabsConfig::ReadConfigValueStr(SilabsConfig::kConfigKey_WiFiSSID, mSavedNetwork.ssid, sizeof(mSavedNetwork.ssid),
-                                           ssidLen);
+    err = SilabsConfig::ReadConfigValueBin(SilabsConfig::kConfigKey_WiFiSSID, mSavedNetwork.ssid, sizeof(mSavedNetwork.ssid),
+                                           mSavedNetwork.ssidLen);
     VerifyOrReturnError(err == CHIP_NO_ERROR, CHIP_NO_ERROR);
 
-    err = SilabsConfig::ReadConfigValueStr(SilabsConfig::kConfigKey_WiFiPSK, mSavedNetwork.key, sizeof(mSavedNetwork.key),
-                                           credentialsLen);
+    err = SilabsConfig::ReadConfigValueBin(SilabsConfig::kConfigKey_WiFiPSK, mSavedNetwork.key, sizeof(mSavedNetwork.key),
+                                           mSavedNetwork.keyLen);
     VerifyOrReturnError(err == CHIP_NO_ERROR, CHIP_NO_ERROR);
 
-    mSavedNetwork.keyLen  = credentialsLen;
-    mSavedNetwork.ssidLen = ssidLen;
     mStagingNetwork       = mSavedNetwork;
 #endif
-    TEMPORARY_RETURN_IGNORED ConnectWiFiNetwork(mSavedNetwork.ssid, ssidLen, mSavedNetwork.key, credentialsLen);
+    TEMPORARY_RETURN_IGNORED ConnectWiFiNetwork(reinterpret_cast<const char *>(mSavedNetwork.ssid), mSavedNetwork.ssidLen,
+                                                reinterpret_cast<const char *>(mSavedNetwork.key), mSavedNetwork.keyLen);
     return err;
 }
 
@@ -80,10 +75,10 @@ CHIP_ERROR SlWiFiDriver::CommitConfiguration()
     constexpr uint8_t kDefaultSecurityBitmap =
         static_cast<uint8_t>(chip::app::Clusters::NetworkCommissioning::WiFiSecurityBitmap::kWpa2Personal);
 
-    ReturnErrorOnFailure(
-        SilabsConfig::WriteConfigValueStr(SilabsConfig::kConfigKey_WiFiSSID, mStagingNetwork.ssid, mStagingNetwork.ssidLen));
-    ReturnErrorOnFailure(
-        SilabsConfig::WriteConfigValueStr(SilabsConfig::kConfigKey_WiFiPSK, mStagingNetwork.key, mStagingNetwork.keyLen));
+    ReturnErrorOnFailure(SilabsConfig::WriteConfigValueBin(
+        SilabsConfig::kConfigKey_WiFiSSID, reinterpret_cast<const uint8_t *>(mStagingNetwork.ssid), mStagingNetwork.ssidLen));
+    ReturnErrorOnFailure(SilabsConfig::WriteConfigValueBin(
+        SilabsConfig::kConfigKey_WiFiPSK, reinterpret_cast<const uint8_t *>(mStagingNetwork.key), mStagingNetwork.keyLen));
     ReturnErrorOnFailure(SilabsConfig::WriteConfigValueBin(SilabsConfig::kConfigKey_WiFiSEC, &kDefaultSecurityBitmap,
                                                            sizeof(kDefaultSecurityBitmap)));
 
@@ -97,7 +92,7 @@ CHIP_ERROR SlWiFiDriver::RevertConfiguration()
     return CHIP_NO_ERROR;
 }
 
-bool SlWiFiDriver::NetworkMatch(const WiFiCredentials & network, ByteSpan networkId)
+bool SlWiFiDriver::NetworkMatch(const Silabs::WifiInterface::WiFiCredentials & network, ByteSpan networkId)
 {
     return networkId.size() == network.ssidLen && memcmp(networkId.data(), network.ssid, network.ssidLen) == 0;
 }
@@ -159,7 +154,7 @@ CHIP_ERROR SlWiFiDriver::ConnectWiFiNetwork(const char * ssid, uint8_t ssidLen, 
 
     VerifyOrReturnError(ssidLen <= kMaxWiFiSSIDLength, CHIP_ERROR_BUFFER_TOO_SMALL);
     memcpy(wifiConfig.ssid, ssid, ssidLen);
-    wifiConfig.ssidLen = static_cast<uint8_t>(ssidLen);
+    wifiConfig.ssidLen = ssidLen;
 
     VerifyOrReturnError(keyLen < kMaxWiFiKeyLength, CHIP_ERROR_BUFFER_TOO_SMALL);
     memcpy(wifiConfig.key, key, keyLen);
@@ -221,7 +216,8 @@ void SlWiFiDriver::ConnectNetwork(ByteSpan networkId, ConnectCallback * callback
     VerifyOrExit(NetworkMatch(mStagingNetwork, networkId), networkingStatus = Status::kNetworkIDNotFound);
     VerifyOrExit(mpConnectCallback == nullptr, networkingStatus = Status::kUnknownError);
 
-    err = ConnectWiFiNetwork(mStagingNetwork.ssid, mStagingNetwork.ssidLen, mStagingNetwork.key, mStagingNetwork.keyLen);
+    err = ConnectWiFiNetwork(reinterpret_cast<const char *>(mStagingNetwork.ssid), mStagingNetwork.ssidLen,
+                             reinterpret_cast<const char *>(mStagingNetwork.key), mStagingNetwork.keyLen);
     if (err == CHIP_NO_ERROR)
     {
         mpConnectCallback = callback;
@@ -327,7 +323,7 @@ CHIP_ERROR GetConnectedNetwork(Network & network)
 
     network.connected = true;
 
-    ByteSpan ssidSpan(reinterpret_cast<const uint8_t *>(wifiConfig.ssid), wifiConfig.ssidLen);
+    ByteSpan ssidSpan(wifiConfig.ssid, wifiConfig.ssidLen);
     MutableByteSpan networkIdSpan(network.networkID, NetworkCommissioning::kMaxNetworkIDLen);
 
     ReturnErrorOnFailure(CopySpanToMutableSpan(ssidSpan, networkIdSpan));
