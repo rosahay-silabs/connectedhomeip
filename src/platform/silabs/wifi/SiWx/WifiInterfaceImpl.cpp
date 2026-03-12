@@ -497,7 +497,7 @@ sl_status_t SetWifiConfigurations()
     };
 
     chip::MutableByteSpan output(profile.config.ssid.value, kMaxWiFiSSIDLength);
-    chip::ByteSpan input(reinterpret_cast<const uint8_t *>(wfx_rsi.credentials.ssid), wfx_rsi.credentials.ssidLen);
+    chip::ByteSpan input(wfx_rsi.credentials.ssid, wfx_rsi.credentials.ssidLen);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(input, output);
 
     if (wfx_rsi.ap_chan != SL_WIFI_AUTO_CHANNEL)
@@ -803,7 +803,7 @@ CHIP_ERROR WifiInterfaceImpl::GetAccessPointInfo(wfx_wifi_scan_result_t & info)
         ReturnErrorOnFailure(chip::CopySpanToMutableSpan(bssidSrc, bssidDst));
 
         chip::ByteSpan ssidSrc(wireless_info.ssid, ssid_len);
-        chip::MutableByteSpan ssidDst(reinterpret_cast<uint8_t *>(wfx_rsi.credentials.ssid), kMaxWiFiSSIDLength);
+        chip::MutableByteSpan ssidDst(wfx_rsi.credentials.ssid, kMaxWiFiSSIDLength);
         ReturnErrorOnFailure(chip::CopySpanToMutableSpan(ssidSrc, ssidDst));
         wfx_rsi.credentials.ssidLen = static_cast<uint8_t>(ssid_len);
 
@@ -814,7 +814,7 @@ CHIP_ERROR WifiInterfaceImpl::GetAccessPointInfo(wfx_wifi_scan_result_t & info)
     info.chan     = wfx_rsi.ap_chan;
 
     chip::MutableByteSpan output(info.ssid, kMaxWiFiSSIDLength);
-    chip::ByteSpan ssid(reinterpret_cast<const uint8_t *>(wfx_rsi.credentials.ssid), wfx_rsi.credentials.ssidLen);
+    chip::ByteSpan ssid(wfx_rsi.credentials.ssid, wfx_rsi.credentials.ssidLen);
     ReturnErrorOnFailure(chip::CopySpanToMutableSpan(ssid, output));
     info.ssid_length = output.size();
     chip::ByteSpan apBssidSpan(wfx_rsi.ap_bssid.data(), wfx_rsi.ap_bssid.size());
