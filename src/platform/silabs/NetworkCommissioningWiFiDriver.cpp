@@ -51,7 +51,6 @@ CHIP_ERROR SlWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeC
     memcpy(&mSavedNetwork.key[0], SL_WIFI_PSK, sizeof(SL_WIFI_PSK));
     mSavedNetwork.keyLen  = sizeof(SL_WIFI_PSK);
     mSavedNetwork.ssidLen = sizeof(SL_WIFI_SSID);
-    mStagingNetwork       = mSavedNetwork;
     err                   = CHIP_NO_ERROR;
 #else
     // If reading fails, wifi is not provisioned, no need to go further.
@@ -63,10 +62,10 @@ CHIP_ERROR SlWiFiDriver::Init(NetworkStatusChangeCallback * networkStatusChangeC
                                            mSavedNetwork.keyLen);
     VerifyOrReturnError(err == CHIP_NO_ERROR, CHIP_NO_ERROR);
 
-    mStagingNetwork       = mSavedNetwork;
-#endif
-    TEMPORARY_RETURN_IGNORED ConnectWiFiNetwork(reinterpret_cast<const char *>(mSavedNetwork.ssid), mSavedNetwork.ssidLen,
-                                                reinterpret_cast<const char *>(mSavedNetwork.key), mSavedNetwork.keyLen);
+#endif // SL_ONNETWORK_PAIRING
+    mStagingNetwork = mSavedNetwork;
+    err             = ConnectWiFiNetwork(reinterpret_cast<const char *>(mSavedNetwork.ssid), mSavedNetwork.ssidLen,
+                                         reinterpret_cast<const char *>(mSavedNetwork.key), mSavedNetwork.keyLen);
     return err;
 }
 
