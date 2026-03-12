@@ -91,8 +91,6 @@ public:
         bool mExhausted = false;
     };
 
-    using WiFiNetwork = Silabs::WifiInterface::WiFiCredentials;
-
     // BaseDriver
     NetworkIterator * GetNetworks() override { return new WiFiNetworkIterator(this); }
     CHIP_ERROR Init(NetworkStatusChangeCallback * networkStatusChangeCallback) override;
@@ -123,13 +121,13 @@ public:
     static SlWiFiDriver * GetInstance() { return mDriver; }
 
 private:
-    bool NetworkMatch(const WiFiCredentials & network, ByteSpan networkId);
+    bool NetworkMatch(const Silabs::WifiInterface::WiFiCredentials & network, ByteSpan networkId);
     bool StartScanWiFiNetworks(ByteSpan ssid);
     static void OnScanWiFiNetworkDone(wfx_wifi_scan_result_t * aScanResult);
 
     static SlWiFiDriver * mDriver;
-    WiFiCredentials mSavedNetwork   = {};
-    WiFiCredentials mStagingNetwork = {};
+    Silabs::WifiInterface::WiFiCredentials mSavedNetwork   = {};
+    Silabs::WifiInterface::WiFiCredentials mStagingNetwork = {};
     ScanCallback * mpScanCallback;
     ConnectCallback * mpConnectCallback;
     NetworkStatusChangeCallback * mpStatusChangeCallback = nullptr;
