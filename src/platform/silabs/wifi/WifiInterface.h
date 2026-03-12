@@ -38,7 +38,7 @@
 #endif // (SLI_SI91X_MCU_INTERFACE | EXP_BOARD)
 
 /* Updated constants */
-constexpr size_t kWifiMacAddressLength = 6;
+constexpr size_t kWiFiMacAddressLength = 6;
 
 /* Defines to update */
 #define MAX_JOIN_RETRIES_COUNT (5)
@@ -165,7 +165,7 @@ public:
         }
     };
 
-    using MacAddress = std::array<uint8_t, kWifiMacAddressLength>;
+    using MacAddress = std::array<uint8_t, kWiFiMacAddressLength>;
 
     virtual ~WifiInterface() = default;
 

@@ -915,7 +915,7 @@ CHIP_ERROR WifiInterfaceImpl::ConfigureBroadcastFilter(bool enableBroadcastFilte
 
 CHIP_ERROR WifiInterfaceImpl::GetMacAddress(sl_wfx_interface_t interface, chip::MutableByteSpan & address)
 {
-    VerifyOrReturnError(address.size() >= kWifiMacAddressLength, CHIP_ERROR_BUFFER_TOO_SMALL);
+    VerifyOrReturnError(address.size() >= kWiFiMacAddressLength, CHIP_ERROR_BUFFER_TOO_SMALL);
 
 #ifdef SL_WFX_CONFIG_SOFTAP
     chip::ByteSpan byteSpan((interface == SL_WFX_SOFTAP_INTERFACE) ? wfx_rsi.softap_mac : wfx_rsi.sta_mac);
