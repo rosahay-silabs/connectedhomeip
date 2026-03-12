@@ -106,16 +106,15 @@ Status SlWiFiDriver::AddOrUpdateNetwork(ByteSpan ssid, ByteSpan credentials, Mut
     VerifyOrReturnError(credentials.size() <= sizeof(mStagingNetwork.key), Status::kOutOfRange);
     VerifyOrReturnError(ssid.size() <= sizeof(mStagingNetwork.ssid), Status::kOutOfRange);
 
-    memset(mStagingNetwork.key, 0, sizeof(mStagingNetwork.key));
-    // Verify that the credentials are not nullpointer,
-    // when connecting to open network this should be a string with null character.
-    VerifyOrReturnError(credentials.data() != nullptr, Status::kOutOfRange);
-    memcpy(mStagingNetwork.key, credentials.data(), credentials.size());
-    mStagingNetwork.keyLen = static_cast<decltype(mStagingNetwork.keyLen)>(credentials.size());
+    VerifyOrReturnError(ssid.data() != nullptr, Status::kNetworkNotFound);
+    MutableByteSpan ssidSpan(mStagingNetwork.ssid, sizeof(mStagingNetwork.ssid));
+    VerifyOrReturnError(CopySpanToMutableSpan(ssid, ssidSpan) == CHIP_NO_ERROR, Status::kBoundsExceeded);
+    mStagingNetwork.ssidLen = ssid.size();
 
-    memset(mStagingNetwork.ssid, 0, sizeof(mStagingNetwork.ssid));
-    memcpy(mStagingNetwork.ssid, ssid.data(), ssid.size());
-    mStagingNetwork.ssidLen = static_cast<decltype(mStagingNetwork.ssidLen)>(ssid.size());
+    VerifyOrReturnError(credentials.data() != nullptr, Status::kNetworkNotFound);
+    MutableByteSpan keySpan(mStagingNetwork.key, sizeof(mStagingNetwork.key));
+    VerifyOrReturnError(CopySpanToMutableSpan(credentials, keySpan) == CHIP_NO_ERROR, Status::kBoundsExceeded);
+    mStagingNetwork.keyLen = credentials.size();
 
     return Status::kSuccess;
 }
