@@ -108,6 +108,20 @@ constexpr osThreadAttr_t kWlanTaskAttr = { .name       = "wlan_rsi",
 constexpr uint32_t kTimeToFullBeaconReception = 5000; // 5 seconds
 #endif                                                // CHIP_CONFIG_ENABLE_ICD_SERVER
 
+/**
+ * Context passed to the unified scan callback via sl_wifi_set_scan_callback(..., arg).
+ * Distinguishes join scan (InitiateScan) from network scan (StartNetworkScan) and
+ * carries optional SSID filter for network scan.
+ */
+struct WifiScanCallbackContext
+{
+    bool is_network_scan;       ///< true = report results via wfx_rsi.scan_cb; false = update wfx_rsi for join
+    sl_wifi_ssid_t requested_ssid; ///< when is_network_scan, length 0 means no SSID filter
+};
+
+static WifiScanCallbackContext sJoinScanContext     = { .is_network_scan = false, .requested_ssid = { { 0 }, 0 } };
+static WifiScanCallbackContext sNetworkScanContext  = { .is_network_scan = true, .requested_ssid = { { 0 }, 0 } };
+
 wfx_wifi_scan_ext_t temp_reset;
 
 osSemaphoreId_t sScanCompleteSemaphore;
@@ -246,68 +260,92 @@ static chip::BitFlags<WiFiSecurityBitmap> ConvertSlWifiSecurityToBitmap(const sl
 }
 
 /**
- * @brief Network Scan callback when the device receive a scan operation from the controller.
- *        This callback is used whe the Network Commission Driver send a ScanNetworks command.
+ * @brief Unified scan callback for both join scan (InitiateScan) and network scan (StartNetworkScan).
+ *        Behavior is determined by the context passed as arg to sl_wifi_set_scan_callback.
  *
- *        If the scan network was requested for a specific SSID - wfx_rsi.scan_ssid had a valid value,
- *        the callback will only forward that specific networks information.
- *        If no ssid is provided, wfx_rsi.scan_ssid is a nullptr, we return the information of all scanned networks.
+ *        - Join scan (context->is_network_scan == false): updates wfx_rsi with first AP info or fallback
+ *          and releases the scan semaphore.
+ *        - Network scan (context->is_network_scan == true): reports each result via wfx_rsi.scan_cb,
+ *          optionally filtered by context->requested_ssid; clears scan state and releases semaphore.
  */
-sl_status_t BackgroundScanCallback(sl_wifi_event_t event, sl_wifi_scan_result_t * result, uint32_t result_length, void * arg)
+sl_status_t WifiScanCallback(sl_wifi_event_t event, sl_wifi_scan_result_t * result, uint32_t result_length, void * arg)
 {
+    const auto * ctx = static_cast<const WifiScanCallbackContext *>(arg);
+
+    // If no context or join scan, use join-scan behavior
+    if (ctx == nullptr || !ctx->is_network_scan)
+    {
+        sl_status_t status = SL_STATUS_OK;
+        if (SL_WIFI_CHECK_IF_EVENT_FAILED(event))
+        {
+            if (result != nullptr)
+            {
+                status = *reinterpret_cast<sl_status_t *>(result);
+                ChipLogError(DeviceLayer, "WifiScanCallback: join scan failed: 0x%lx", status);
+            }
+            wfx_rsi.ap_chan = SL_WIFI_AUTO_CHANNEL;
+#if WIFI_ENABLE_SECURITY_WPA3_TRANSITION
+            security = SL_WIFI_WPA3_TRANSITION;
+#else
+            security = SL_WIFI_WPA_WPA2_MIXED;
+#endif
+        }
+        else if (result != nullptr && result->scan_count > 0)
+        {
+            security                     = static_cast<sl_wifi_security_t>(result->scan_info[0].security_mode);
+            wfx_rsi.ap_chan              = result->scan_info[0].rf_channel;
+            wfx_rsi.credentials.security = ConvertSlWifiSecurityToBitmap(security);
+
+            chip::MutableByteSpan bssidSpan(wfx_rsi.ap_bssid.data(), kWiFiBSSIDLength);
+            chip::ByteSpan inBssid(result->scan_info[0].bssid, kWiFiBSSIDLength);
+            TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(inBssid, bssidSpan);
+        }
+        osSemaphoreRelease(sScanCompleteSemaphore);
+        return SL_STATUS_OK;
+    }
+
+    // Network scan: report results via wfx_rsi.scan_cb
     VerifyOrReturnError(result != nullptr, SL_STATUS_NULL_POINTER);
     VerifyOrReturnError(wfx_rsi.scan_cb != nullptr, SL_STATUS_INVALID_HANDLE);
 
     chip::ByteSpan requestedSsidSpan = {};
-
-    // arg is set to requested SSID if provided in sl_wifi_set_scan_callback
-    if (arg != nullptr)
+    if (ctx->requested_ssid.length > 0)
     {
-        sl_wifi_ssid_t * requestedSsidPtr = static_cast<sl_wifi_ssid_t *>(arg);
-        requestedSsidSpan = chip::ByteSpan(requestedSsidPtr->value, requestedSsidPtr->length);
+        requestedSsidSpan = chip::ByteSpan(ctx->requested_ssid.value, ctx->requested_ssid.length);
     }
 
     uint32_t nbreResults = result->scan_count;
     for (uint32_t i = 0; i < nbreResults; i++)
     {
-        // Length excludes null-character
         size_t ssidLen = strnlen(reinterpret_cast<char *>(result->scan_info[i].ssid), kMaxWiFiSSIDLength);
         chip::ByteSpan ssidSpan(result->scan_info[i].ssid, ssidLen);
 
         if (requestedSsidSpan.empty() || requestedSsidSpan.data_equal(ssidSpan))
         {
-
-            // Create a new scan response for the current scan result
             chip::DeviceLayer::NetworkCommissioning::WiFiScanResponse currentScanResult = {};
 
-            // Copy the scanned SSID to the scan response
             chip::MutableByteSpan responseSsidSpan(currentScanResult.ssid, kMaxWiFiSSIDLength);
             VerifyOrReturnError(chip::CopySpanToMutableSpan(ssidSpan, responseSsidSpan) == CHIP_NO_ERROR,
                                 SL_STATUS_SI91X_MEMORY_IS_NOT_SUFFICIENT);
             currentScanResult.ssidLen = static_cast<uint8_t>(ssidLen);
 
-            // Copy the BSSID to the scan response
             chip::ByteSpan bssidSpan(result->scan_info[i].bssid, kWiFiBSSIDLength);
             chip::MutableByteSpan responseBssidSpan(currentScanResult.bssid, kWiFiBSSIDLength);
             VerifyOrReturnError(chip::CopySpanToMutableSpan(bssidSpan, responseBssidSpan) == CHIP_NO_ERROR,
                                 SL_STATUS_SI91X_MEMORY_IS_NOT_SUFFICIENT);
 
-            // Convert the RSSI to a int8_t value
             int16_t rssi = std::clamp(((-1) * result->scan_info[i].rssi_val), INT8_MIN, INT8_MAX);
-
             currentScanResult.signal.strength = static_cast<int8_t>(rssi);
             currentScanResult.signal.type     = chip::DeviceLayer::NetworkCommissioning::WirelessSignalType::kdBm;
 
             currentScanResult.channel  = static_cast<uint16_t>(result->scan_info[i].rf_channel);
             currentScanResult.wiFiBand = WiFiBandEnum::k2g4;
-
             currentScanResult.security =
                 ConvertSlWifiSecurityToBitmap(static_cast<sl_wifi_security_t>(result->scan_info[i].security_mode));
 
             wfx_rsi.scan_cb(&currentScanResult);
         }
     }
-    // null callback to indicate that the scan is complete
     wfx_rsi.scan_cb(nullptr);
     wfx_rsi.scan_cb = nullptr;
     wfx_rsi.dev_state.Clear(WifiInterface::WifiState::kScanStarted);
@@ -376,39 +414,6 @@ sl_status_t SiWxPlatformInit(void)
     return status;
 }
 
-sl_status_t ScanCallback(sl_wifi_event_t event, sl_wifi_scan_result_t * scan_result, uint32_t result_length, void * arg)
-{
-    sl_status_t status = SL_STATUS_OK;
-    if (SL_WIFI_CHECK_IF_EVENT_FAILED(event))
-    {
-        if (scan_result != nullptr)
-        {
-            status = *reinterpret_cast<sl_status_t *>(scan_result);
-            ChipLogError(DeviceLayer, "ScanCallback: failed: 0x%lx", status);
-        }
-        // SET FALLBACK VALUES FOR THE SCAN
-        wfx_rsi.ap_chan = SL_WIFI_AUTO_CHANNEL;
-#if WIFI_ENABLE_SECURITY_WPA3_TRANSITION
-        security = SL_WIFI_WPA3_TRANSITION;
-#else
-        security = SL_WIFI_WPA_WPA2_MIXED;
-#endif /* WIFI_ENABLE_SECURITY_WPA3_TRANSITION */
-    }
-    else
-    {
-        security                     = static_cast<sl_wifi_security_t>(scan_result->scan_info[0].security_mode);
-        wfx_rsi.ap_chan              = scan_result->scan_info[0].rf_channel;
-        wfx_rsi.credentials.security = ConvertSlWifiSecurityToBitmap(security);
-
-        chip::MutableByteSpan bssidSpan(wfx_rsi.ap_bssid.data(), kWiFiBSSIDLength);
-        chip::ByteSpan inBssid(scan_result->scan_info[0].bssid, kWiFiBSSIDLength);
-        TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(inBssid, bssidSpan);
-    }
-
-    osSemaphoreRelease(sScanCompleteSemaphore);
-    return status;
-}
-
 sl_status_t InitiateScan()
 {
     sl_status_t status                                   = SL_STATUS_OK;
@@ -421,7 +426,7 @@ sl_status_t InitiateScan()
     chip::MutableByteSpan ssidSpan(ssid.value, ssid.length);
     TEMPORARY_RETURN_IGNORED chip::CopySpanToMutableSpan(requestedSsidSpan, ssidSpan);
 
-    sl_wifi_set_scan_callback(ScanCallback, NULL);
+    sl_wifi_set_scan_callback(WifiScanCallback, &sJoinScanContext);
 
     osMutexAcquire(sScanInProgressSemaphore, osWaitForever);
 
@@ -974,23 +979,21 @@ CHIP_ERROR WifiInterfaceImpl::StartNetworkScan(chip::ByteSpan ssid, ::ScanCallba
     }
 
     // If an ssid was not provided, we need to call sl_wifi_start_scan with nullptr to scan all Wi-Fi networks
-    sl_wifi_ssid_t requestedSsid      = { 0 };
     sl_wifi_ssid_t * requestedSsidPtr = nullptr;
 
+    sNetworkScanContext.requested_ssid.length = 0;
     if (!ssid.empty())
     {
-        // Copy the requested SSID to the sl_wifi_ssid_t structure
-        chip::MutableByteSpan requestedSsidSpan(requestedSsid.value, sizeof(requestedSsid.value));
+        chip::MutableByteSpan requestedSsidSpan(sNetworkScanContext.requested_ssid.value,
+                                                sizeof(sNetworkScanContext.requested_ssid.value));
         ReturnErrorOnFailure(chip::CopySpanToMutableSpan(ssid, requestedSsidSpan));
-        // Copy the length of the requested SSID to the sl_wifi_ssid_t structure
-        requestedSsid.length = static_cast<uint8_t>(ssid.size());
-        requestedSsidPtr     = &requestedSsid;
+        sNetworkScanContext.requested_ssid.length = static_cast<uint8_t>(ssid.size());
+        requestedSsidPtr                         = &sNetworkScanContext.requested_ssid;
     }
 
     osMutexAcquire(sScanInProgressSemaphore, osWaitForever);
 
-    // NOTE: sending requestedSsidPtr as background scan does not filter for SSID
-    sl_wifi_set_scan_callback(BackgroundScanCallback, requestedSsidPtr);
+    sl_wifi_set_scan_callback(WifiScanCallback, &sNetworkScanContext);
     status = sl_wifi_start_scan(SL_WIFI_CLIENT_2_4GHZ_INTERFACE, requestedSsidPtr, &wifi_scan_configuration);
 
     if (SL_STATUS_IN_PROGRESS == status)
